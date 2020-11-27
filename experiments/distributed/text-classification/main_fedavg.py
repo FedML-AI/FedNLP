@@ -13,6 +13,7 @@ import wandb
 
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "../../../")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "../../../../FedML")))
 from FedML.fedml_api.distributed.fedavg.FedAvgAPI import FedML_init, FedML_FedAvg_distributed
 
 from data_proprocessing.shakespeare.data_loader import load_partition_data_shakespeare
@@ -137,13 +138,13 @@ if __name__ == "__main__":
     logging.info(args)
 
     # customize the process name
-    str_process_name = "FedAvg (distributed):" + str(process_id)
+    str_process_name = "FedNLP (distributed):" + str(process_id)
     setproctitle.setproctitle(str_process_name)
 
     # customize the log format
+    logging.getLogger().setLevel(logging.INFO)
     logging.basicConfig(level=logging.INFO,
-                        format=str(
-                            process_id) + ' - %(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
+                        format=str(process_id) + ' - %(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
                         datefmt='%a, %d %b %Y %H:%M:%S')
     hostname = socket.gethostname()
     logging.info("#############process ID = " + str(process_id) +
@@ -151,11 +152,13 @@ if __name__ == "__main__":
                  ", process ID = " + str(os.getpid()) +
                  ", process Name = " + str(psutil.Process(os.getpid())))
 
+    logging.info("process_id = %d, size = %d" % (process_id, worker_number))
+
     # initialize the wandb machine learning experimental tracking platform (https://www.wandb.com/).
     if process_id == 0:
         wandb.init(
             # project="federated_nas",
-            project="fedml",
+            project="fednlp",
             name="FedAVG(d)" + str(args.partition_method) + "r" + str(args.comm_round) + "-e" + str(
                 args.epochs) + "-lr" + str(
                 args.lr),
