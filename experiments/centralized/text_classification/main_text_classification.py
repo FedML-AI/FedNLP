@@ -6,20 +6,21 @@ import os
 
 import numpy as np
 import torch
+from torch.optim import *
+import torch.nn.functional as F
 
 # add the FedML root directory to the python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "../../../")))
 
-import fedml_api.data_preprocessing.fednlp.news_20.data_loader
-import fedml_api.data_preprocessing.fednlp.AGNews.data_loader
-import fedml_api.data_preprocessing.fednlp.SemEval2010Task8.data_loader
-import fedml_api.data_preprocessing.fednlp.Sentiment140.data_loader
-import fedml_api.data_preprocessing.fednlp.SST_2.data_loader
+import data_preprocessing.news_20.data_loader
+import data_preprocessing.AGNews.data_loader
+import data_preprocessing.SemEval2010Task8.data_loader
+import data_preprocessing.Sentiment140.data_loader
+import data_preprocessing.SST_2.data_loader
 
-from fedml_api.model.nlp.rnn import BiLSTM
-from fedml_api.data_preprocessing.fednlp.base.utils import *
+from model.bilstm import BiLSTM
+from data_preprocessing.base.utils import *
 
-from fedml_api.centralized.fednlp_classification.FedNLPClassificationAPI import FedNLP_Classification_centralized
 
 
 def add_args(parser):
@@ -34,10 +35,10 @@ def add_args(parser):
     parser.add_argument('--dataset', type=str, default='20news', metavar='N',
                         help='dataset used for training')
 
-    parser.add_argument('--data_file', type=str, default='../../../data/fednlp/data_loaders/20news_data_loader.pkl',
+    parser.add_argument('--data_file', type=str, default='../../../data/data_loaders/20news_data_loader.pkl',
                         help='data pickle file')
 
-    parser.add_argument('--partition_file', type=str, default='../../../data/fednlp/partition/20news_partition.pkl',
+    parser.add_argument('--partition_file', type=str, default='../../../data/partition/20news_partition.pkl',
                         help='partition pickle file')
 
     parser.add_argument('--partition_method', type=str, default='uniform', metavar='N',
@@ -86,27 +87,27 @@ def load_data(args, dataset_name):
     data_loader = None
     if dataset_name == "20news":
         logging.info("load_data. dataset_name = %s" % dataset_name)
-        data_loader = fedml_api.data_preprocessing.fednlp.news_20.data_loader.\
+        data_loader = data_preprocessing.news_20.data_loader.\
             ClientDataLoader(os.path.abspath(args.data_file), os.path.abspath(args.partition_file),
                              partition_method=args.partition_method, tokenize=True)
     elif dataset_name == "agnews":
         logging.info("load_data. dataset_name = %s" % dataset_name)
-        data_loader = fedml_api.data_preprocessing.fednlp.AGNews.data_loader. \
+        data_loader = data_preprocessing.AGNews.data_loader. \
             ClientDataLoader(os.path.abspath(args.data_file), os.path.abspath(args.partition_file),
                              partition_method=args.partition_method, tokenize=True)
     elif dataset_name == "semeval_2010_task8":
         logging.info("load_data. dataset_name = %s" % dataset_name)
-        data_loader = fedml_api.data_preprocessing.fednlp.SemEval2010Task8.data_loader. \
+        data_loader = data_preprocessing.SemEval2010Task8.data_loader. \
             ClientDataLoader(os.path.abspath(args.data_file), os.path.abspath(args.partition_file),
                              partition_method=args.partition_method, tokenize=True)
     elif dataset_name == "sentiment140":
         logging.info("load_data. dataset_name = %s" % dataset_name)
-        data_loader = fedml_api.data_preprocessing.fednlp.Sentiment140.data_loader. \
+        data_loader = data_preprocessing.Sentiment140.data_loader. \
             ClientDataLoader(os.path.abspath(args.data_file), os.path.abspath(args.partition_file),
                              partition_method=args.partition_method, tokenize=True)
     elif dataset_name == "sst_2":
         logging.info("load_data. dataset_name = %s" % dataset_name)
-        data_loader = fedml_api.data_preprocessing.fednlp.SST_2.data_loader. \
+        data_loader = data_preprocessing.SST_2.data_loader. \
             ClientDataLoader(os.path.abspath(args.data_file), os.path.abspath(args.partition_file),
                              partition_method=args.partition_method, tokenize=True)
     else:
@@ -164,6 +165,74 @@ def create_model(args, model_name, input_size, output_size, embedding_weights):
     return model
 
 
+def FedNLP_text_classification_centralized(model, train_data, test_data, args):
+    if args.device is not None:
+        model = model.to(device=args.device)
+
+    optimizer = None
+    if args.optimizer == "adam":
+        optimizer = Adam(model.parameters(), lr=args.lr, weight_decay=args.wd)
+    else:
+        raise Exception("No such optimizer")
+    loss_func = F.cross_entropy
+
+    for epoch in range(args.epochs):
+        train_loss, train_acc = train_model(model, train_data, loss_func, optimizer, epoch, args)
+        eval_loss, eval_acc = eval_model(model, test_data, loss_func, args)
+
+        print("Epoch: %d, Train loss: %.4f, Train Accuracy: %.2f, Eval loss: %.4f, Eval Accuracy: %.4f" % epoch + 1,
+              train_loss, train_acc, eval_loss, eval_acc)
+
+
+def train_model(model, train_data, loss_func, optimizer, epoch, args):
+    total_epoch_loss = 0
+    total_epoch_acc = 0
+    model.train()
+    steps = 0
+    for batch_data in train_data:
+        x = torch.tensor(batch_data["X"])
+        y = torch.tensor(batch_data["Y"])
+        if args.device is not None:
+            x = x.to(device=args.device)
+            y = y.to(device=args.device)
+        optimizer.zero_grad()
+        prediction = model(x, args.batch_size, args.device)
+        loss = loss_func(prediction, y)
+        num_corrects = (torch.max(prediction, 1)[1].view(y.size()).data == y.data).float().sum()
+        acc = 100.0 * num_corrects / len(train_data)
+        loss.backward()
+        optimizer.step()
+        steps += 1
+        if steps % 100 == 0:
+            print("Epoch: %d, Training loss: %.4f, Training Accuracy: %.2f" % epoch + 1, loss.item(), acc.item())
+
+        total_epoch_acc += acc.item()
+        total_epoch_loss += loss.item()
+
+    return total_epoch_loss / len(train_data), total_epoch_acc / len(train_data)
+
+
+def eval_model(model, test_data, loss_func, args):
+    total_epoch_loss = 0
+    total_epoch_acc = 0
+    model.eval()
+    for batch_data in test_data:
+        x = torch.tensor(batch_data["X"])
+        y = torch.tensor(batch_data["Y"])
+        if args.device is not None:
+            x = x.to(device=args.device)
+            y = y.to(device=args.device)
+        prediction = model(x, args.batch_size, args.device)
+        loss = loss_func(prediction, y)
+        num_corrects = (torch.max(prediction, 1)[1].view(y.size()).data == y.data).float().sum()
+        acc = 100.0 * num_corrects / len(test_data)
+
+        total_epoch_acc += acc.item()
+        total_epoch_loss += loss.item()
+
+    return total_epoch_loss / len(test_data), total_epoch_acc / len(test_data)
+
+
 if __name__ == "__main__":
     # parse python script input parameters
     parser = argparse.ArgumentParser()
@@ -190,5 +259,5 @@ if __name__ == "__main__":
         if torch.cuda.is_available():
             args.device = 'cuda'
 
-    FedNLP_Classification_centralized(model, dataset[0], dataset[1], args)
+    FedNLP_text_classification_centralized(model, dataset[0], dataset[1], args)
 
