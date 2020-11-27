@@ -9,6 +9,7 @@ http://doc.fedml.ai/#/installation
 
 After the clone of this repository, please run the following command to get `FedML` submodule to your local.
 ```
+cd FedML
 git submodule init
 git submodule update
 ```
