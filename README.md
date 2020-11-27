@@ -16,7 +16,7 @@ git submodule update
 # Code Structure of FedNLP
 Note: please make sure that the code in FedNLP only uses `FedML/fedml_core` and `FedML/fedml_api`.
 In near future, once FedML is stable, we will release it as a python package. 
-At that time, we can install FedML package with pip or conda without the need to use Git submodule.
+At that time, we can install FedML package with pip or conda, without the need to use Git submodule.
 
 `FedML`: a soft repository link generated using `git submodule add https://github.com/FedML-AI/FedML`.
 
