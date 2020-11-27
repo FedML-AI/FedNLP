@@ -6,7 +6,6 @@ from spacy.lang.ru import Russian
 from spacy.lang.zh import Chinese
 from spacy.tokenizer import Tokenizer
 
-# add the FedML root directory to the python path
 from ..base.globals import *
 
 

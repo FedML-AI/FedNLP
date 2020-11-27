@@ -1,8 +1,8 @@
 import os
-import sys
 
-from ..base.base_raw_data_loader import BaseRawDataLoader
 from ..base.base_client_data_loader import BaseClientDataLoader
+from ..base.base_raw_data_loader import BaseRawDataLoader
+
 
 class RawDataLoader(BaseRawDataLoader):
     def __init__(self, data_path):
@@ -37,13 +37,14 @@ class RawDataLoader(BaseRawDataLoader):
             data = f.readlines()
             for i in range(len(data)):
                 if len(data[i]) > 1 and data[i][0].isdigit():
-                    clean_data = data[i].split('\t')[1].strip().replace('"',"")
+                    clean_data = data[i].split('\t')[1].strip().replace('"', "")
                     X.append(clean_data)
 
-                elif len(data[i-1]) > 1 and data[i-1][0].isdigit():
+                elif len(data[i - 1]) > 1 and data[i - 1][0].isdigit():
                     label = data[i].rstrip("\n")
                     Y.append(label)
         return X, Y
+
 
 class ClientDataLoader(BaseClientDataLoader):
 
@@ -65,7 +66,6 @@ class ClientDataLoader(BaseClientDataLoader):
         __tokenize_data(self.train_data)
         __tokenize_data(self.test_data)
 
-
 # if __name__ == "__main__":
 #     data_file_path = '../../../../data//fednlp/text_classification/SemEval2010Task8/SemEval2010_task8_all_data'
 #     data_loader = RawDataLoader(data_file_path)
@@ -76,5 +76,3 @@ class ClientDataLoader(BaseClientDataLoader):
 #     pickle.dump(results, open("semeval_2010_task8_data_loader.pkl", "wb"))
 #     pickle.dump({"uniform": uniform_partition_dict}, open("semeval_2010_task8_partition.pkl", "wb"))
 #     print("done")
-
-

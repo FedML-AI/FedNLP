@@ -1,8 +1,7 @@
 import os
-import sys
 
-from ..base.base_raw_data_loader import BaseRawDataLoader
 from ..base.base_client_data_loader import BaseClientDataLoader
+from ..base.base_raw_data_loader import BaseRawDataLoader
 from ..base.utils import build_vocab
 
 
@@ -72,5 +71,3 @@ class ClientDataLoader(BaseClientDataLoader):
         attribute_fields = []
         super().__init__(data_path, partition_path, client_idx, partition_method, tokenize, data_fields,
                          attribute_fields)
-
-

@@ -1,9 +1,7 @@
+import pickle
 from abc import ABC, abstractmethod
-import sys
-import os
 
 from .utils import SpacyTokenizer
-import pickle
 
 
 class BaseClientDataLoader(ABC):

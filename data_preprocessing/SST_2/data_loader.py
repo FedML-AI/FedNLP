@@ -1,8 +1,7 @@
 import os
-import sys
 
-from ..base.base_raw_data_loader import BaseRawDataLoader
 from ..base.base_client_data_loader import BaseClientDataLoader
+from ..base.base_raw_data_loader import BaseRawDataLoader
 
 
 class RawDataLoader(BaseRawDataLoader):
@@ -72,4 +71,3 @@ class ClientDataLoader(BaseClientDataLoader):
 
         __tokenize_data(self.train_data)
         __tokenize_data(self.test_data)
-
