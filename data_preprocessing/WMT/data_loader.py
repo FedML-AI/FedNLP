@@ -1,13 +1,8 @@
 import pickle
-import sys
-import os
 
-# add the FedML root directory to the python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "../../")))
-
-from data_preprocessing.base.base_raw_data_loader import BaseRawDataLoader
-from data_preprocessing.base.base_client_data_loader import BaseClientDataLoader
-from data_preprocessing.base.partition import *
+from ..base.base_client_data_loader import BaseClientDataLoader
+from ..base.base_raw_data_loader import BaseRawDataLoader
+from ..base.partition import *
 
 
 class RawDataLoader(BaseRawDataLoader):
@@ -65,7 +60,7 @@ class ClientDataLoader(BaseClientDataLoader):
 
 if __name__ == "__main__":
     data_file_paths = ["../../../../data/fednlp/seq2seq/WMT/training-parallel-nc-v13/news-commentary-v13.cs-en.cs",
-                        "../../../../data/fednlp/seq2seq/WMT/training-parallel-nc-v13/news-commentary-v13.cs-en.en"]
+                       "../../../../data/fednlp/seq2seq/WMT/training-parallel-nc-v13/news-commentary-v13.cs-en.en"]
     data_loader = RawDataLoader(data_file_paths)
     results = data_loader.data_loader()
     uniform_partition_dict = uniform_partition(results["attributes"]["index_list"])
@@ -73,7 +68,7 @@ if __name__ == "__main__":
     pickle.dump({"uniform_partition": uniform_partition_dict}, open("wmt_cs_en_partition.pkl", "wb"))
 
     data_file_paths = ["../../../../data/fednlp/seq2seq/WMT/training-parallel-nc-v13/news-commentary-v13.de-en.de",
-                        "../../../../data/fednlp/seq2seq/WMT/training-parallel-nc-v13/news-commentary-v13.de-en.en"]
+                       "../../../../data/fednlp/seq2seq/WMT/training-parallel-nc-v13/news-commentary-v13.de-en.en"]
     data_loader = RawDataLoader(data_file_paths)
     results = data_loader.data_loader()
     uniform_partition_dict = uniform_partition(results["attributes"]["index_list"])
@@ -81,7 +76,7 @@ if __name__ == "__main__":
     pickle.dump({"uniform_partition": uniform_partition_dict}, open("wmt_de_en_partition.pkl", "wb"))
 
     data_file_paths = ["../../../../data/fednlp/seq2seq/WMT/training-parallel-nc-v13/news-commentary-v13.ru-en.ru",
-                        "../../../../data/fednlp/seq2seq/WMT/training-parallel-nc-v13/news-commentary-v13.ru-en.en"]
+                       "../../../../data/fednlp/seq2seq/WMT/training-parallel-nc-v13/news-commentary-v13.ru-en.en"]
     data_loader = RawDataLoader(data_file_paths)
     results = data_loader.data_loader()
     uniform_partition_dict = uniform_partition(results["attributes"]["index_list"])
@@ -89,7 +84,7 @@ if __name__ == "__main__":
     pickle.dump({"uniform_partition": uniform_partition_dict}, open("wmt_ru_en_partition.pkl", "wb"))
 
     data_file_paths = ["../../../../data/fednlp/seq2seq/WMT/training-parallel-nc-v13/news-commentary-v13.zh-en.zh",
-                        "../../../../data/fednlp/seq2seq/WMT/training-parallel-nc-v13/news-commentary-v13.zh-en.en"]
+                       "../../../../data/fednlp/seq2seq/WMT/training-parallel-nc-v13/news-commentary-v13.zh-en.en"]
     data_loader = RawDataLoader(data_file_paths)
     results = data_loader.data_loader()
     uniform_partition_dict = uniform_partition(results["attributes"]["index_list"])

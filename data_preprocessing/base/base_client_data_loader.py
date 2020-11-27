@@ -1,12 +1,7 @@
-from abc import ABC, abstractmethod
-import sys
-import os
-
-# add the FedML root directory to the python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "../../")))
-
-from data_preprocessing.base.utils import SpacyTokenizer
 import pickle
+from abc import ABC, abstractmethod
+
+from .utils import SpacyTokenizer
 
 
 class BaseClientDataLoader(ABC):

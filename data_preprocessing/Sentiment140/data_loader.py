@@ -1,12 +1,8 @@
-import os
 import csv
-import sys
+import os
 
-# add the FedML root directory to the python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "../../")))
-
-from data_preprocessing.base.base_raw_data_loader import BaseRawDataLoader
-from data_preprocessing.base.base_client_data_loader import BaseClientDataLoader
+from ..base.base_client_data_loader import BaseClientDataLoader
+from ..base.base_raw_data_loader import BaseRawDataLoader
 
 
 class RawDataLoader(BaseRawDataLoader):
@@ -37,13 +33,14 @@ class RawDataLoader(BaseRawDataLoader):
     def process_data(self, file_path):
         X = []
         Y = []
-        with open(file_path ,"r",newline='',encoding='utf-8',errors='ignore') as csvfile:
-            data = csv.reader(csvfile,delimiter=',')
+        with open(file_path, "r", newline='', encoding='utf-8', errors='ignore') as csvfile:
+            data = csv.reader(csvfile, delimiter=',')
             for line in data:
                 X.append(line[5])
                 Y.append(line[0])
 
         return X, Y
+
 
 class ClientDataLoader(BaseClientDataLoader):
 
@@ -64,5 +61,3 @@ class ClientDataLoader(BaseClientDataLoader):
 
         __tokenize_data(self.train_data)
         __tokenize_data(self.test_data)
-
-
