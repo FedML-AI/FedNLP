@@ -1,11 +1,7 @@
-import random
 import math
-import os
-import sys
+import random
 
-# add the FedML root directory to the python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "../../../")))
-from data_preprocessing.base.globals import *
+from ..base.globals import *
 
 
 def uniform_partition(train_index_list, test_index_list=None, n_clients=N_CLIENTS):
@@ -25,7 +21,7 @@ def uniform_partition(train_index_list, test_index_list=None, n_clients=N_CLIENT
     for i in range(n_clients):
         train_start = i * train_batch_size
         partition_dict["partition_data"][i] = dict()
-        train_set = train_index_list[train_start: train_start+train_batch_size]
+        train_set = train_index_list[train_start: train_start + train_batch_size]
         if test_index_list is None:
             random.shuffle(train_set)
             train_num = int(len(train_set) * 0.8)
@@ -34,7 +30,6 @@ def uniform_partition(train_index_list, test_index_list=None, n_clients=N_CLIENT
         else:
             test_start = i * test_batch_size
             partition_dict["partition_data"][i]["train"] = train_set
-            partition_dict["partition_data"][i]["test"] = test_index_list[test_start:test_start+test_batch_size]
+            partition_dict["partition_data"][i]["test"] = test_index_list[test_start:test_start + test_batch_size]
 
     return partition_dict
-

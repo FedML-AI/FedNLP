@@ -1,11 +1,7 @@
 import os
-import sys
 
-# add the FedML root directory to the python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "../")))
-
-from data_preprocessing.base.base_raw_data_loader import BaseRawDataLoader
-from data_preprocessing.base.base_client_data_loader import BaseClientDataLoader
+from ..base.base_client_data_loader import BaseClientDataLoader
+from ..base.base_raw_data_loader import BaseRawDataLoader
 
 
 class RawDataLoader(BaseRawDataLoader):
@@ -32,11 +28,11 @@ class RawDataLoader(BaseRawDataLoader):
         return {"X": self.X, "Y": self.Y, "target_vocab": self.target_vocab, "task_type": self.task_type,
                 "attributes": self.attributes}
 
-    #remove header
+    # remove header
     def remove_header(self, lines):
         for i in range(len(lines)):
-            if(lines[i] == '\n'):
-                start = i+1
+            if (lines[i] == '\n'):
+                start = i + 1
                 break
         new_lines = lines[start:]
         return new_lines
@@ -49,11 +45,12 @@ class RawDataLoader(BaseRawDataLoader):
             content = self.remove_header(content)
 
             for i in content:
-                temp = i.lstrip("> ").replace("/\\","").replace("*","").replace("^","")
+                temp = i.lstrip("> ").replace("/\\", "").replace("*", "").replace("^", "")
                 document = document + temp
 
             X.append(document)
         return X
+
 
 class ClientDataLoader(BaseClientDataLoader):
 
@@ -74,4 +71,3 @@ class ClientDataLoader(BaseClientDataLoader):
 
         __tokenize_data(self.train_data)
         __tokenize_data(self.test_data)
-

@@ -1,11 +1,7 @@
 import os
-import sys
 
-# add the FedML root directory to the python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "../")))
-
-from data_preprocessing.base.base_raw_data_loader import BaseRawDataLoader
-from data_preprocessing.base.base_client_data_loader import BaseClientDataLoader
+from ..base.base_client_data_loader import BaseClientDataLoader
+from ..base.base_raw_data_loader import BaseRawDataLoader
 
 
 class RawDataLoader(BaseRawDataLoader):
@@ -59,6 +55,7 @@ class RawDataLoader(BaseRawDataLoader):
         Y.append(' '.join(["%s %s %s" % ("<s>", sent, "</s>") for sent in abstract_lines]))
         return X, Y
 
+
 class ClientDataLoader(BaseClientDataLoader):
 
     def __init__(self, data_path, partition_path, client_idx=None, partition_method="uniform", tokenize=False):
@@ -79,4 +76,3 @@ class ClientDataLoader(BaseClientDataLoader):
 
         __tokenize_data(self.train_data)
         __tokenize_data(self.test_data)
-

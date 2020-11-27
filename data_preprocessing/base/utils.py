@@ -1,18 +1,13 @@
-
 # Variables
-from spacy.tokenizer import Tokenizer
-from spacy.lang.en import English
-from spacy.lang.zh import Chinese
-from spacy.lang.de import German
-from spacy.lang.ru import Russian
 from spacy.lang.cs import Czech
-
-import sys
-import os
+from spacy.lang.de import German
+from spacy.lang.en import English
+from spacy.lang.ru import Russian
+from spacy.lang.zh import Chinese
+from spacy.tokenizer import Tokenizer
 
 # add the FedML root directory to the python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "../../../")))
-from data_preprocessing.base.globals import *
+from ..base.globals import *
 
 
 class SpacyTokenizer:
@@ -114,5 +109,3 @@ def label_to_idx(y, vocab):
     for label in y:
         idx_y.append(vocab[label])
     return idx_y
-
-

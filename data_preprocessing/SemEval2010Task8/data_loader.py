@@ -1,11 +1,8 @@
 import os
 import sys
 
-# add the FedML root directory to the python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "../")))
-
-from data_preprocessing.base.base_raw_data_loader import BaseRawDataLoader
-from data_preprocessing.base.base_client_data_loader import BaseClientDataLoader
+from ..base.base_raw_data_loader import BaseRawDataLoader
+from ..base.base_client_data_loader import BaseClientDataLoader
 
 class RawDataLoader(BaseRawDataLoader):
     def __init__(self, data_path):
