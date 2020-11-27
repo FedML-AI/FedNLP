@@ -43,19 +43,12 @@ Some tasks can share the same trainer.
 3. You may need to accelerate your training through distributed training on multi-GPUs and multi-machines. Please refer the code at `experiments/centralized/DDP_demo`.
 
 # Update FedML Submodule
-If you need new features supported by FedML framework, please update FedML submodule using Git commands at this tutorial:
-https://git-scm.com/book/en/v2/Git-Tools-Submodules
-
-Method 1: 
-```
-git fetch
-git merge origin/master
-```
-
-Method 2:
 ```
 cd FedML
-git submodule update --remote FedML
+git checkout master && git pull
+cd ..
+git add FedML
+git commit -m "updating submodule FedML to latest"
 ```
 
 
