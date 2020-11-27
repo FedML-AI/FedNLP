@@ -1,5 +1,5 @@
 # Introduction
-This is FedNLP, an application ecosystem for federated natural language processing based the FedML framework (https://github.com/FedML-AI/FedML).
+This is FedNLP, an application ecosystem for federated natural language processing based on FedML framework (https://github.com/FedML-AI/FedML).
 
 FedNLP uses FedML repository as the git submodule. In other words, FedNLP only focus on adavanced models and dataset, while FedML supports various
 federated optimizers (e.g., FedAvg) and platforms (Distributed Computing, IoT/Mobile, Standalone).
