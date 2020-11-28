@@ -104,24 +104,9 @@ class ClientDataLoader(BaseClientDataLoader):
 
         def __tokenize_data(data):
             for i in range(len(data["context_X"])):
-                data["context_X"][i] = [str(token) for token in tokenizer(data["context_X"][i])]
-                data["question_X"][i] = [str(token) for token in tokenizer(data["question_X"][i])]
+                data["context_X"][i] = [str(token).strip().lower() for token in tokenizer(data["context_X"][i].strip()) if str(token).strip()]
+                data["question_X"][i] = [str(token).strip().lower() for token in tokenizer(data["question_X"][i].strip()) if str(token).strip()]
 
         __tokenize_data(self.train_data)
         __tokenize_data(self.test_data)
 
-# if __name__ == "__main__":
-#     data_file_path = '../../../../data/fednlp/span_extraction/SQuAD_1.1'
-#
-#     data_loader = RawDataLoader(data_file_path)
-#     results = data_loader.data_loader()
-#
-#     nature_partition = RawDataLoader.nature_partition(results["attributes"])
-#     uniform_partition_dict = uniform_partition(results["attributes"]["train_index_list"],
-#                                                results["attributes"]["test_index_list"])
-#
-#     pickle.dump(results, open("squad_1.1_data_loader.pkl", "wb"))
-#     pickle.dump({"uniform": uniform_partition_dict, "nature": nature_partition},
-#                 open("squad_1.1_partition.pkl", "wb"))
-#
-#     print("done")

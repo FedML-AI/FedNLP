@@ -71,8 +71,8 @@ class ClientDataLoader(BaseClientDataLoader):
 
         def __tokenize_data(data):
             for i in range(len(data["X"])):
-                data["X"][i] = [str(token) for token in tokenizer(data["X"][i])]
-                data["Y"][i] = [str(token) for token in tokenizer(data["Y"][i])]
+                data["X"][i] = [str(token).strip().lower() for token in tokenizer(data["X"][i].strip()) if str(token).strip()]
+                data["Y"][i] = [str(token).strip().lower() for token in tokenizer(data["Y"][i].strip()) if str(token).strip()]
 
         __tokenize_data(self.train_data)
         __tokenize_data(self.test_data)

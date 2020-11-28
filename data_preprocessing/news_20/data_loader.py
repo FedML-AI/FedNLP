@@ -1,7 +1,11 @@
 import os
+import re
 
 from ..base.base_client_data_loader import BaseClientDataLoader
 from ..base.base_raw_data_loader import BaseRawDataLoader
+
+_QUOTE_RE = re.compile(r'(writes in|writes:|wrote:|says:|said:'
+                           r'|^In article|^Quoted from|^\||^>)')
 
 
 class RawDataLoader(BaseRawDataLoader):
@@ -29,26 +33,38 @@ class RawDataLoader(BaseRawDataLoader):
                 "attributes": self.attributes}
 
     # remove header
-    def remove_header(self, lines):
-        for i in range(len(lines)):
-            if (lines[i] == '\n'):
-                start = i + 1
+    def remove_headers(self, text):
+        _before, _blankline, after = text.partition('\n\n')
+        return after
+
+    # remove quotes
+    def remove_quotes(self, text):
+        good_lines = [line for line in text.split('\n')
+                      if not _QUOTE_RE.search(line)]
+        return '\n'.join(good_lines)
+
+    # remove footers
+    def remove_footers(self, text):
+        lines = text.strip().split('\n')
+        for line_num in range(len(lines) - 1, -1, -1):
+            line = lines[line_num]
+            if line.strip().strip('-') == '':
                 break
-        new_lines = lines[start:]
-        return new_lines
+
+        if line_num > 0:
+            return '\n'.join(lines[:line_num])
+        else:
+            return text
 
     def process_data(self, file_path):
         X = []
         with open(file_path, "r", errors='ignore') as f:
-            document = ""
-            content = f.readlines()
-            content = self.remove_header(content)
+            content = f.read()
+            content = self.remove_headers(content)
+            content = self.remove_footers(content)
+            content = self.remove_quotes(content)
 
-            for i in content:
-                temp = i.lstrip("> ").replace("/\\", "").replace("*", "").replace("^", "")
-                document = document + temp
-
-            X.append(document)
+            X.append(content)
         return X
 
 
@@ -67,7 +83,7 @@ class ClientDataLoader(BaseClientDataLoader):
 
         def __tokenize_data(data):
             for i in range(len(data["X"])):
-                data["X"][i] = [str(token) for token in tokenizer(data["X"][i])]
+                data["X"][i] = [str(token).strip().lower() for token in tokenizer(data["X"][i].strip()) if str(token).strip()]
 
         __tokenize_data(self.train_data)
         __tokenize_data(self.test_data)
