@@ -17,15 +17,6 @@ different partition. For more details, please checkout the code directly.
 The figure below illustrates the workflow.
 ![avatar](docs/images/data_loader_work_flow.jpg)
 
-#### Tokenizer
-In order to supporting multi-language tokenization, we use spaCy to tokenize the raw data but some languages require additional
-packages. In FedNLP, Chinese, German and English need to download additional packages for tokenization. You can use the 
-following commands to download.
-```shell script
-python -m spacy download zh_core_web_sm
-python -m spacy download de_core_web_sm
-python -m spacy download en_core_web_sm
-```
 
 
 ### Test

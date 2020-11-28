@@ -99,11 +99,11 @@ class ClientDataLoader(BaseClientDataLoader):
 
         def __tokenize_data(data):
             for i in range(len(data["X"])):
-                data["X"][i] = [str(token).strip().lower() for token in tokenizer(data["X"][i].strip()) if str(token).strip()]
-                data["Y"][i] = [str(token).strip().lower() for token in tokenizer(data["Y"][i].strip()) if str(token).strip()]
+                data["X"][i] = [token.text.strip().lower() for token in tokenizer(data["X"][i].strip()) if token.text.strip()]
+                data["Y"][i] = [token.text.strip().lower() for token in tokenizer(data["Y"][i].strip()) if token.text.strip()]
                 for j in range(len(data["history"][i])):
-                    data["history"][i][j] = [str(token).strip().lower() for token in tokenizer(data["history"][i][j].strip()) if
-                                    str(token).strip()]
+                    data["history"][i][j] = [token.text.strip().lower() for token in tokenizer(data["history"][i][j].strip()) if
+                                    token.text.strip()]
 
         __tokenize_data(self.train_data)
         __tokenize_data(self.test_data)

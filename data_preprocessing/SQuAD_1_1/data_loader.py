@@ -104,8 +104,8 @@ class ClientDataLoader(BaseClientDataLoader):
 
         def __tokenize_data(data):
             for i in range(len(data["context_X"])):
-                data["context_X"][i] = [str(token).strip().lower() for token in tokenizer(data["context_X"][i].strip()) if str(token).strip()]
-                data["question_X"][i] = [str(token).strip().lower() for token in tokenizer(data["question_X"][i].strip()) if str(token).strip()]
+                data["context_X"][i] = [token.text.strip().lower() for token in tokenizer(data["context_X"][i].strip()) if token.text.strip()]
+                data["question_X"][i] = [token.text.strip().lower() for token in tokenizer(data["question_X"][i].strip()) if token.text.strip()]
 
         __tokenize_data(self.train_data)
         __tokenize_data(self.test_data)

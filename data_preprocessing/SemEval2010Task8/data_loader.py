@@ -61,18 +61,9 @@ class ClientDataLoader(BaseClientDataLoader):
 
         def __tokenize_data(data):
             for i in range(len(data["X"])):
-                data["X"][i] = [str(token).strip().lower() for token in tokenizer(data["X"][i].strip()) if str(token).strip()]
+                data["X"][i] = [token.text.strip().lower() for token in tokenizer(data["X"][i].strip()) if token.text.strip()]
 
         __tokenize_data(self.train_data)
         __tokenize_data(self.test_data)
 
-# if __name__ == "__main__":
-#     data_file_path = '../../../../data//fednlp/text_classification/SemEval2010Task8/SemEval2010_task8_all_data'
-#     data_loader = RawDataLoader(data_file_path)
-#     results = data_loader.data_loader()
-#
-#     uniform_partition_dict = uniform_partition(results["attributes"]["train_index_list"], results["attributes"]["test_index_list"])
-#
-#     pickle.dump(results, open("semeval_2010_task8_data_loader.pkl", "wb"))
-#     pickle.dump({"uniform": uniform_partition_dict}, open("semeval_2010_task8_partition.pkl", "wb"))
-#     print("done")
+

@@ -1,7 +1,9 @@
 # Variables
 from spacy.lang.cs import Czech
 from spacy.lang.ru import Russian
-from spacy.tokenizer import Tokenizer
+from spacy.lang.en import English
+from spacy.lang.zh import Chinese
+from spacy.lang.de import German
 import spacy
 
 from ..base.globals import *
@@ -18,13 +20,16 @@ class SpacyTokenizer:
     @staticmethod
     def get_tokenizer(lang):
         if lang == "zh":
-            nlp = spacy.load("zh_core_web_sm")
+            # nlp = spacy.load("zh_core_web_sm")
+            nlp = Chinese()
         elif lang == "en":
-            nlp = spacy.load("en_core_web_sm")
+            # nlp = spacy.load("en_core_web_sm")
+            nlp = English()
         elif lang == "cs":
             nlp = Czech()
         elif lang == "de":
-            nlp = spacy.load("de_core_web_sm")
+            # nlp = spacy.load("de_core_web_sm")
+            nlp = German()
         elif lang == "ru":
             nlp = Russian()
         else:
