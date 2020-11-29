@@ -34,7 +34,7 @@ class NLPModelTrainer(ModelTrainer):
         model.to(device)
         model.train()
 
-        criterion = nn.CrossEntropyLoss().to(device)
+        criterion = torch.nn.CrossEntropyLoss().to(device)
         if args.client_optimizer == "sgd":
             optimizer = torch.optim.SGD(model.parameters(), lr=args.lr)
         else:
