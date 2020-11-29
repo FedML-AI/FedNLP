@@ -8,9 +8,9 @@ from spacy.lang.de import German
 from ..base.globals import *
 
 import struct
+import numpy as np
 
 FLOAT_SIZE = 4
-
 
 class SpacyTokenizer:
     def __init__(self):
@@ -117,18 +117,19 @@ def label_to_idx(y, vocab):
 
 def load_word2vec_embedding(path):
     vocab = dict()
-    weights = []
+    weights = None
     total_num_vectors, vector_len = None, None
     with open(path, "rb") as f:
         c = None
 
         # read the header
-        header = ""
+        header = b""
         while c != b"\n":
             c = f.read(1)
-            header += c.decode()
+            header += c
 
-        total_num_vectors, vector_len = (int(x) for x in header.split())
+        total_num_vectors, vector_len = (int(x) for x in header.decode().split())
+        weights = np.zeros((total_num_vectors+2, vector_len))
 
         while len(vocab) < total_num_vectors:
 
@@ -141,12 +142,10 @@ def load_word2vec_embedding(path):
 
             binary_vector = f.read(FLOAT_SIZE * vector_len)
             vocab[word.decode()] = len(vocab)
-            weights.append([struct.unpack_from('f', binary_vector, i)[0]
+            weights[len(vocab)-1] = np.array([struct.unpack_from('f', binary_vector, i)[0]
                             for i in range(0, len(binary_vector), FLOAT_SIZE)])
     vocab[PAD_TOKEN] = len(vocab)
     vocab[UNK_TOKEN] = len(vocab)
-    weights.append([0.0 for _ in range(vector_len)])
-    weights.append([0.0 for _ in range(vector_len)])
     return vocab, weights
 
 
@@ -165,4 +164,4 @@ def load_glove_embedding(path):
     vocab[UNK_TOKEN] = len(vocab)
     weights.append([0.0 for _ in range(vector_len)])
     weights.append([0.0 for _ in range(vector_len)])
-    return vocab, weights
+    return vocab, np.array(weights)
