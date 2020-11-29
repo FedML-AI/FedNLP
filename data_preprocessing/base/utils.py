@@ -4,9 +4,12 @@ from spacy.lang.ru import Russian
 from spacy.lang.en import English
 from spacy.lang.zh import Chinese
 from spacy.lang.de import German
-import spacy
 
 from ..base.globals import *
+
+import struct
+
+FLOAT_SIZE = 4
 
 
 class SpacyTokenizer:
@@ -110,3 +113,56 @@ def label_to_idx(y, vocab):
     for label in y:
         idx_y.append(vocab[label])
     return idx_y
+
+
+def load_word2vec_embedding(path):
+    vocab = dict()
+    weights = []
+    total_num_vectors, vector_len = None, None
+    with open(path, "rb") as f:
+        c = None
+
+        # read the header
+        header = ""
+        while c != b"\n":
+            c = f.read(1)
+            header += c.decode()
+
+        total_num_vectors, vector_len = (int(x) for x in header.split())
+
+        while len(vocab) < total_num_vectors:
+
+            word = b""
+            while True:
+                c = f.read(1)
+                if c == b" ":
+                    break
+                word += c
+
+            binary_vector = f.read(FLOAT_SIZE * vector_len)
+            vocab[word.decode()] = len(vocab)
+            weights.append([struct.unpack_from('f', binary_vector, i)[0]
+                            for i in range(0, len(binary_vector), FLOAT_SIZE)])
+    vocab[PAD_TOKEN] = len(vocab)
+    vocab[UNK_TOKEN] = len(vocab)
+    weights.append([0.0 for _ in range(vector_len)])
+    weights.append([0.0 for _ in range(vector_len)])
+    return vocab, weights
+
+
+def load_glove_embedding(path):
+    vocab = dict()
+    weights = []
+    vector_len = None
+    with open(path, "r") as f:
+        for line in f:
+            line = line.strip()
+            temp = line.split(" ")
+            vocab[temp[0]] = len(vocab)
+            weights.append([float(num) for num in temp[1:]])
+            vector_len = len(temp[1:])
+    vocab[PAD_TOKEN] = len(vocab)
+    vocab[UNK_TOKEN] = len(vocab)
+    weights.append([0.0 for _ in range(vector_len)])
+    weights.append([0.0 for _ in range(vector_len)])
+    return vocab, weights

@@ -15,6 +15,8 @@ OPTIMIZER=${12}
 LR=${13}
 WD=${14}
 EPOCHS=${15}
+EMBEDDING_NAME=${16}
+EMBEDDING_FILE=${17}
 
 python3 ./main_text_classification.py \
   --model $MODEL \
@@ -30,4 +32,6 @@ python3 ./main_text_classification.py \
   --embedding_length $EMBEDDING_LENGTH \
   --lr $LR \
   --wd $WD \
-  --epochs $EPOCHS
+  --epochs $EPOCHS \
+  --embedding_name $EMBEDDING_NAME \
+  --embedding_file $EMBEDDING_FILE

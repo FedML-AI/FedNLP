@@ -58,7 +58,7 @@ class BiLSTM(nn.Module):
         if self.attention:
             output = self.attention_forward(output, state)
         else:
-            output = state
+            output = output[:, -1, :].squeeze(1)
 
         logits = self.output_layer(output)
 

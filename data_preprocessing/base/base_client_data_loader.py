@@ -34,7 +34,7 @@ class BaseClientDataLoader(ABC):
                 batch_data = dict()
                 for field in self.data_fields:
                     batch_data[field] = self.train_data[field][start: end]
-                    batch_data_list.append(batch_data)
+                batch_data_list.append(batch_data)
                 start = end
             return batch_data_list
 
@@ -50,7 +50,7 @@ class BaseClientDataLoader(ABC):
                 batch_data = dict()
                 for field in self.data_fields:
                     batch_data[field] = self.test_data[field][start: end]
-                    batch_data_list.append(batch_data)
+                batch_data_list.append(batch_data)
                 start = end
             return batch_data_list
 
