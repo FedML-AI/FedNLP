@@ -9,6 +9,7 @@ import numpy as np
 import psutil
 import setproctitle
 import torch
+import torch.nn
 import wandb
 
 
@@ -34,7 +35,7 @@ class NLPModelTrainer(ModelTrainer):
         model.to(device)
         model.train()
 
-        criterion = torch.nn.CrossEntropyLoss().to(device)
+        criterion = nn.CrossEntropyLoss().to(device)
         if args.client_optimizer == "sgd":
             optimizer = torch.optim.SGD(model.parameters(), lr=args.lr)
         else:
@@ -67,7 +68,7 @@ class NLPModelTrainer(ModelTrainer):
         model.to(device)
 
         test_loss = test_acc = test_total = 0.
-        criterion = nn.CrossEntropyLoss().to(device)
+        criterion = torch.nn.CrossEntropyLoss().to(device)
         with torch.no_grad():
             for batch_idx, (x, target) in enumerate(test_data):
                 x = x.to(device)
