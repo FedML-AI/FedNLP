@@ -7,10 +7,12 @@ It uses FedML repository as the git submodule. In other words, FedNLP only focus
 federated optimizers (e.g., FedAvg) and platforms (Distributed Computing, IoT/Mobile, Standalone).
 
 ## Installation
-http://doc.fedml.ai/#/installation
+<!-- http://doc.fedml.ai/#/installation -->
+After `git clone`-ing this repository, please run the following command to install our dependencies.
 
-After the clone of this repository, please run the following command to get `FedML` submodule to your local.
-```
+```bash
+conda create -n fednlp python=3.7
+conda activate fednlp
 cd FedML
 git submodule init
 git submodule update
