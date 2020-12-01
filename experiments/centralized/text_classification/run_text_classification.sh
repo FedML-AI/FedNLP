@@ -18,7 +18,7 @@ EPOCHS=${15}
 EMBEDDING_NAME=${16}
 EMBEDDING_FILE=${17}
 
-python3 experiments/centralized/text_classification/main_text_classification.py \
+python -m experiments.centralized.text_classification.main_text_classification \
   --model $MODEL \
   --dataset $DATASET \
   --data_file $DATA_FILE \
