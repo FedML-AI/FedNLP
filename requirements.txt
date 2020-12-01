@@ -1,0 +1,13 @@
+numpy
+requests
+tqdm
+regex
+tokenizers==0.9.3
+transformers==3.5.0
+scipy
+scikit-learn
+seqeval
+tensorboardx
+pandas
+wandb
+streamlit

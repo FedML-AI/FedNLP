@@ -20,7 +20,7 @@ wandb
 ./*/*/*/*/*/wandb
 
 
-*.txt
+# *.txt
 *.h5
 
 # data
