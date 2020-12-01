@@ -119,26 +119,24 @@ def load_data(args, dataset_name):
 
 def preprocess_data(args, dataset):
     print("preproccess data")
-    source_vocab = None
+    train_batch_data_list, test_batch_data_list, attributes = dataset
+    target_vocab = attributes["target_vocab"]
+    x = []
+    for batch_data in train_batch_data_list:
+        x.extend(batch_data["X"])
+    source_vocab = build_vocab(x)
     embedding_weights = None
     if args.embedding_file != '':
         if args.embedding_name == "word2vec":
             print("load word embedding %s" % args.embedding_name)
-            source_vocab, embedding_weights = load_word2vec_embedding(os.path.abspath(args.embedding_file))
+            source_vocab, embedding_weights = load_word2vec_embedding(os.path.abspath(args.embedding_file), source_vocab)
         elif args.embedding_name == "glove":
             print("load word embedding %s" % args.embedding_name)
             source_vocab, embedding_weights = load_glove_embedding(os.path.abspath(args.embedding_file))
         else:
             raise Exception("No such embedding")
         embedding_weights = torch.tensor(embedding_weights, dtype=torch.float)
-    train_batch_data_list, test_batch_data_list, attributes = dataset
-    target_vocab = attributes["target_vocab"]
 
-    if source_vocab is None:
-        x = []
-        for batch_data in train_batch_data_list:
-            x.extend(batch_data["X"])
-        source_vocab = build_vocab(x)
 
     if args.max_seq_len == -1:
         lengths = []
@@ -270,6 +268,7 @@ if __name__ == "__main__":
     np.random.seed(0)
     torch.manual_seed(0)
     torch.cuda.manual_seed_all(0)
+
 
     # load data
     dataset = load_data(args, args.dataset)

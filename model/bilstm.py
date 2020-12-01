@@ -14,9 +14,10 @@ class BiLSTM(nn.Module):
         self.attention = attention
         self.embedding_length = embedding_length
 
-        self.word_embeddings = nn.Embedding(self.input_size, self.embedding_length)
         if embedding_weights is not None:
-            self.word_embeddings.weights = nn.Parameter(embedding_weights, requires_grad=False)
+            self.word_embeddings = nn.Embedding.from_pretrained(torch.tensor(embedding_weights))
+        else:
+            self.word_embeddings = nn.Embedding(self.input_size, self.embedding_length)
         if self.attention:
             self.attention_layer = nn.Linear(self.hidden_size * 4, self.hidden_size * 2)
 
