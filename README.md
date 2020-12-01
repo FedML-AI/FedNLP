@@ -23,7 +23,7 @@ cd FedML; git submodule init; git submodule update; cd ../;
 ## Data Preparation
 
 ### Option 1: use our bash scripts to download the dataset that you need manually. 
-For example, in theh `data/text_classification/20Newsgroups` folder, you can  run `sh download_and_unzip.sh` to get the raw data and then process it following [data_preprocessing/README.md](data_preprocessing/README.md).
+For example, in the `data/text_classification/20Newsgroups` folder, you can  run `sh download_and_unzip.sh` to get the raw data and then process it following [data_preprocessing/README.md](data_preprocessing/README.md).
 
 ### Option 2: download our processed files from Google Drive.
 Dwnload files for each dataset in this [link](https://drive.google.com/folderview?id=1OhZ5NDaVz0VZX5jy8V_I_sfR25R2k_OE).  
