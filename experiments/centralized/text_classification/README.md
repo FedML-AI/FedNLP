@@ -45,7 +45,7 @@ sh run_text_classification.sh bilstm sst_2 ../../../data/data_loaders/sst_2_data
 | semeval_2010_task8 | BiLSTM+Attention | random | 67.83% |
 | sentiment140 | BiLSTM | random | 60.30% |
 | sentiment140 | BiLSTM+Attention | random | 59.79% |
-| sst_2 | BiLSTM | random | 60.30% |
+| sst_2 | BiLSTM | random | 65.42% |
 | sst_2 | BiLSTM+Attention | random | 65.28% |
 
 ## Experiment Parameters
