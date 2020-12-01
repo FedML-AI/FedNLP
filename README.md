@@ -30,7 +30,7 @@ For example, in theh `data/text_classification/20Newsgroups` folder, you can  ru
 
 ### Option 2: download our processed files from Google Drive.
 Dwnload files for each dataset in this [link](https://drive.google.com/folderview?id=1OhZ5NDaVz0VZX5jy8V_I_sfR25R2k_OE).  
-We provide two files for eac dataset: data files are saved in  **data_loaders**, and partition files are in directory **partition**. You need to put the downloaded `data_loaders` and `partition` in the `data` folder here. Simply put, we will have `data/data_loaders` and `data/partition` in the end.
+We provide two files for eac dataset: data files are saved in  **data_loaders**, and partition files are in directory **partition**. You need to put the downloaded `data_loaders` and `partition` in the `data` folder here. Simply put, we will have `data/data_loaders/*_data_loader.pkl` and `data/partition/*_partition.pkl` in the end.
 
 
 ## Centralized Experiments 
