@@ -5,6 +5,7 @@ import os
 
 import numpy as np
 import torch
+import wandb
 from torch.optim import *
 import torch.nn.functional as F
 
@@ -254,6 +255,16 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     args = add_args(parser)
     print(args)
+
+    # initialize the wandb machine learning experimental tracking platform (https://wandb.ai/automl/fednlp).
+    wandb.init(
+        # project="federated_nas",
+        project="fednlp",
+        name="FedAVG(d)" + str(args.partition_method) + "r" + str(args.comm_round) + "-e" + str(
+            args.epochs) + "-lr" + str(
+            args.lr),
+        config=args
+    )
 
     # Set the random seed. The np.random seed determines the dataset partition.
     # The torch_manual_seed determines the initial weight.
