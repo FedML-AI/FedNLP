@@ -1,14 +1,14 @@
 import argparse
 import random
-import sys
 import os
+import sys
 
-import numpy as np
 import torch
 import wandb
 from torch.optim import *
 import torch.nn.functional as F
 
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.abspath(__file__), "../../../../")))
 
 import data_preprocessing.news_20.data_loader
 import data_preprocessing.AGNews.data_loader
@@ -57,11 +57,9 @@ def add_args(parser):
     parser.add_argument('--max_seq_len', type=int, default=512, metavar='N',
                         help='maximum sequence length (-1 means the maximum sequence length in the dataset)')
 
-    parser.add_argument('--embedding_file', type=str,
-                        default='data/pretrained/GoogleNews-vectors-negative300.bin',
-                        help='word embedding file')
+    parser.add_argument('--embedding_file', type=str, nargs="?", help='word embedding file')
 
-    parser.add_argument('--embedding_name', type=str, default='word2vec', help='word embedding name(word2vec, glove)')
+    parser.add_argument('--embedding_name', type=str, nargs="?", help='word embedding name(word2vec, glove)')
 
     parser.add_argument('--embedding_length', type=int, default=300, help='dimension of word embedding')
 
@@ -126,7 +124,7 @@ def preprocess_data(args, dataset):
         x.extend(batch_data["X"])
     source_vocab = build_vocab(x)
     embedding_weights = None
-    if args.embedding_file != '':
+    if args.embedding_name is not None:
         if args.embedding_name == "word2vec":
             print("load word embedding %s" % args.embedding_name)
             source_vocab, embedding_weights = load_word2vec_embedding(os.path.abspath(args.embedding_file), source_vocab)
@@ -187,13 +185,16 @@ def FedNLP_text_classification_centralized(model, train_data, test_data, args):
     else:
         raise Exception("No such optimizer")
     loss_func = F.cross_entropy
-
+    max_eval_acc = 0.0
     for epoch in range(args.epochs):
         train_loss, train_acc = train_model(model, train_data, loss_func, optimizer, epoch, args)
         eval_loss, eval_acc = eval_model(model, test_data, loss_func, args)
-
+        max_eval_acc = max(max_eval_acc, eval_acc)
         print("Epoch: %d, Train loss: %.4f, Train Accuracy: %.2f, Eval loss: %.4f, Eval Accuracy: %.2f" % (epoch + 1,
               train_loss, train_acc, eval_loss, eval_acc))
+        wandb.log({"Epoch": epoch + 1, "Training loss": train_loss, "Training Accuracy:": train_acc,
+                   "Eval loss": eval_loss, "Eval Accuracy": eval_acc})
+    print("Maximum Eval Accuracy: %.2f" % max_eval_acc)
 
 
 def train_model(model, train_data, loss_func, optimizer, epoch, args):
@@ -216,6 +217,7 @@ def train_model(model, train_data, loss_func, optimizer, epoch, args):
         optimizer.step()
         steps += 1
         if steps % 100 == 0:
+            wandb.log({"Training loss": loss.item(), "Training Accuracy:": acc.item()})
             print("Epoch: %d, Training loss: %.4f, Training Accuracy: %.2f" % (epoch + 1, loss.item(), acc.item()))
 
         total_epoch_acc += acc.item()
@@ -255,7 +257,7 @@ if __name__ == "__main__":
     wandb.init(
         # project="federated_nas",
         project="fednlp",
-        name="FedAVG(d)" + str(args.partition_method) + "r" + str(args.comm_round) + "-e" + str(
+        name="FedCentralized" + "-" + str(args.dataset) + "-" + str(args.partition_method) + "-e" + str(
             args.epochs) + "-lr" + str(
             args.lr),
         config=args
