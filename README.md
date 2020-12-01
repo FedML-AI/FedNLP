@@ -18,10 +18,7 @@ pip install -r requirements.txt
 cd FedML; git submodule init; git submodule update; cd ../;
 ```
 
-```bash
-# Test for the fed_transformers
-python -m model.fed_transformers.test
-```
+
 
 ## Data Preparation
 
@@ -33,11 +30,11 @@ Dwnload files for each dataset in this [link](https://drive.google.com/foldervie
 We provide two files for eac dataset: data files are saved in  **data_loaders**, and partition files are in directory **partition**. You need to put the downloaded `data_loaders` and `partition` in the `data` folder here. Simply put, we will have `data/data_loaders/*_data_loader.pkl` and `data/partition/*_partition.pkl` in the end.
 
 
-## Centralized Experiments 
+## Experiments for Centralized Learning (Sanity Check)
 
 ### LSTM-based models 
 
-For example, you can run the centralized version of the models for text classification tasks with BLSTM models.
+For example, you can run the centralized version of the models for text classification tasks with BLSTM models ([model/bilstm.py](model/bilstm.py)).
 ```bash
 sh experiments/centralized/text_classification/run_text_classification.sh \
     bilstm_attention 20news \
@@ -50,6 +47,16 @@ sh experiments/centralized/text_classification/run_text_classification.sh \
 For more experiments, please read [experiments/centralized/README.md](experiments/centralized/README.md).
 
 ### Transformer-based models 
+
+```bash
+# Test the environment for the fed_transformers
+python -m model.fed_transformers.test
+```
+**TODO**
+
+## Experiments for Federated Learining
+
+**TODO**
 
 
 <!-- ### Update FedML Submodule 
