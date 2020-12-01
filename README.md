@@ -13,6 +13,8 @@ After `git clone`-ing this repository, please run the following command to insta
 ```bash
 conda create -n fednlp python=3.7
 conda activate fednlp
+pip install -r requirements.txt 
+conda install pytorch==1.6.0 torchvision==0.7.0 cudatoolkit=10.1 -c pytorch -n fednlp
 cd FedML
 git submodule init
 git submodule update
