@@ -253,13 +253,16 @@ if __name__ == "__main__":
     args = add_args(parser)
     print(args)
 
+    if args.embedding_name is None:
+        embedding_name = "random"
+    else:
+        embedding_name = args.embedding_name
     # initialize the wandb machine learning experimental tracking platform (https://wandb.ai/automl/fednlp).
     wandb.init(
         # project="federated_nas",
         project="fednlp",
-        name="FedCentralized" + "-" + str(args.dataset) + "-" + str(args.partition_method) + "-e" + str(
-            args.epochs) + "-lr" + str(
-            args.lr),
+        name="FedCentralized" + "-" + str(args.dataset) + "-" + str(args.model) + "-" + str(embedding_name) + "-e" +
+             str(args.epochs) + "-lr" + str(args.lr),
         config=args
     )
 
