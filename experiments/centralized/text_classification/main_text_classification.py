@@ -10,9 +10,6 @@ from torch.optim import *
 import torch.nn.functional as F
 
 
-# add the FedML root directory to the python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "../../../")))
-
 import data_preprocessing.news_20.data_loader
 import data_preprocessing.AGNews.data_loader
 import data_preprocessing.SemEval2010Task8.data_loader
@@ -36,10 +33,10 @@ def add_args(parser):
     parser.add_argument('--dataset', type=str, default='20news', metavar='N',
                         help='dataset used for training')
 
-    parser.add_argument('--data_file', type=str, default='../../../data/data_loaders/20news_data_loader.pkl',
+    parser.add_argument('--data_file', type=str, default='data/data_loaders/20news_data_loader.pkl',
                         help='data pickle file')
 
-    parser.add_argument('--partition_file', type=str, default='../../../data/partition/20news_partition.pkl',
+    parser.add_argument('--partition_file', type=str, default='data/partition/20news_partition.pkl',
                         help='partition pickle file')
 
     parser.add_argument('--partition_method', type=str, default='uniform', metavar='N',
@@ -61,7 +58,7 @@ def add_args(parser):
                         help='maximum sequence length (-1 means the maximum sequence length in the dataset)')
 
     parser.add_argument('--embedding_file', type=str,
-                        default='../../../data/pretrained/GoogleNews-vectors-negative300.bin',
+                        default='data/pretrained/GoogleNews-vectors-negative300.bin',
                         help='word embedding file')
 
     parser.add_argument('--embedding_name', type=str, default='word2vec', help='word embedding name(word2vec, glove)')
