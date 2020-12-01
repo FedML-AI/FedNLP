@@ -18,6 +18,6 @@ We provide each dataset with a bash script to download the raw data within its o
 ### Pre-processed Pickles 
 
 You can also download pickle files for each dataset in this [link](https://drive.google.com/folderview?id=1OhZ5NDaVz0VZX5jy8V_I_sfR25R2k_OE).  
-We provide two kinds of pickle files: the one in direcotry **data loaders**  contains the whole dataset.
+We provide two kinds of pickle files: the one in direcotry **data_loaders**  contains the whole dataset.
 The other files in directory **partition** are splited dataset using multiple partition methods.
 You need to put the `data_loaders` and `partition` here.
