@@ -4,5 +4,5 @@ The `fed_transformers` is based on `huggingface/transformers` and `ThilinaRajapa
 
 ```bash
 # Test
-python -m model.fed_transformers.model
+python -m model.fed_transformers.test
 ```

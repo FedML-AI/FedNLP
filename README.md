@@ -18,6 +18,10 @@ pip install -r requirements.txt
 cd FedML; git submodule init; git submodule update; cd ../;
 ```
 
+```bash
+# Test for the fed_transformers
+python -m model.fed_transformers.test
+```
 
 <!-- ### Update FedML Submodule 
 ```

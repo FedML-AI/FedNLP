@@ -12,6 +12,10 @@
 
 *.log
 
+runs/
+outputs/
+cache_dir/
+
 wandb
 ./*/wandb
 ./*/*/wandb
