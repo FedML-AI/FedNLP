@@ -1,7 +1,11 @@
 ## Installation
 http://doc.fedml.ai/#/installation-distributed-computing
 
+## Experimental Tracking
+```
+pip install --upgrade wandb
 wandb login ee0b5f53d949c84cee7decbe7a629e63fb2f8408
+```
 
 ## Run Experiments
 
