@@ -192,8 +192,8 @@ def FedNLP_text_classification_centralized(model, train_data, test_data, args):
         max_eval_acc = max(max_eval_acc, eval_acc)
         print("Epoch: %d, Train loss: %.4f, Train Accuracy: %.2f, Eval loss: %.4f, Eval Accuracy: %.2f" % (epoch + 1,
               train_loss, train_acc, eval_loss, eval_acc))
-        wandb.log({"Epoch": epoch + 1, "Training loss": train_loss, "Training Accuracy:": train_acc,
-                   "Eval loss": eval_loss, "Eval Accuracy": eval_acc})
+        wandb.log({"Epoch": epoch + 1, "Avg Training loss": train_loss, "Avg Training Accuracy:": train_acc,
+                   "Avg Eval loss": eval_loss, "Avg Eval Accuracy": eval_acc})
     print("Maximum Eval Accuracy: %.2f" % max_eval_acc)
 
 
