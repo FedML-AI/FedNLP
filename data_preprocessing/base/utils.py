@@ -7,7 +7,7 @@ from spacy.lang.de import German
 
 from ..base.globals import *
 
-import struct
+import gensim
 import numpy as np
 
 FLOAT_SIZE = 4
@@ -115,37 +115,19 @@ def label_to_idx(y, vocab):
     return idx_y
 
 
-def load_word2vec_embedding(path):
+def load_word2vec_embedding(path, source_vocab):
     vocab = dict()
-    weights = None
-    total_num_vectors, vector_len = None, None
-    with open(path, "rb") as f:
-        c = None
-
-        # read the header
-        header = b""
-        while c != b"\n":
-            c = f.read(1)
-            header += c
-
-        total_num_vectors, vector_len = (int(x) for x in header.decode().split())
-        weights = np.zeros((total_num_vectors+2, vector_len))
-
-        while len(vocab) < total_num_vectors:
-
-            word = b""
-            while True:
-                c = f.read(1)
-                if c == b" ":
-                    break
-                word += c
-
-            binary_vector = f.read(FLOAT_SIZE * vector_len)
-            vocab[word.decode()] = len(vocab)
-            weights[len(vocab)-1] = np.array([struct.unpack_from('f', binary_vector, i)[0]
-                            for i in range(0, len(binary_vector), FLOAT_SIZE)])
+    model = gensim.models.KeyedVectors.load_word2vec_format(path, binary=True)
+    weights = []
+    for key, value in model.vocab.items():
+        if key in source_vocab:
+            vocab[key] = len(vocab)
+            weights.append(model.vectors[value.index])
     vocab[PAD_TOKEN] = len(vocab)
     vocab[UNK_TOKEN] = len(vocab)
+    weights.append(np.zeros(model.vector_size))
+    weights.append(np.zeros(model.vector_size))
+    weights = np.array(weights)
     return vocab, weights
 
 
