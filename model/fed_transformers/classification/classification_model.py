@@ -37,7 +37,7 @@ from transformers import (
     AlbertTokenizer,
     BertConfig,
     BertTokenizer,
-    BertweetTokenizer,
+    # BertweetTokenizer,
     CamembertConfig,
     CamembertTokenizer,
     DistilBertConfig,
@@ -60,8 +60,8 @@ from transformers import (
     XLMTokenizer,
     XLNetConfig,
     XLNetTokenizer,
-    LayoutLMConfig,
-    LayoutLMTokenizer,
+    # LayoutLMConfig,
+    # LayoutLMTokenizer,
     get_linear_schedule_with_warmup,
 )
 from transformers.convert_graph_to_onnx import convert, quantize
@@ -128,7 +128,7 @@ class ClassificationModel:
         MODEL_CLASSES = {
             "albert": (AlbertConfig, AlbertForSequenceClassification, AlbertTokenizer),
             "bert": (BertConfig, BertForSequenceClassification, BertTokenizer),
-            "bertweet": (RobertaConfig, RobertaForSequenceClassification, BertweetTokenizer),
+            # "bertweet": (RobertaConfig, RobertaForSequenceClassification, BertweetTokenizer),
             "camembert": (CamembertConfig, CamembertForSequenceClassification, CamembertTokenizer),
             "distilbert": (DistilBertConfig, DistilBertForSequenceClassification, DistilBertTokenizer),
             "electra": (ElectraConfig, ElectraForSequenceClassification, ElectraTokenizer),
@@ -139,7 +139,7 @@ class ClassificationModel:
             "xlnet": (XLNetConfig, XLNetForSequenceClassification, XLNetTokenizer),
             "xlm": (XLMConfig, XLMForSequenceClassification, XLMTokenizer),
             "xlmroberta": (XLMRobertaConfig, XLMRobertaForSequenceClassification, XLMRobertaTokenizer),
-            "layoutlm": (LayoutLMConfig, LayoutLMForSequenceClassification, LayoutLMTokenizer),
+            # "layoutlm": (LayoutLMConfig, LayoutLMForSequenceClassification, LayoutLMTokenizer),
         }
 
         self.args = self._load_model_args(model_name)
