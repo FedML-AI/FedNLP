@@ -6,7 +6,7 @@ wandb login ee0b5f53d949c84cee7decbe7a629e63fb2f8408
 
 ## Run Experiments
 
-## MNIST experiments
+## 20News experiments
 ```
 sh experiments/centralized/text_classification/run_text_classification.sh \
     bilstm_attention 20news \

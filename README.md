@@ -23,6 +23,35 @@ cd FedML; git submodule init; git submodule update; cd ../;
 python -m model.fed_transformers.test
 ```
 
+## Data Preparation
+
+### Option 1: use our bash scripts to download the dataset that you need manually. 
+For example, in theh `data/text_classification/20Newsgroups` folder, you can  run `sh download_and_unzip.sh` to get the raw data and then process it following [data_preprocessing/README.md](data_preprocessing/README.md).
+
+### Option 2: download our processed files from Google Drive.
+Dwnload files for each dataset in this [link](https://drive.google.com/folderview?id=1OhZ5NDaVz0VZX5jy8V_I_sfR25R2k_OE).  
+We provide two files for eac dataset: data files are saved in  **data_loaders**, and partition files are in directory **partition**. You need to put the downloaded `data_loaders` and `partition` in the `data` folder here. Simply put, we will have `data/data_loaders` and `data/partition` in the end.
+
+
+## Centralized Experiments 
+
+### LSTM-based models 
+
+For example, you can run the centralized version of the models for text classification tasks with BLSTM models.
+```bash
+sh experiments/centralized/text_classification/run_text_classification.sh \
+    bilstm_attention 20news \
+    data/data_loaders/20news_data_loader.pkl \
+    data/partition/20news_partition.pkl \
+    uniform 512 1 0.1 32 1000 300 adam 0.001 0.0001 10 \
+    word2vec data/pretrained/GoogleNews-vectors-negative300.bin
+```
+
+For more experiments, please read [experiments/centralized/README.md](experiments/centralized/README.md).
+
+### Transformer-based models 
+
+
 <!-- ### Update FedML Submodule 
 ```
 cd FedML
