@@ -54,12 +54,17 @@ python -m model.fed_transformers.test
 ```
 **TODO**
 
-## Experiments for Federated Learining
+## Experiments for Federated Learning
 
-**TODO**
+1. Shakespeare + BiLSTM + FedAvg:
+```bash
+sh experiments/distributed/text_classification/run_fedavg_distributed_pytorch.sh 4 4 1 4 rnn hetero 100 1 10 0.8 shakespeare "./data/text_classification/shakespeare/" 0
 
+##run on background
+nohup sh experiments/distributed/text_classification/run_fedavg_distributed_pytorch.sh 4 4 1 4 rnn hetero 100 1 10 0.8 shakespeare "./data/text_classification/shakespeare/" 0  2>&1 &
+```
 
-<!-- ### Update FedML Submodule 
+### Update FedML Submodule 
 ```
 cd FedML
 git checkout master && git pull
@@ -67,7 +72,7 @@ cd ..
 git add FedML
 git commit -m "updating submodule FedML to latest"
 git push
-``` -->
+``` 
 
 ## Code Structure of FedNLP
 <!-- Note: The code of FedNLP only uses `FedML/fedml_core` and `FedML/fedml_api`.
