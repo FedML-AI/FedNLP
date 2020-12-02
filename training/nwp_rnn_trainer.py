@@ -1,3 +1,5 @@
+import logging
+
 import torch
 
 from FedML.fedml_core.trainer.model_trainer import ModelTrainer
@@ -37,10 +39,8 @@ class NWPRNNTrainer(ModelTrainer):
                 batch_loss.append(loss.item())
             if len(batch_loss) > 0:
                 epoch_loss.append(sum(batch_loss) / len(batch_loss))
-                logging.info('(Trainer_ID {}. Local Training Epoch: {} \tLoss: {:.6f}'.format(self.id,
-                                                                                              epoch,
-                                                                                              sum(epoch_loss) / len(
-                                                                                                  epoch_loss)))
+                logging.info('(Trainer_ID {}. Local Training Epoch: {} '
+                             '\tLoss: {:.6f}'.format(self.id, epoch, sum(epoch_loss) / len(epoch_loss)))
 
     def test(self, test_data, device, args):
         model = self.model
