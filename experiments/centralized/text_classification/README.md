@@ -43,8 +43,8 @@ sh run_text_classification.sh bilstm sst_2 ../../../data/data_loaders/sst_2_data
 | agnews | BiLSTM+Attention | random | 89.96% |
 | semeval_2010_task8 | BiLSTM | random | 69.68% |
 | semeval_2010_task8 | BiLSTM+Attention | random | 68.79% |
-| sentiment140 | BiLSTM | random | 60.30% |
-| sentiment140 | BiLSTM+Attention | random | 59.79% |
+| sentiment140 | BiLSTM | random | 60.64% |
+| sentiment140 | BiLSTM+Attention | random | 60.04% |
 | sst_2 | BiLSTM | random | 65.45% |
 | sst_2 | BiLSTM+Attention | random | 65.29% |
 
