@@ -20,8 +20,8 @@ do
       --model_type distilbert \
       --model_name distilbert-base-uncased \
       --do_lower_case True \
-      --train_batch_size 8 \
-      --eval_batch_size 8 \
+      --train_batch_size 32 \
+      --eval_batch_size 32 \
       --max_seq_length 128 \
       --learning_rate 1e-5 \
       --num_train_epochs 5 \
