@@ -18,6 +18,10 @@ python -m experiments.centralized.fed_transformer_exps.text_classification \
     --output_dir /tmp/20news_fed/ \
     --fp16
 """
+import data_preprocessing.AGNews.data_loader
+import data_preprocessing.SST_2.data_loader
+import data_preprocessing.SemEval2010Task8.data_loader
+import data_preprocessing.Sentiment140.data_loader
 import data_preprocessing.news_20.data_loader
 from data_preprocessing.base.utils import *
 from model.fed_transformers.classification import ClassificationModel
