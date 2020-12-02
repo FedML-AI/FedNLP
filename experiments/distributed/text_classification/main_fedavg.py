@@ -12,9 +12,8 @@ import torch
 import torch.nn
 import wandb
 
+sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "")))
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "../../../")))
-sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "../../../../FedML")))
 from FedML.fedml_api.distributed.fedavg.FedAvgAPI import FedML_init, FedML_FedAvg_distributed
 from FedML.fedml_core.trainer.model_trainer import ModelTrainer
 
