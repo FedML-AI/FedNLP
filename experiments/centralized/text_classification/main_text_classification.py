@@ -13,7 +13,7 @@ import data_preprocessing.SemEval2010Task8.data_loader
 import data_preprocessing.Sentiment140.data_loader
 import data_preprocessing.news_20.data_loader
 from data_preprocessing.base.utils import *
-from model.bilstm import BiLSTM
+from model.bilstm import BiLSTM_TextClassification
 
 
 def add_args(parser):
@@ -111,13 +111,21 @@ def load_data(args, dataset_name):
 
 
 def preprocess_data(args, dataset):
+    """
+    preprocessing data for further training, which includes load pretrianed embeddings, padding data and transforming
+    token and label to index
+    """
     print("preproccess data")
     train_batch_data_list, test_batch_data_list, attributes = dataset
     target_vocab = attributes["target_vocab"]
+
+    # build source vocabulary based on tokenized data
     x = []
     for batch_data in train_batch_data_list:
         x.extend(batch_data["X"])
     source_vocab = build_vocab(x)
+
+    # load pretrained embeddings. Note that we use source vocabulary here to reduce the input size
     embedding_weights = None
     if args.embedding_name is not None:
         if args.embedding_name == "word2vec":
@@ -140,6 +148,8 @@ def preprocess_data(args, dataset):
     new_test_batch_data_list = list()
     num_train_examples = 0
     num_test_examples = 0
+
+    # padding data and transforming token as well as label to index
     for i, batch_data in enumerate(train_batch_data_list):
         new_train_batch_data_list.append(
             {"X": token_to_idx(padding_data(batch_data["X"], args.max_seq_len), source_vocab),
@@ -162,11 +172,11 @@ def create_model(args, model_name, input_size, output_size, embedding_weights):
           % (model_name, input_size, output_size))
     model = None
     if model_name == "bilstm_attention":
-        model = BiLSTM(input_size, args.hidden_size, output_size, args.num_layers, args.dropout, args.embedding_length,
-                       attention=True, embedding_weights=embedding_weights)
+        model = BiLSTM_TextClassification(input_size, args.hidden_size, output_size, args.num_layers, args.dropout,
+                                          args.embedding_length, attention=True, embedding_weights=embedding_weights)
     elif model_name == "bilstm":
-        model = BiLSTM(input_size, args.hidden_size, output_size, args.num_layers, args.dropout, args.embedding_length,
-                       embedding_weights=embedding_weights)
+        model = BiLSTM_TextClassification(input_size, args.hidden_size, output_size, args.num_layers, args.dropout,
+                                          args.embedding_length, embedding_weights=embedding_weights)
     else:
         raise Exception("No such model")
     return model
