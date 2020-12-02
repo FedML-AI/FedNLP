@@ -12,7 +12,6 @@ import torch
 import torch.nn
 import wandb
 
-from training.nwp_rnn_trainer import NLPModelTrainer
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "")))
 
@@ -20,6 +19,7 @@ from FedML.fedml_api.distributed.fedavg.FedAvgAPI import FedML_init, FedML_FedAv
 
 from data_preprocessing.shakespeare.data_loader import load_partition_data_shakespeare
 from model.rnn import RNN_OriginalFedAvg
+from training.nwp_rnn_trainer import NWPRNNTrainer
 
 
 def add_args(parser):
@@ -199,7 +199,7 @@ if __name__ == "__main__":
     model = create_model(args, model_name=args.model, output_dim=dataset[7])
 
     # define the customized model trainer using abstract class `FedML.fedml_core.trainer.model_trainer`
-    model_trainer = NLPModelTrainer(model)
+    model_trainer = NWPRNNTrainer(model)
 
     # start "federated averaging (FedAvg)"
     FedML_FedAvg_distributed(process_id, worker_number, device, comm,
