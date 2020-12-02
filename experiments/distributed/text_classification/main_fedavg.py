@@ -12,7 +12,7 @@ import torch
 import torch.nn
 import wandb
 
-from training.NWPRNNTrainer import NLPModelTrainer
+from training.nwp_rnn_trainer import NLPModelTrainer
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "")))
 
