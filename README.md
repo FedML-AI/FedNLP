@@ -48,11 +48,33 @@ For more experiments, please read [experiments/centralized/README.md](experiment
 
 ### Transformer-based models 
 
+First, please us this command to test the dependencies.
 ```bash
 # Test the environment for the fed_transformers
 python -m model.fed_transformers.test
 ```
-**TODO**
+
+Run Text Classification model with `distilbert`:
+
+```bash 
+CUDA_VISIBLE_DEVICES=0 \
+python -m experiments.centralized.fed_transformer_exps.text_classification \
+    --dataset_name 20news \
+    --data_file data/data_loaders/20news_data_loader.pkl \
+    --partition_file data/partition/20news_partition.pkl \
+    --partition_method uniform \
+    --model_type distilbert \
+    --model_name distilbert-base-uncased \
+    --do_lower_case True \
+    --train_batch_size 8 \
+    --eval_batch_size 8 \
+    --max_seq_length 128 \
+    --learning_rate 1e-5 \
+    --num_train_epochs 3 \
+    --output_dir /tmp/20news_fed/ \
+    --n_gpu 1 --fp16
+```
+
 
 ## Experiments for Federated Learning
 
@@ -64,7 +86,8 @@ sh experiments/distributed/text_classification/run_fedavg_distributed_pytorch.sh
 nohup sh experiments/distributed/text_classification/run_fedavg_distributed_pytorch.sh 4 4 1 4 rnn hetero 100 1 10 0.8 shakespeare "./data/text_classification/shakespeare/" 0  2>&1 &
 ```
 
-### Update FedML Submodule 
+<!-- ### Update FedML Submodule 
+This is only for internal contributors, can put this kind of info to a seperate readme file.
 ```
 cd FedML
 git checkout master && git pull
@@ -72,7 +95,7 @@ cd ..
 git add FedML
 git commit -m "updating submodule FedML to latest"
 git push
-``` 
+```  -->
 
 ## Code Structure of FedNLP
 <!-- Note: The code of FedNLP only uses `FedML/fedml_core` and `FedML/fedml_api`.

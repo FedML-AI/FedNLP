@@ -17,8 +17,6 @@ python -m experiments.centralized.fed_transformer_exps.text_classification \
     --num_train_epochs 3 \
     --output_dir /tmp/20news_fed/ \
     --fp16
-        
-    
 """
 import data_preprocessing.news_20.data_loader
 from data_preprocessing.base.utils import *
@@ -75,7 +73,8 @@ def add_args(parser):
                         help='how many epochs will be trained locally')
     parser.add_argument('--gradient_accumulation_steps', type=int, default=1, metavar='EP',
                         help='how many steps for accumulate the loss.')
-
+    parser.add_argument('--n_gpu', type=int, default=1, metavar='EP',
+                        help='how many gpus will be used ')
     parser.add_argument('--fp16', default=False, action="store_true",
                         help='if enable fp16 for training')
     parser.add_argument('--manual_seed', type=int, default=42, metavar='N',
@@ -145,6 +144,7 @@ def main(args):
               "train_batch_size": args.train_batch_size,
               "eval_batch_size": args.eval_batch_size,
               "fp16": args.fp16,
+              "n_gpu": args.n_gpu,
               "output_dir": args.output_dir,
               "wandb_project": "fednlp"})
 
@@ -166,6 +166,7 @@ if __name__ == "__main__":
     # initialize the wandb machine learning experimental tracking platform (https://wandb.ai/automl/fednlp).
     wandb.init(
         project="fednlp",
+        entity="automl",
         name="FedNLP-Centralized" + "-TC-" + str(args.dataset_name) + "-" + str(args.model_name),
         config=args)
     # Start training.
