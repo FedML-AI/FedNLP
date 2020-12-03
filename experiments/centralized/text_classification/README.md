@@ -56,3 +56,16 @@ sh run_text_classification.sh bilstm sst_2 ../../../data/data_loaders/sst_2_data
 | semeval_2010_task8 | 256 |  1 |  0.1 |  32 |  32 |  300 |  adam |  0.001 |  0.0001 |  200 |
 | sentiment140 | 256 |  1 |  0.1 |  128 |  32 |  300 |  adam |  0.001 |  0.0001 |  200 |
 | sst_2 | 256 |  1 |  0.1 |  128 |  12 |  300 |  adam |  0.001 |  0.0001 |  200 |
+
+
+## Experiment Metrics
+20News: Accuracy, Precision, Recall, F1
+
+agnews: Error Rate, Accuracy([BiLSTM:91.7](https://arxiv.org/pdf/1808.09644v1.pdf))
+
+semeval_2010_task8: macro-averaged F1-Score for (9+1)-way classification, taking directionality into account([BiLSTM:82.7, BiLSTM+Attention:84.0](https://arxiv.org/pdf/1901.08163v1.pdf))
+
+sentiment140: Accuracy, F1(treat neutral as positive or negative)
+
+sst_2: Accuracy, 5-class/binary classification ([BiLSTM: 87.5](https://arxiv.org/pdf/1910.03474v1.pdf))
+

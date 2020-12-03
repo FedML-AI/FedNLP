@@ -26,7 +26,7 @@ details.
 #### Test Scripts
 ``` 
 ## 20news
-sh run_fednlp_dataloader.sh 20news ../../data/text_classification/20Newsgroups/20news-18828 uniform 32 100
+sh run_fednlp_dataloader.sh 20news ../../data/text_classification/20Newsgroups uniform 32 100
 
 ## AGNews
 sh run_fednlp_dataloader.sh agnews ../../data/text_classification/AGNews uniform 32 100

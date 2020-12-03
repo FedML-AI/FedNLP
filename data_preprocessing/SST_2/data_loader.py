@@ -22,18 +22,25 @@ class RawDataLoader(BaseRawDataLoader):
         return {"X": self.X, "Y": self.Y, "target_vocab": self.target_vocab, "task_type": self.task_type,
                 "attributes": self.attributes}
 
+    # def label_level(self, label):
+    #     label = float(label)
+    #     if label >= 0.0 and label <= 0.2:
+    #         return "very negative"
+    #     elif label > 0.2 and label <= 0.4:
+    #         return "negative"
+    #     elif label > 0.4 and label <= 0.6:
+    #         return "neutral"
+    #     elif label > 0.6 and label <= 0.8:
+    #         return "positive"
+    #     else:
+    #         return "very positive"
+
     def label_level(self, label):
         label = float(label)
-        if label >= 0.0 and label <= 0.2:
-            return "very negative"
-        elif label > 0.2 and label <= 0.4:
+        if label < 0.5:
             return "negative"
-        elif label > 0.4 and label <= 0.6:
-            return "neutral"
-        elif label > 0.6 and label <= 0.8:
-            return "positive"
         else:
-            return "very positive"
+            return "positive"
 
     def process_data(self, file_path):
         X = []
