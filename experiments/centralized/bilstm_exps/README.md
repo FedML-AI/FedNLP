@@ -3,31 +3,117 @@
 pip install --upgrade wandb
 wandb login ee0b5f53d949c84cee7decbe7a629e63fb2f8408
 ```
-## Run Experiments
 
+## Run Experiments
+Note that we always assume users will run the following scripts at root directory
 ## 20News experiments
 ```
-sh run_text_classification.sh bilstm 20news ../../../data/data_loaders/20news_data_loader.pkl ../../../data/partition/20news_partition.pkl uniform 256 1 0.1 32 256 300 adam 0.001 0.0001 10
+python -m experiments.centralized.bilstm_exps.main_text_classification \
+  --model bilstm \
+  --dataset 20news \
+  --data_file data/data_loaders/20news_data_loader.pkl \
+  --partition_file data/partition/20news_partition.pkl \
+  --partition_method uniform \
+  --hidden_size 256  \
+  --num_layers 1 \
+  --dropout 0.1 \
+  --batch_size 32 \
+  --max_seq_len 256 \
+  --embedding_length 300 \
+  --lr 0.001 \
+  --wd 0.0001 \
+  --epochs 100 \
+  --embedding_name '' \
+  --embedding_file '' \
+  --device ''
 ```
 
 ## AGNews experiments
 ```
-sh run_text_classification.sh bilstm agnews ../../../data/data_loaders/agnews_data_loader.pkl ../../../data/partition/agnews_partition.pkl uniform 256 1 0.1 128 50 300 adam 0.001 0.0001 10
+python -m experiments.centralized.bilstm_exps.main_text_classification \
+  --model bilstm \
+  --dataset agnews \
+  --data_file data/data_loaders/agnews_data_loader.pkl \
+  --partition_file data/partition/agnews_partition.pkl \
+  --partition_method uniform \
+  --hidden_size 256  \
+  --num_layers 1 \
+  --dropout 0.1 \
+  --batch_size 128 \
+  --max_seq_len 50 \
+  --embedding_length 300 \
+  --lr 0.001 \
+  --wd 0.0001 \
+  --epochs 100 \
+  --embedding_name '' \
+  --embedding_file '' \
+  --device ''
 ```
 
 ## Semeval_2010_task8 experiments
 ```
-sh run_text_classification.sh bilstm semeval_2010_task8 ../../../data/data_loaders/semeval_2010_task8_data_loader.pkl ../../../data/partition/semeval_2010_task8_partition.pkl uniform 256 1 0.1 32 32 300 adam 0.001 0.0001 10
+python -m experiments.centralized.bilstm_exps.main_text_classification \
+  --model bilstm \
+  --dataset semeval_2010_task8 \
+  --data_file data/data_loaders/semeval_2010_task8_data_loader.pkl \
+  --partition_file data/partition/semeval_2010_task8_partition.pkl \
+  --partition_method uniform \
+  --hidden_size 256  \
+  --num_layers 1 \
+  --dropout 0.1 \
+  --batch_size 32 \
+  --max_seq_len 32 \
+  --embedding_length 300 \
+  --lr 0.001 \
+  --wd 0.0001 \
+  --epochs 100 \
+  --embedding_name '' \
+  --embedding_file '' \
+  --device ''
 ```
 
 ## Sentiment140 experiments
 ```
-sh run_text_classification.sh bilstm sentiment140 ../../../data/data_loaders/sentiment140_data_loader.pkl ../../../data/partition/sentiment140_partition.pkl uniform 256 1 0.1 32 128 300 adam 0.001 0.0001 10
+python -m experiments.centralized.bilstm_exps.main_text_classification \
+  --model bilstm \
+  --dataset sentiment140 \
+  --data_file data/data_loaders/sentiment_140_data_loader.pkl \
+  --partition_file data/partition/sentiment_140_partition.pkl \
+  --partition_method uniform \
+  --hidden_size 256  \
+  --num_layers 1 \
+  --dropout 0.1 \
+  --batch_size 32 \
+  --max_seq_len 128 \
+  --embedding_length 300 \
+  --lr 0.001 \
+  --wd 0.0001 \
+  --epochs 100 \
+  --embedding_name '' \
+  --embedding_file '' \
+  --device ''
 ```
 
 ## SST-2 experiments
 ```
-sh run_text_classification.sh bilstm sst_2 ../../../data/data_loaders/sst_2_data_loader.pkl ../../../data/partition/sst_2_partition.pkl uniform 256 1 0.1 128 12 300 adam 0.001 0.0001 10
+python -m experiments.centralized.bilstm_exps.main_text_classification \
+  --model bilstm \
+  --dataset sst_2 \
+  --data_file data/data_loaders/sst_2_data_loader.pkl \
+  --partition_file data/partition/sst_2_task8_partition.pkl \
+  --partition_method uniform \
+  --hidden_size 256  \
+  --num_layers 1 \
+  --dropout 0.1 \
+  --batch_size 128 \
+  --max_seq_len 12 \
+  --embedding_length 300 \
+  --lr 0.001 \
+  --wd 0.0001 \
+  --epochs 100 \
+  --embedding_name '' \
+  --embedding_file '' \
+  --device ''
 ```
 
 ## Experiment Results

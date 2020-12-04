@@ -48,7 +48,7 @@ For more experiments, please read [experiments/centralized/README.md](experiment
 
 ### Transformer-based models 
 
-First, please us this command to test the dependencies.
+First, please use this command to test the dependencies.
 ```bash
 # Test the environment for the fed_transformers
 python -m model.fed_transformers.test
