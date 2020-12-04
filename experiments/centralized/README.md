@@ -22,10 +22,12 @@ do
       --do_lower_case True \
       --train_batch_size 32 \
       --eval_batch_size 32 \
-      --max_seq_length 128 \
+      --max_seq_length 256 \
       --learning_rate 1e-5 \
       --num_train_epochs 5 \
       --output_dir /tmp/${DATA_NAME}_fed/ \
       --n_gpu 1 --fp16
 done
+
+
 ```

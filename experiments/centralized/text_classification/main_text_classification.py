@@ -271,6 +271,7 @@ if __name__ == "__main__":
     wandb.init(
         # project="federated_nas",
         project="fednlp",
+        entity="automl",
         name="FedCentralized" + "-" + str(args.dataset) + "-" + str(args.model) + "-" + str(embedding_name) + "-e" +
              str(args.epochs) + "-lr" + str(args.lr),
         config=args
