@@ -115,9 +115,9 @@ def label_to_idx(y, vocab):
     return idx_y
 
 
-def load_word2vec_embedding(path, source_vocab):
+def load_embedding(path, binary, source_vocab):
     vocab = dict()
-    model = gensim.models.KeyedVectors.load_word2vec_format(path, binary=True)
+    model = gensim.models.KeyedVectors.load_word2vec_format(path, binary=binary)
     weights = []
     for key, value in model.vocab.items():
         if key in source_vocab:
@@ -131,19 +131,3 @@ def load_word2vec_embedding(path, source_vocab):
     return vocab, weights
 
 
-def load_glove_embedding(path):
-    vocab = dict()
-    weights = []
-    vector_len = None
-    with open(path, "r") as f:
-        for line in f:
-            line = line.strip()
-            temp = line.split(" ")
-            vocab[temp[0]] = len(vocab)
-            weights.append([float(num) for num in temp[1:]])
-            vector_len = len(temp[1:])
-    vocab[PAD_TOKEN] = len(vocab)
-    vocab[UNK_TOKEN] = len(vocab)
-    weights.append([0.0 for _ in range(vector_len)])
-    weights.append([0.0 for _ in range(vector_len)])
-    return vocab, np.array(weights)

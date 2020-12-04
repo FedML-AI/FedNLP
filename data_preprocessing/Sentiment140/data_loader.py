@@ -1,14 +1,14 @@
 import csv
 import os
 
-from ..base.base_client_data_loader import BaseClientDataLoader
-from ..base.base_raw_data_loader import BaseRawDataLoader
+from data_preprocessing.base.base_client_data_loader import BaseClientDataLoader
+from data_preprocessing.base.base_raw_data_loader import BaseRawDataLoader
 
 
 class RawDataLoader(BaseRawDataLoader):
     def __init__(self, data_path):
         super().__init__(data_path)
-        self.task_type = "text_classification"
+        self.task_type = "bilstm_exps"
         self.target_vocab = None
         self.test_file_name = "testdata.manual.2009.06.14.csv"
         self.train_file_name = "training.1600000.processed.noemoticon.csv"
@@ -37,7 +37,10 @@ class RawDataLoader(BaseRawDataLoader):
             data = csv.reader(csvfile, delimiter=',')
             for line in data:
                 X.append(line[5])
-                Y.append(line[0])
+                if line[0] == "0":
+                    Y.append(line[0])
+                else:
+                    Y.append("1")
 
         return X, Y
 

@@ -45,8 +45,7 @@ sh run_text_classification.sh bilstm sst_2 ../../../data/data_loaders/sst_2_data
 | semeval_2010_task8 | BiLSTM+Attention | random | 68.79% |
 | sentiment140 | BiLSTM | random | 60.64% |
 | sentiment140 | BiLSTM+Attention | random | 60.04% |
-| sst_2 | BiLSTM | random | 65.45% |
-| sst_2 | BiLSTM+Attention | random | 65.29% |
+| sst_2 | BiLSTM | glove | 82.07% |
 
 ## Experiment Parameters
 | dataset | hidden_size | num_layers | dropout | batch_size | max_seq_len | embedding_length | optimizer | lr | wd | epochs |
@@ -63,9 +62,10 @@ sh run_text_classification.sh bilstm sst_2 ../../../data/data_loaders/sst_2_data
 
 agnews: Error Rate, Accuracy([BiLSTM:91.7](https://arxiv.org/pdf/1808.09644v1.pdf))
 
-semeval_2010_task8: macro-averaged F1-Score for (9+1)-way classification, taking directionality into account([BiLSTM:82.7, BiLSTM+Attention:84.0](https://arxiv.org/pdf/1901.08163v1.pdf))
+semeval_2010_task8: macro-averaged F1-Score for (9+1)-way classification, taking directionality into account([BiLSTM:82.7](https://www.aclweb.org/anthology/Y15-1009.pdf), 
+[BiLSTM+Attention:84.0](https://www.aclweb.org/anthology/P16-2034.pdf))
 
 sentiment140: Accuracy, F1(treat neutral as positive or negative)
 
-sst_2: Accuracy, 5-class/binary classification ([BiLSTM: 87.5](https://arxiv.org/pdf/1910.03474v1.pdf))
+sst_2: Accuracy, binary classification ([BiLSTM: 87.5](https://arxiv.org/pdf/1910.03474v1.pdf))
 

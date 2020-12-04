@@ -130,11 +130,10 @@ def preprocess_data(args, dataset):
     if args.embedding_name is not None:
         if args.embedding_name == "word2vec":
             print("load word embedding %s" % args.embedding_name)
-            source_vocab, embedding_weights = load_word2vec_embedding(os.path.abspath(args.embedding_file),
-                                                                      source_vocab)
+            source_vocab, embedding_weights = load_embedding(os.path.abspath(args.embedding_file), True, source_vocab)
         elif args.embedding_name == "glove":
             print("load word embedding %s" % args.embedding_name)
-            source_vocab, embedding_weights = load_glove_embedding(os.path.abspath(args.embedding_file))
+            source_vocab, embedding_weights = load_embedding(os.path.abspath(args.embedding_file), False, source_vocab)
         else:
             raise Exception("No such embedding")
         embedding_weights = torch.tensor(embedding_weights, dtype=torch.float)

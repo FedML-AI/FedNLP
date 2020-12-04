@@ -30,7 +30,7 @@ def add_args(parser):
     parser.add_argument('--dataset', type=str, default='20news', metavar='N',
                         help='dataset used for training')
 
-    parser.add_argument('--data_dir', type=str, default='../../data/fednlp/text_classification/20Newsgroups/20news-18828',
+    parser.add_argument('--data_dir', type=str, default='../../data/text_classification/20Newsgroups/20news-18828',
                         help='data directory')
 
     parser.add_argument('--partition_method', type=str, default='uniform', metavar='N',

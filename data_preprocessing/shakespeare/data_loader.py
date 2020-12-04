@@ -4,7 +4,7 @@ import os
 import numpy as np
 import torch
 
-from .language_utils import word_to_indices, VOCAB_SIZE, letter_to_index
+from data_preprocessing.shakespeare.language_utils import word_to_indices, VOCAB_SIZE, letter_to_index
 
 
 def read_data(train_data_dir, test_data_dir):
@@ -87,8 +87,8 @@ def batch_data(data, batch_size):
 
 
 def load_partition_data_shakespeare(batch_size):
-    train_path = "./data/text_classification/shakespeare/train"
-    test_path = "./data/text_classification/shakespeare/test"
+    train_path = "./data/bilstm_exps/shakespeare/train"
+    test_path = "./data/bilstm_exps/shakespeare/test"
     users, groups, train_data, test_data = read_data(train_path, test_path)
 
     if len(groups) == 0:

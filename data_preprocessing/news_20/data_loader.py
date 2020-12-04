@@ -11,7 +11,7 @@ _QUOTE_RE = re.compile(r'(writes in|writes:|wrote:|says:|said:'
 class RawDataLoader(BaseRawDataLoader):
     def __init__(self, data_path):
         super().__init__(data_path)
-        self.task_type = "text_classification"
+        self.task_type = "bilstm_exps"
         self.train_path = "20news-bydate-train"
         self.test_path = "20news-bydate-test"
         self.target_vocab = None
