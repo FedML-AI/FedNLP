@@ -10,9 +10,9 @@ Note that we always assume users will run the following scripts at root director
 ```
 python -m experiments.centralized.bilstm_exps.main_text_classification \
   --model bilstm \
-  --dataset agnews \
-  --data_file data/data_loaders/agnews_data_loader.pkl \
-  --partition_file data/partition/agnews_partition.pkl \
+  --dataset 20news \
+  --data_file data/data_loaders/20news_data_loader.pkl \
+  --partition_file data/partition/20news_partition.pkl \
   --partition_method uniform \
   --hidden_size 300  \
   --num_layers 1 \
@@ -25,9 +25,9 @@ python -m experiments.centralized.bilstm_exps.main_text_classification \
   --lr 0.001 \
   --wd 0.0001 \
   --epochs 30 \
-  --embedding_name '' \
-  --embedding_file '' \
-  --device '' \
+  --embedding_name glove \
+  --embedding_file data/pretrained/glove.6B.300d.txt \
+  --device cuda:0 \
   --do_remove_stop_words True \
   --do_remove_low_freq_words 5
 ```
@@ -62,9 +62,9 @@ python -m experiments.centralized.bilstm_exps.main_text_classification \
 ```
 python -m experiments.centralized.bilstm_exps.main_text_classification \
   --model bilstm \
-  --dataset agnews \
-  --data_file data/data_loaders/agnews_data_loader.pkl \
-  --partition_file data/partition/agnews_partition.pkl \
+  --dataset semeval_2010_task8 \
+  --data_file data/data_loaders/semeval_2010_task8_data_loader.pkl \
+  --partition_file data/partition/semeval_2010_task8_partition.pkl \
   --partition_method uniform \
   --hidden_size 300  \
   --num_layers 1 \
@@ -88,9 +88,9 @@ python -m experiments.centralized.bilstm_exps.main_text_classification \
 ```
 python -m experiments.centralized.bilstm_exps.main_text_classification \
   --model bilstm \
-  --dataset agnews \
-  --data_file data/data_loaders/agnews_data_loader.pkl \
-  --partition_file data/partition/agnews_partition.pkl \
+  --dataset sentiment140 \
+  --data_file data/data_loaders/sentiment_140_data_loader.pkl \
+  --partition_file data/partition/sentiment_140_partition.pkl \
   --partition_method uniform \
   --hidden_size 300  \
   --num_layers 1 \
@@ -114,9 +114,9 @@ python -m experiments.centralized.bilstm_exps.main_text_classification \
 ```
 python -m experiments.centralized.bilstm_exps.main_text_classification \
   --model bilstm \
-  --dataset agnews \
-  --data_file data/data_loaders/agnews_data_loader.pkl \
-  --partition_file data/partition/agnews_partition.pkl \
+  --dataset sst_2 \
+  --data_file data/data_loaders/sst_2_data_loader.pkl \
+  --partition_file data/partition/sst_2_partition.pkl \
   --partition_method uniform \
   --hidden_size 100  \
   --num_layers 1 \

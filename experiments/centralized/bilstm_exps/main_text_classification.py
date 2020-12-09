@@ -146,7 +146,7 @@ def preprocess_data(args, dataset):
         # build low frequency words set
         low_freq_words = set()
         for token, freq in freq_vocab.items():
-            if freq <= args.remove_freq:
+            if freq <= args.do_remove_low_freq_words:
                 low_freq_words.add(token)
 
         for i, batch_data in enumerate(train_batch_data_list):
