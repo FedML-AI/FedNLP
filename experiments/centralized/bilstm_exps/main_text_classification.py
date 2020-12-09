@@ -222,10 +222,12 @@ def create_model(args, model_name, input_size, output_size, embedding_weights):
           % (model_name, input_size, output_size))
     model = None
     if model_name == "bilstm_attention":
-        model = BiLSTM_TextClassification(input_size, args.hidden_size, output_size, args.num_layers, args.dropout,
+        model = BiLSTM_TextClassification(input_size, args.hidden_size, output_size, args.num_layers,
+                                          args.embedding_dropout, args.lstm_dropout, args.attention_dropout,
                                           args.embedding_length, attention=True, embedding_weights=embedding_weights)
     elif model_name == "bilstm":
-        model = BiLSTM_TextClassification(input_size, args.hidden_size, output_size, args.num_layers, args.dropout,
+        model = BiLSTM_TextClassification(input_size, args.hidden_size, output_size, args.num_layers,
+                                          args.embedding_dropout, args.lstm_dropout, args.attention_dropout,
                                           args.embedding_length, embedding_weights=embedding_weights)
     else:
         raise Exception("No such model")
