@@ -107,7 +107,7 @@ python -m experiments.centralized.bilstm_exps.main_text_classification \
   --embedding_file '' \
   --device '' \
   --do_remove_stop_words False \
-  --do_remove_low_freq_words 0
+  --do_remove_low_freq_words 5
 ```
 
 ## SST-2 experiments
@@ -133,7 +133,7 @@ python -m experiments.centralized.bilstm_exps.main_text_classification \
   --embedding_file data/pretrained/glove.840B.300d.txt \
   --device cuda:0 \
   --do_remove_stop_words False \
-  --do_remove_low_freq_words 5
+  --do_remove_low_freq_words 0
 ```
 
 ## Experiment Results
@@ -152,7 +152,12 @@ python -m experiments.centralized.bilstm_exps.main_text_classification \
 | agnews | 300 |  1 |  0.1 | 0 | 128 |  128 |  300 |  adam |  0.001 |  0.0001 |  10 |
 | semeval_2010_task8 | 300 | 1 |  0.5 | 0.3 |  10 |  100 |  300 |  adam |  0.001 |  0.0001 |  30 |
 | sentiment140 | 300 |  1 | 0.1 |  0 |  128 |  32 |  300 |  adam |  0.001 |  0.0001 |  10 |
-| sst_2 | 100 |  1 |  0.5 | 0.3 |  32 |  32 |  300 |  adam |  0.001 |  0.0005 |  30 |
+| sst_2 | 100 |  1 |  0.5 | 0.3 |  32 |  32 |  300 |  adam |  0.001 |  0.0005 | 30 |
+hidden size = 300 78.88
+hidden size = 100 78.57
+hidden size = 100 remove words=5 75.67
+hidden size = 300 78.30 remove stop words 78.30
+hidden size = 100 max_seq_len=100
 
 
 

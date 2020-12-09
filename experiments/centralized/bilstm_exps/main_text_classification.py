@@ -141,8 +141,10 @@ def preprocess_data(args, dataset):
     for batch_data in test_batch_data_list:
         x.extend(batch_data["X"])
     freq_vocab = build_freq_vocab(x)
+    print("frequency vocab size", len(freq_vocab))
 
     if args.do_remove_low_freq_words > 0:
+        print("remove low frequency words")
         # build low frequency words set
         low_freq_words = set()
         for token, freq in freq_vocab.items():
@@ -156,6 +158,7 @@ def preprocess_data(args, dataset):
             test_batch_data_list[i]["X"] = remove_words(batch_data["X"], low_freq_words)
 
     if args.do_remove_stop_words:
+        print("remove stop words")
         for i, batch_data in enumerate(train_batch_data_list):
             train_batch_data_list[i]["X"] = remove_words(batch_data["X"], STOP_WORDS)
 
@@ -169,6 +172,7 @@ def preprocess_data(args, dataset):
     for batch_data in test_batch_data_list:
         x.extend(batch_data["X"])
     source_vocab = build_vocab(x)
+    print("source vocab size", len(source_vocab))
 
     # load pretrained embeddings. Note that we use source vocabulary here to reduce the input size
     embedding_weights = None

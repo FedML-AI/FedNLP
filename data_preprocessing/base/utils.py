@@ -165,10 +165,10 @@ def load_glove_embedding(path, source_vocab, dimension):
         for line in f:
             line = line.strip()
             temp = line.split(" ")
-            word = " ".join(temp[:-300])
+            word = " ".join(temp[:-dimension])
             if word in source_vocab:
                 vocab[word] = len(vocab)
-                weights.append(np.array([float(num) for num in temp[-300:]]))
+                weights.append(np.array([float(num) for num in temp[-dimension:]]))
     vocab[PAD_TOKEN] = len(vocab)
     vocab[UNK_TOKEN] = len(vocab)
     weights.append(np.zeros(dimension))
