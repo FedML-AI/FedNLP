@@ -79,7 +79,7 @@ def add_args(parser):
 
     parser.add_argument('--device', type=str, default="cuda:3", metavar="DV", help='gpu device for training')
 
-    parser.add_argument("--do_remove_stop_words", type=bool, default=False, metavar="RSW",
+    parser.add_argument("--do_remove_stop_words", type=lambda x: (str(x).lower() == 'true'), default=False, metavar="RSW",
                         help="remove stop words which specify in sapcy")
 
     parser.add_argument('--do_remove_low_freq_words', type=int, default=5, metavar="RLW",
