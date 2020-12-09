@@ -6,6 +6,7 @@ import torch
 import torch.nn.functional as F
 import wandb
 from torch.optim import *
+from spacy.lang.en import STOP_WORDS
 
 import data_preprocessing.AGNews.data_loader
 import data_preprocessing.SST_2.data_loader
@@ -22,54 +23,67 @@ def add_args(parser):
     return a parser added with args required by fit
     """
     # Training settings
-    parser.add_argument('--model', type=str, default='bilstm', metavar='N',
+    parser.add_argument('--model', type=str, default='bilstm', metavar='M',
                         help='neural network used in training')
 
-    parser.add_argument('--dataset', type=str, default='20news', metavar='N',
+    parser.add_argument('--dataset', type=str, default='20news', metavar='DS',
                         help='dataset used for training')
 
     parser.add_argument('--data_file', type=str, default='data/data_loaders/20news_data_loader.pkl',
-                        help='data pickle file')
+                        metavar="DF", help='data pickle file')
 
     parser.add_argument('--partition_file', type=str, default='data/partition/20news_partition.pkl',
-                        help='partition pickle file')
+                        metavar="PF", help='partition pickle file')
 
-    parser.add_argument('--partition_method', type=str, default='uniform', metavar='N',
+    parser.add_argument('--partition_method', type=str, default='uniform', metavar='PM',
                         help='how to partition the dataset')
 
-    parser.add_argument('--hidden_size', type=int, default=128, metavar='N',
+    parser.add_argument('--hidden_size', type=int, default=300, metavar='H',
                         help='size of hidden layers')
 
     parser.add_argument('--num_layers', type=int, default=1, metavar='N',
                         help='number of layers in neural network')
 
-    parser.add_argument('--dropout', type=float, default=0.1, metavar='N',
-                        help='dropout rate for neural network')
+    parser.add_argument('--lstm_dropout', type=float, default=0.1, metavar='LD',
+                        help="dropout rate for LSTM's output")
 
-    parser.add_argument('--batch_size', type=int, default=32, metavar='N',
+    parser.add_argument('--embedding_dropout', type=float, default=0, metavar='ED',
+                        help='dropout rate for word embedding')
+
+    parser.add_argument('--attention_dropout', type=float, default=0, metavar='AD',
+                        help='dropout rate for attention layer output, only work when BiLSTM_Attention is chosen')
+
+    parser.add_argument('--batch_size', type=int, default=32, metavar='B',
                         help='input batch size for training (default: 32)')
 
-    parser.add_argument('--max_seq_len', type=int, default=512, metavar='N',
+    parser.add_argument('--max_seq_len', type=int, default=512, metavar='MSL',
                         help='maximum sequence length (-1 means the maximum sequence length in the dataset)')
 
-    parser.add_argument('--embedding_file', type=str, nargs="?", help='word embedding file')
+    parser.add_argument('--embedding_file', type=str, nargs="?", metavar="EF", help='word embedding file')
 
-    parser.add_argument('--embedding_name', type=str, nargs="?", help='word embedding name(word2vec, glove)')
+    parser.add_argument('--embedding_name', type=str, nargs="?", metavar="EN",
+                        help='word embedding name(word2vec, glove)')
 
-    parser.add_argument('--embedding_length', type=int, default=300, help='dimension of word embedding')
+    parser.add_argument('--embedding_length', type=int, default=300, metavar="EL", help='dimension of word embedding')
 
-    parser.add_argument('--optimizer', type=str, default='adam',
+    parser.add_argument('--optimizer', type=str, default='adam', metavar="O",
                         help='SGD with momentum; adam')
 
     parser.add_argument('--lr', type=float, default=0.001, metavar='LR',
                         help='learning rate (default: 0.001)')
 
-    parser.add_argument('--wd', help='weight decay parameter;', type=float, default=0.001)
+    parser.add_argument('--wd', help='weight decay parameter;', metavar="WD", type=float, default=0.001)
 
     parser.add_argument('--epochs', type=int, default=5, metavar='EP',
                         help='how many epochs will be trained locally')
 
-    parser.add_argument('--device', type=str, default=None, help='gpu device for training')
+    parser.add_argument('--device', type=str, default="cuda:3", metavar="DV", help='gpu device for training')
+
+    parser.add_argument("--do_remove_stop_words", type=bool, default=False, metavar="RSW",
+                        help="remove stop words which specify in sapcy")
+
+    parser.add_argument('--do_remove_low_freq_words', type=int, default=5, metavar="RLW",
+                        help='remove words in lower frequency')
 
     args = parser.parse_args()
 
@@ -119,21 +133,53 @@ def preprocess_data(args, dataset):
     train_batch_data_list, test_batch_data_list, attributes = dataset
     target_vocab = attributes["target_vocab"]
 
-    # build source vocabulary based on tokenized data
+    # remove low frequency words and stop words
+    # build frequency vocabulary based on tokenized data
     x = []
     for batch_data in train_batch_data_list:
+        x.extend(batch_data["X"])
+    for batch_data in test_batch_data_list:
+        x.extend(batch_data["X"])
+    freq_vocab = build_freq_vocab(x)
+
+    if args.do_remove_low_freq_words > 0:
+        # build low frequency words set
+        low_freq_words = set()
+        for token, freq in freq_vocab.items():
+            if freq <= args.remove_freq:
+                low_freq_words.add(token)
+
+        for i, batch_data in enumerate(train_batch_data_list):
+            train_batch_data_list[i]["X"] = remove_words(batch_data["X"], low_freq_words)
+
+        for i, batch_data in enumerate(test_batch_data_list):
+            test_batch_data_list[i]["X"] = remove_words(batch_data["X"], low_freq_words)
+
+    if args.do_remove_stop_words:
+        for i, batch_data in enumerate(train_batch_data_list):
+            train_batch_data_list[i]["X"] = remove_words(batch_data["X"], STOP_WORDS)
+
+        for i, batch_data in enumerate(test_batch_data_list):
+            test_batch_data_list[i]["X"] = remove_words(batch_data["X"], STOP_WORDS)
+
+    x.clear()
+    x = []
+    for batch_data in train_batch_data_list:
+        x.extend(batch_data["X"])
+    for batch_data in test_batch_data_list:
         x.extend(batch_data["X"])
     source_vocab = build_vocab(x)
 
     # load pretrained embeddings. Note that we use source vocabulary here to reduce the input size
     embedding_weights = None
-    if args.embedding_name is not None:
+    if args.embedding_name:
         if args.embedding_name == "word2vec":
             print("load word embedding %s" % args.embedding_name)
-            source_vocab, embedding_weights = load_embedding(os.path.abspath(args.embedding_file), True, source_vocab)
+            source_vocab, embedding_weights = load_word2vec_embedding(os.path.abspath(args.embedding_file), source_vocab)
         elif args.embedding_name == "glove":
             print("load word embedding %s" % args.embedding_name)
-            source_vocab, embedding_weights = load_embedding(os.path.abspath(args.embedding_file), False, source_vocab)
+            source_vocab, embedding_weights = load_glove_embedding(os.path.abspath(args.embedding_file), source_vocab,
+                                                                   args.embedding_length)
         else:
             raise Exception("No such embedding")
         embedding_weights = torch.tensor(embedding_weights, dtype=torch.float)
@@ -143,6 +189,7 @@ def preprocess_data(args, dataset):
         for batch_data in train_batch_data_list:
             lengths.extend([len(single_x) for single_x in batch_data["X"]])
         args.max_seq_len = max(lengths)
+
     new_train_batch_data_list = list()
     new_test_batch_data_list = list()
     num_train_examples = 0
@@ -150,15 +197,19 @@ def preprocess_data(args, dataset):
 
     # padding data and transforming token as well as label to index
     for i, batch_data in enumerate(train_batch_data_list):
+        padding_x, seq_lens = padding_data(batch_data["X"], args.max_seq_len)
         new_train_batch_data_list.append(
-            {"X": token_to_idx(padding_data(batch_data["X"], args.max_seq_len), source_vocab),
-             "Y": label_to_idx(batch_data["Y"], target_vocab)})
+            {"X": token_to_idx(padding_x, source_vocab),
+             "Y": label_to_idx(batch_data["Y"], target_vocab),
+             "seq_lens": seq_lens})
         num_train_examples += len(batch_data["X"])
 
     for batch_data in test_batch_data_list:
+        padding_x, seq_lens = padding_data(batch_data["X"], args.max_seq_len)
         new_test_batch_data_list.append(
-            {"X": token_to_idx(padding_data(batch_data["X"], args.max_seq_len), source_vocab),
-             "Y": label_to_idx(batch_data["Y"], target_vocab)})
+            {"X": token_to_idx(padding_x, source_vocab),
+             "Y": label_to_idx(batch_data["Y"], target_vocab),
+             "seq_lens": seq_lens})
         num_test_examples += len(batch_data["X"])
 
     print("number of train examples: %s, number of test examples: %s, size of source vocab: %s, "
@@ -214,11 +265,13 @@ def train_model(model, train_data, loss_func, optimizer, epoch, args):
     for batch_data in train_data:
         x = torch.tensor(batch_data["X"])
         y = torch.tensor(batch_data["Y"])
+        seq_lens = torch.tensor(batch_data["seq_lens"])
         if args.device is not None:
             x = x.to(device=args.device)
             y = y.to(device=args.device)
+            seq_lens = seq_lens.to(device=args.device)
         optimizer.zero_grad()
-        prediction = model(x, x.size()[0], args.device)
+        prediction = model(x, x.size()[0], seq_lens, args.device)
         loss = loss_func(prediction, y)
         num_corrects = torch.sum(torch.argmax(prediction, 1) == y)
         acc = 100.0 * num_corrects / x.size()[0]
@@ -242,10 +295,12 @@ def eval_model(model, test_data, loss_func, args):
     for batch_data in test_data:
         x = torch.tensor(batch_data["X"])
         y = torch.tensor(batch_data["Y"])
+        seq_lens = torch.tensor(batch_data["seq_lens"])
         if args.device is not None:
             x = x.to(device=args.device)
             y = y.to(device=args.device)
-        prediction = model(x, x.size()[0], args.device)
+            seq_lens = seq_lens.to(device=args.device)
+        prediction = model(x, x.size()[0], seq_lens, args.device)
         loss = loss_func(prediction, y)
         num_corrects = torch.sum(torch.argmax(prediction, 1) == y)
         acc = 100.0 * num_corrects / x.size()[0]
@@ -262,10 +317,10 @@ if __name__ == "__main__":
     args = add_args(parser)
     print(args)
 
-    if args.embedding_name is None:
-        embedding_name = "random"
-    else:
+    if args.embedding_name:
         embedding_name = args.embedding_name
+    else:
+        embedding_name = "random"
     # initialize the wandb machine learning experimental tracking platform (https://wandb.ai/automl/fednlp).
     wandb.init(
         # project="federated_nas",
@@ -292,7 +347,7 @@ if __name__ == "__main__":
     model = create_model(args, model_name=args.model, input_size=len(dataset[2]), output_size=len(dataset[3]),
                          embedding_weights=dataset[4])
 
-    if args.device is None:
+    if not args.device:
         if torch.cuda.is_available():
             args.device = 'cuda'
 

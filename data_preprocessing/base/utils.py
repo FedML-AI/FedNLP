@@ -4,13 +4,15 @@ from spacy.lang.ru import Russian
 from spacy.lang.en import English
 from spacy.lang.zh import Chinese
 from spacy.lang.de import German
+import spacy
 
-from ..base.globals import *
+from data_preprocessing.base.globals import *
 
 import gensim
 import numpy as np
 
 FLOAT_SIZE = 4
+
 
 class SpacyTokenizer:
     def __init__(self):
@@ -82,17 +84,31 @@ def build_vocab(x):
     return vocab
 
 
+def build_freq_vocab(x):
+    freq_vocab = dict()
+    for single_x in x:
+        for token in single_x:
+            if token not in freq_vocab:
+                freq_vocab[token] = 1
+            else:
+                freq_vocab[token] += 1
+    return freq_vocab
+
+
 def padding_data(x, max_sequence_length):
     padding_x = []
+    seq_lens = []
     for single_x in x:
         new_single_x = single_x.copy()
         if len(new_single_x) <= max_sequence_length:
+            seq_lens.append(len(new_single_x))
             for _ in range(len(new_single_x), max_sequence_length):
                 new_single_x.append(PAD_TOKEN)
         else:
+            seq_lens.append(max_sequence_length)
             new_single_x = new_single_x[:max_sequence_length]
         padding_x.append(new_single_x)
-    return padding_x
+    return padding_x, seq_lens
 
 
 def token_to_idx(x, vocab):
@@ -115,9 +131,20 @@ def label_to_idx(y, vocab):
     return idx_y
 
 
-def load_embedding(path, binary, source_vocab):
+def remove_words(x, removed_words):
+    remove_x = []
+    for single_x in x:
+        new_single_x = []
+        for token in single_x:
+            if token not in removed_words:
+                new_single_x.append(token)
+        remove_x.append(new_single_x)
+    return remove_x
+
+
+def load_word2vec_embedding(path, source_vocab):
     vocab = dict()
-    model = gensim.models.KeyedVectors.load_word2vec_format(path, binary=binary)
+    model = gensim.models.KeyedVectors.load_word2vec_format(path, binary=True)
     weights = []
     for key, value in model.vocab.items():
         if key in source_vocab:
@@ -127,6 +154,25 @@ def load_embedding(path, binary, source_vocab):
     vocab[UNK_TOKEN] = len(vocab)
     weights.append(np.zeros(model.vector_size))
     weights.append(np.zeros(model.vector_size))
+    weights = np.array(weights)
+    return vocab, weights
+
+
+def load_glove_embedding(path, source_vocab, dimension):
+    vocab = dict()
+    weights = []
+    with open(path, "r") as f:
+        for line in f:
+            line = line.strip()
+            temp = line.split(" ")
+            word = " ".join(temp[:-300])
+            if word in source_vocab:
+                vocab[word] = len(vocab)
+                weights.append(np.array([float(num) for num in temp[-300:]]))
+    vocab[PAD_TOKEN] = len(vocab)
+    vocab[UNK_TOKEN] = len(vocab)
+    weights.append(np.zeros(dimension))
+    weights.append(np.zeros(dimension))
     weights = np.array(weights)
     return vocab, weights
 

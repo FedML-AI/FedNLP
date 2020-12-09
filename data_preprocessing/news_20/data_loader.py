@@ -11,7 +11,7 @@ _QUOTE_RE = re.compile(r'(writes in|writes:|wrote:|says:|said:'
 class RawDataLoader(BaseRawDataLoader):
     def __init__(self, data_path):
         super().__init__(data_path)
-        self.task_type = "bilstm_exps"
+        self.task_type = "text_classification"
         self.train_path = "20news-bydate-train"
         self.test_path = "20news-bydate-test"
         self.target_vocab = None
@@ -73,9 +73,10 @@ class RawDataLoader(BaseRawDataLoader):
         X = []
         with open(file_path, "r", errors='ignore') as f:
             content = f.read()
-            content = self.remove_headers(content)
-            content = self.remove_footers(content)
-            content = self.remove_quotes(content)
+            content = content.replace("\n", " ")
+            # content = self.remove_headers(content)
+            # content = self.remove_footers(content)
+            # content = self.remove_quotes(content)
 
             X.append(content)
         return X
@@ -88,15 +89,37 @@ class ClientDataLoader(BaseClientDataLoader):
         attribute_fields = ["target_vocab"]
         super().__init__(data_path, partition_path, client_idx, partition_method, tokenize, data_fields,
                          attribute_fields)
+        self.clean_data()
         if self.tokenize:
             self.tokenize_data()
 
     def tokenize_data(self):
-        tokenizer = self.spacy_tokenizer.en_tokenizer
-
         def __tokenize_data(data):
             for i in range(len(data["X"])):
-                data["X"][i] = [token.text.strip().lower() for token in tokenizer(data["X"][i].strip()) if token.text.strip()]
+                data["X"][i] = data["X"][i].split(" ")
 
         __tokenize_data(self.train_data)
         __tokenize_data(self.test_data)
+
+    def clean_data(self):
+        def __clean_data(data):
+            for i in range(len(data["X"])):
+                data["X"][i] = self.clean_str(data["X"][i])
+        __clean_data(self.train_data)
+        __clean_data(self.test_data)
+
+    def clean_str(self, string):
+        string = re.sub(r"[^A-Za-z0-9(),!?\'\`]", " ", string)
+        string = re.sub(r"\'s", " \'s", string)
+        string = re.sub(r"\'ve", " \'ve", string)
+        string = re.sub(r"n\'t", " n\'t", string)
+        string = re.sub(r"\'re", " \'re", string)
+        string = re.sub(r"\'d", " \'d", string)
+        string = re.sub(r"\'ll", " \'ll", string)
+        string = re.sub(r",", " , ", string)
+        string = re.sub(r"!", " ! ", string)
+        string = re.sub(r"\(", " \( ", string)
+        string = re.sub(r"\)", " \) ", string)
+        string = re.sub(r"\?", " \? ", string)
+        string = re.sub(r"\s{2,}", " ", string)
+        return string.strip().lower()
