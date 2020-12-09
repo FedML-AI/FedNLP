@@ -144,12 +144,10 @@ class ClientDataLoader(BaseClientDataLoader):
             self.tokenize_data()
 
     def tokenize_data(self):
-        tokenizer = self.spacy_tokenizer.en_tokenizer
 
         def __tokenize_data(data):
             for i in range(len(data["X"])):
-                data["X"][i] = [token.text.strip() for token in tokenizer(data["X"][i].lower().strip())
-                                if token.text.strip()]
+                data["X"][i] = data["X"][i].split(" ")
 
         __tokenize_data(self.train_data)
         __tokenize_data(self.test_data)
