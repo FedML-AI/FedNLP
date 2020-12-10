@@ -36,8 +36,8 @@ mpirun -np $PROCESS_NUM -hostfile ./mpi_host_file python3 experiments/distribute
   --gpu_num_per_server $GPU_NUM_PER_SERVER \
   --model $MODEL \
   --dataset $DATASET \
-  --data_file DATA_FILE \
-  --partition_file PARTITION_FILE \
+  --data_file $DATA_FILE \
+  --partition_file $PARTITION_FILE \
   --partition_method $DISTRIBUTION  \
   --client_num_in_total $CLIENT_NUM \
   --client_num_per_round $WORKER_NUM \
