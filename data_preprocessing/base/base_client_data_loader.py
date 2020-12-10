@@ -84,3 +84,4 @@ class BaseClientDataLoader(ABC):
         self.attributes = dict()
         for field in self.attribute_fields:
             self.attributes[field] = data_dict[field]
+        self.attributes["n_clients"] = partition_dict[self.partition_method]["n_clients"]
