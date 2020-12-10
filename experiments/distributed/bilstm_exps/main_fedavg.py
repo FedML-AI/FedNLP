@@ -12,7 +12,7 @@ import torch.nn
 import wandb
 from spacy.lang.en import STOP_WORDS
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "../../../")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "")))
 
 from FedML.fedml_api.distributed.fedavg.FedAvgAPI import FedML_init, FedML_FedAvg_distributed
 
