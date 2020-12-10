@@ -145,7 +145,7 @@ def load_data(args, dataset_name):
             client_train_data_list.append(client_data_loader.get_train_batch_data(args.batch_size))
     else:
         raise Exception("No such dataset")
-    return client_train_data_list, server_data_loader.get_train_batch_data(args.batch_size), \
+    return client_train_data_list, server_data_loader.get_test_batch_data(args.batch_size), \
            server_data_loader.get_attributes()
 
 
@@ -279,7 +279,7 @@ def FedNLP_text_classification_centralized(client_index, model, train_data, test
         eval_loss, eval_acc = eval_model(model, test_data, loss_func, args)
         max_eval_acc = max(max_eval_acc, eval_acc)
         print("Client index: %d, Epoch: %d, Train loss: %.4f, Train Accuracy: %.2f, Eval loss: %.4f, "
-              "Eval Accuracy: %.2f" % (args.client_index, epoch + 1, train_loss, train_acc, eval_loss, eval_acc))
+              "Eval Accuracy: %.2f" % (client_index, epoch + 1, train_loss, train_acc, eval_loss, eval_acc))
         wandb.log({"Epoch-Client %d" % client_index: epoch + 1, "Avg Training loss-Client %d" % client_index: train_loss,
                    "Avg Training Accuracy-Client %d" % client_index: train_acc,
                    "Avg Eval loss-Client %d" % client_index: eval_loss,
@@ -312,7 +312,7 @@ def train_model(client_index, model, train_data, loss_func, optimizer, epoch, ar
             wandb.log({"Training loss-Client %d" % client_index: loss.item(),
                        "Training Accuracy-Client %d:" % client_index: acc.item()})
             print("Client index: %d, Epoch: %d, Training loss: %.4f, Training Accuracy: %.2f" %
-                  (args.client_index, epoch + 1, loss.item(), acc.item()))
+                  (client_index, epoch + 1, loss.item(), acc.item()))
 
         total_epoch_acc += acc.item()
         total_epoch_loss += loss.item()
