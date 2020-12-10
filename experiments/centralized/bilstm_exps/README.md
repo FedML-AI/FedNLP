@@ -155,7 +155,7 @@ python -m experiments.centralized.bilstm_exps.main_text_classification_lower_bou
   --embedding_length 300 \
   --lr 0.001 \
   --wd 0.0001 \
-  --epochs 30 \
+  --epochs 50 \
   --embedding_name glove \
   --embedding_file data/pretrained/glove.6B.300d.txt \
   --device cuda:0 \
@@ -181,7 +181,7 @@ python -m experiments.centralized.bilstm_exps.main_text_classification_lower_bou
   --embedding_length 300 \
   --lr 0.001 \
   --wd 0.0001 \
-  --epochs 10 \
+  --epochs 20 \
   --embedding_name glove \
   --embedding_file data/pretrained/glove.6B.300d.txt \
   --device cuda:0 \
@@ -207,7 +207,7 @@ python -m experiments.centralized.bilstm_exps.main_text_classification_lower_bou
   --embedding_length 300 \
   --lr 0.001 \
   --wd 0.0001 \
-  --epochs 30 \
+  --epochs 50 \
   --embedding_name glove \
   --embedding_file data/pretrained/glove.840B.300d.txt \
   --device cuda:1 \
@@ -233,10 +233,10 @@ python -m experiments.centralized.bilstm_exps.main_text_classification_lower_bou
   --embedding_length 300 \
   --lr 0.001 \
   --wd 0.0001 \
-  --epochs 10 \
+  --epochs 15 \
   --embedding_name glove \
   --embedding_file data/pretrained/glove.840B.300d.txt \
-  --device cuda:0 \
+  --device cuda:1 \
   --do_remove_stop_words False \
   --do_remove_low_freq_words 5
 ```
@@ -259,22 +259,22 @@ python -m experiments.centralized.bilstm_exps.main_text_classification_lower_bou
   --embedding_length 300 \
   --lr 0.001 \
   --wd 0.0005 \
-  --epochs 30 \
+  --epochs 50 \
   --embedding_name glove \
   --embedding_file data/pretrained/glove.840B.300d.txt \
-  --device cuda:0 \
+  --device cuda:2 \
   --do_remove_stop_words False \
   --do_remove_low_freq_words 0
 ```
 
 ## Experiment Results
-| Dataset | Model | Embedding | Metrics | Metrics Value |
-| ------- | ------ | ------- | ------- | ------- |
-| 20news | BiLSTM | glove | Accuracy| 78%/[73.18](https://arxiv.org/pdf/1809.05679v3.pdf) |
-| agnews | BiLSTM | glove | Accuracy| 91.5%/[91.7](https://arxiv.org/pdf/1808.09644v1.pdf) |
-| semeval_2010_task8 | BiLSTM | glove | Accuracy,F1 | 74%,79%/[82.7](https://www.aclweb.org/anthology/Y15-1009.pdf) |
-| sentiment140 | BiLSTM | glove | Accuracy| 84% |
-| sst_2 | BiLSTM | glove | Accuracy | 81%/[87.5](https://arxiv.org/pdf/1503.00075.pdf) |
+| Dataset | Model | Embedding | Metrics | Metrics Value | Metrics Value(Lower Bound)
+| ------- | ------ | ------- | ------- | ------- | ------- |
+| 20news | BiLSTM | glove | Accuracy| 78%/[73.18](https://arxiv.org/pdf/1809.05679v3.pdf) | 41% |
+| agnews | BiLSTM | glove | Accuracy| 91.5%/[91.7](https://arxiv.org/pdf/1808.09644v1.pdf) | 88% |
+| semeval_2010_task8 | BiLSTM | glove | Accuracy,F1 | 74%,79%/[82.7](https://www.aclweb.org/anthology/Y15-1009.pdf) | 45%,- |
+| sentiment140 | BiLSTM | glove | Accuracy| 84% | 81% |
+| sst_2 | BiLSTM | glove | Accuracy | 81%/[87.5](https://arxiv.org/pdf/1503.00075.pdf) | 74% |
 
 ## Experiment Parameters
 | dataset | hidden_size | num_layers | dropout | embedding_dropout | batch_size | max_seq_len | embedding_length | optimizer | lr | wd | epochs |
