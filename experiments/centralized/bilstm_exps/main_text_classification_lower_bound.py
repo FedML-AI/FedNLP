@@ -388,4 +388,6 @@ if __name__ == "__main__":
 
         eval_acc = FedNLP_text_classification_centralized(idx, model, dataset[0], dataset[1], args)
         eval_accuracy_list.append(eval_acc)
-    print("%s lower bound test mean eval accuracy: %.2f" % (args.dataset, mean(eval_accuracy_list)))
+    mean_accuracy = mean(eval_accuracy_list)
+    print("%s lower bound test mean eval accuracy: %.2f" % (args.dataset, mean_accuracy))
+    wandb.log({"Mean eval accuracy": mean_accuracy})
