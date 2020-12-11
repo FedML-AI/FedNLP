@@ -35,9 +35,9 @@ class TextClassificationBiLSTMTrainer(ModelTrainer):
                 y = torch.tensor(batch_data["Y"])
                 seq_lens = torch.tensor(batch_data["seq_lens"])
                 if device is not None:
-                    x = x.to(device=args.device)
-                    y = y.to(device=args.device)
-                    seq_lens = seq_lens.to(device=args.device)
+                    x = x.to(device=device)
+                    y = y.to(device=device)
+                    seq_lens = seq_lens.to(device=device)
                 optimizer.zero_grad()
                 prediction = model(x, x.size()[0], seq_lens, device)
                 loss = criterion(prediction, y)
@@ -48,12 +48,12 @@ class TextClassificationBiLSTMTrainer(ModelTrainer):
 
                 batch_loss.append(loss.item())
                 batch_acc.append(acc.item())
-            if len(batch_loss) > 0:
-                epoch_loss.append(sum(batch_loss) / len(batch_loss))
-                epoch_acc.append(sum(batch_acc)/ len(batch_acc))
-                logging.info('(Trainer_ID {}. Local Training Epoch: {} '
-                             '\tLoss: {:.6f}\tAccuracy: {:.4f}'.format(self.id, epoch, sum(epoch_loss) / len(epoch_loss),
-                                                                       sum(epoch_acc) / len(epoch_acc)))
+                if len(batch_loss) > 0:
+                    epoch_loss.append(sum(batch_loss) / len(batch_loss))
+                    epoch_acc.append(sum(batch_acc) / len(batch_acc))
+                    logging.info('(Trainer_ID {}. Local Training Epoch: {} '
+                                 '\tLoss: {:.6f}\tAccuracy: {:.4f}'.format(self.id, epoch, sum(epoch_loss) / len(epoch_loss),
+                                                                           sum(epoch_acc) / len(epoch_acc)))
 
     def test(self, test_data, device, args):
         model = self.model
@@ -69,16 +69,15 @@ class TextClassificationBiLSTMTrainer(ModelTrainer):
                 y = torch.tensor(batch_data["Y"])
                 seq_lens = torch.tensor(batch_data["seq_lens"])
                 if device is not None:
-                    x = x.to(device=args.device)
-                    y = y.to(device=args.device)
-                    seq_lens = seq_lens.to(device=args.device)
+                    x = x.to(device=device)
+                    y = y.to(device=device)
+                    seq_lens = seq_lens.to(device=device)
 
                 prediction = model(x, x.size()[0], seq_lens, device)
                 loss = criterion(prediction, y)
                 num_corrects = torch.sum(torch.argmax(prediction, 1).eq(y))
-                acc = 100.0 * num_corrects / x.size()[0]
 
-                test_acc += acc.item()
+                test_acc += num_corrects.item()
                 test_loss += loss.item() * y.size(0)
                 test_total += y.size(0)
 

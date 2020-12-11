@@ -104,7 +104,7 @@ def add_args(parser):
     parser.add_argument('--gpu_server_num', type=int, default=1,
                         help='gpu_server_num')
 
-    parser.add_argument('--gpu_num_per_server', type=int, default=4,
+    parser.add_argument('--gpu_num_per_server', type=int, default=1,
                         help='gpu_num_per_server')
 
     parser.add_argument('--ci', type=int, default=0,

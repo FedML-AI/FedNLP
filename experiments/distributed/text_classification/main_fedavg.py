@@ -64,7 +64,7 @@ def add_args(parser):
                         help='how many epochs will be trained locally')
 
     parser.add_argument('--comm_round', type=int, default=10,
-                        help='how many round of communications we shoud use')
+                        help='how many round of communications we should use')
 
     parser.add_argument('--is_mobile', type=int, default=0,
                         help='whether the program is running on the FedML-Mobile server side')
