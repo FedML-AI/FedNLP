@@ -12,7 +12,7 @@ declare -a datasets=("20news" "agnews" "semeval_2010_task8" "sentiment140" "sst_
 for DATA_NAME in "${datasets[@]}"
 do
   CUDA_VISIBLE_DEVICES=1 \
-  python -m experiments.centralized.fed_transformer_exps.text_classification \
+  python -m experiments.centralized.transformer_exps.text_classification \
       --dataset_name ${DATA_NAME} \
       --data_file data/data_loaders/${DATA_NAME}_data_loader.pkl \
       --partition_file data/partition/${DATA_NAME}_partition.pkl \

@@ -58,7 +58,7 @@ Run Text Classification model with `distilbert`:
 
 ```bash 
 CUDA_VISIBLE_DEVICES=0 \
-python -m experiments.centralized.fed_transformer_exps.text_classification \
+python -m experiments.centralized.transformer_exps.text_classification \
     --dataset_name 20news \
     --data_file data/data_loaders/20news_data_loader.pkl \
     --partition_file data/partition/20news_partition.pkl \
