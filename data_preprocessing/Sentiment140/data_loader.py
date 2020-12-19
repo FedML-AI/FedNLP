@@ -1,6 +1,7 @@
 import csv
 import os
 import re
+import string
 
 from data_preprocessing.base.base_client_data_loader import BaseClientDataLoader
 from data_preprocessing.base.base_raw_data_loader import BaseRawDataLoader
@@ -74,10 +75,24 @@ class ClientDataLoader(BaseClientDataLoader):
         __clean_data(self.train_data)
         __clean_data(self.test_data)
 
+    # def clean_str(self, sentence):
+    #     sentence = re.sub(
+    #         r'''(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'".,<>?«»“”‘’]))''',
+    #         " ", sentence)
+    #     # Eliminating the token if it is a mention
+    #     sentence = re.sub("(@[A-Za-z0-9_]+)", "", sentence)
+    #     return sentence.lower()
     def clean_str(self, sentence):
-        sentence = re.sub(
-            r'''(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'".,<>?«»“”‘’]))''',
-            " ", sentence)
-        # Eliminating the token if it is a mention
-        sentence = re.sub("(@[A-Za-z0-9_]+)", "", sentence)
-        return sentence.lower()
+        sentence = re.sub(r'\&\w*;', '', sentence)
+        sentence = re.sub('@[^\s]+','',sentence)
+        sentence = re.sub(r'\$\w*', '', sentence)
+        sentence = sentence.lower()
+        sentence = re.sub(r'https?:\/\/.*\/\w*', '', sentence)
+        sentence = re.sub(r'#\w*', '', sentence)
+        sentence = re.sub(r'[' + string.punctuation.replace('@', '') + ']+', ' ', sentence)
+        sentence = re.sub(r'\b\w{1,2}\b', '', sentence)
+        sentence = re.sub(r'\s\s+', ' ', sentence)
+        sentence = [char for char in list(sentence) if char not in string.punctuation]
+        sentence = ''.join(sentence)
+        sentence = sentence.lstrip(' ') 
+        return sentence

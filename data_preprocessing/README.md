@@ -47,7 +47,7 @@ sh run_fednlp_dataloader.sh sentiment_140 ../../data/text_classification/Sentime
 sh run_fednlp_dataloader.sh squad_1.1 ../../data/span_extraction/SQuAD_1.1 uniform 32 100
 
 ## SST-2
-sh run_fednlp_dataloader.sh sst_2 ../../data/text_classification/SST-2/stanfordSentimentTreebank uniform 32 100
+sh run_fednlp_dataloader.sh sst_2 ../../data/text_classification/SST-2/trees uniform 32 100
 
 ## W_NUT
 sh run_fednlp_dataloader.sh w_nut ../../data/sequence_tagging/W-NUT2017/data uniform 32 100

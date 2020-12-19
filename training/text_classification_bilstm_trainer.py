@@ -51,9 +51,9 @@ class TextClassificationBiLSTMTrainer(ModelTrainer):
                 if len(batch_loss) > 0:
                     epoch_loss.append(sum(batch_loss) / len(batch_loss))
                     epoch_acc.append(sum(batch_acc) / len(batch_acc))
-                    logging.info('(Trainer_ID {}. Local Training Epoch: {} '
-                                 '\tLoss: {:.6f}\tAccuracy: {:.4f}'.format(self.id, epoch, sum(epoch_loss) / len(epoch_loss),
-                                                                           sum(epoch_acc) / len(epoch_acc)))
+            logging.info('(Trainer_ID {}. Local Training Epoch: {} '
+                            '\tLoss: {:.6f}\tAccuracy: {:.4f}'.format(self.id, epoch, sum(epoch_loss) / len(epoch_loss),
+                                                                    sum(epoch_acc) / len(epoch_acc)))
 
     def test(self, test_data, device, args):
         model = self.model

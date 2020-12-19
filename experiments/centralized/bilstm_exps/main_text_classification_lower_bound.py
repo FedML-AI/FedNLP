@@ -1,13 +1,14 @@
 import argparse
 import os
 import random
+import logging
 
 import torch
 import torch.nn.functional as F
 import wandb
 from torch.optim import *
 from spacy.lang.en import STOP_WORDS
-from statistics import mean
+from statistics import *
 
 import data_preprocessing.AGNews.data_loader
 import data_preprocessing.SST_2.data_loader
@@ -94,7 +95,7 @@ def add_args(parser):
 def load_data(args, dataset_name):
     client_train_data_list = []
     if dataset_name == "20news":
-        print("load_data. dataset_name = %s" % dataset_name)
+        logging.info("load_data. dataset_name = %s" % dataset_name)
         server_data_loader = data_preprocessing.news_20.data_loader. \
             ClientDataLoader(os.path.abspath(args.data_file), os.path.abspath(args.partition_file),
                              partition_method=args.partition_method, tokenize=True)
@@ -104,7 +105,7 @@ def load_data(args, dataset_name):
                                  partition_method=args.partition_method, tokenize=True, client_idx=client_index)
             client_train_data_list.append(client_data_loader.get_train_batch_data(args.batch_size))
     elif dataset_name == "agnews":
-        print("load_data. dataset_name = %s" % dataset_name)
+        logging.info("load_data. dataset_name = %s" % dataset_name)
         server_data_loader = data_preprocessing.AGNews.data_loader. \
             ClientDataLoader(os.path.abspath(args.data_file), os.path.abspath(args.partition_file),
                              partition_method=args.partition_method, tokenize=True)
@@ -114,7 +115,7 @@ def load_data(args, dataset_name):
                                  partition_method=args.partition_method, tokenize=True, client_idx=client_index)
             client_train_data_list.append(client_data_loader.get_train_batch_data(args.batch_size))
     elif dataset_name == "semeval_2010_task8":
-        print("load_data. dataset_name = %s" % dataset_name)
+        logging.info("load_data. dataset_name = %s" % dataset_name)
         server_data_loader = data_preprocessing.SemEval2010Task8.data_loader. \
             ClientDataLoader(os.path.abspath(args.data_file), os.path.abspath(args.partition_file),
                              partition_method=args.partition_method, tokenize=True)
@@ -124,7 +125,7 @@ def load_data(args, dataset_name):
                                  partition_method=args.partition_method, tokenize=True, client_idx=client_index)
             client_train_data_list.append(client_data_loader.get_train_batch_data(args.batch_size))
     elif dataset_name == "sentiment140":
-        print("load_data. dataset_name = %s" % dataset_name)
+        logging.info("load_data. dataset_name = %s" % dataset_name)
         server_data_loader = data_preprocessing.Sentiment140.data_loader. \
             ClientDataLoader(os.path.abspath(args.data_file), os.path.abspath(args.partition_file),
                              partition_method=args.partition_method, tokenize=True)
@@ -134,7 +135,7 @@ def load_data(args, dataset_name):
                                  partition_method=args.partition_method, tokenize=True, client_idx=client_index)
             client_train_data_list.append(client_data_loader.get_train_batch_data(args.batch_size))
     elif dataset_name == "sst_2":
-        print("load_data. dataset_name = %s" % dataset_name)
+        logging.info("load_data. dataset_name = %s" % dataset_name)
         server_data_loader = data_preprocessing.SST_2.data_loader. \
             ClientDataLoader(os.path.abspath(args.data_file), os.path.abspath(args.partition_file),
                              partition_method=args.partition_method, tokenize=True)
@@ -154,7 +155,7 @@ def preprocess_data(args, dataset):
     preprocessing data for further training, which includes load pretrianed embeddings, padding data and transforming
     token and label to index
     """
-    print("preproccess data")
+    logging.info("preproccess data")
     train_batch_data_list, test_batch_data_list, attributes = dataset
     target_vocab = attributes["target_vocab"]
 
@@ -166,10 +167,10 @@ def preprocess_data(args, dataset):
     for batch_data in test_batch_data_list:
         x.extend(batch_data["X"])
     freq_vocab = build_freq_vocab(x)
-    print("frequency vocab size", len(freq_vocab))
+    logging.info("frequency vocab size %d", len(freq_vocab))
 
     if args.do_remove_low_freq_words > 0:
-        print("remove low frequency words")
+        logging.info("remove low frequency words")
         # build low frequency words set
         low_freq_words = set()
         for token, freq in freq_vocab.items():
@@ -183,7 +184,7 @@ def preprocess_data(args, dataset):
             test_batch_data_list[i]["X"] = remove_words(batch_data["X"], low_freq_words)
 
     if args.do_remove_stop_words:
-        print("remove stop words")
+        logging.info("remove stop words")
         for i, batch_data in enumerate(train_batch_data_list):
             train_batch_data_list[i]["X"] = remove_words(batch_data["X"], STOP_WORDS)
 
@@ -197,16 +198,16 @@ def preprocess_data(args, dataset):
     for batch_data in test_batch_data_list:
         x.extend(batch_data["X"])
     source_vocab = build_vocab(x)
-    print("source vocab size", len(source_vocab))
+    logging.info("source vocab size %d", len(source_vocab))
 
     # load pretrained embeddings. Note that we use source vocabulary here to reduce the input size
     embedding_weights = None
     if args.embedding_name:
         if args.embedding_name == "word2vec":
-            print("load word embedding %s" % args.embedding_name)
+            logging.info("load word embedding %s" % args.embedding_name)
             source_vocab, embedding_weights = load_word2vec_embedding(os.path.abspath(args.embedding_file), source_vocab)
         elif args.embedding_name == "glove":
-            print("load word embedding %s" % args.embedding_name)
+            logging.info("load word embedding %s" % args.embedding_name)
             source_vocab, embedding_weights = load_glove_embedding(os.path.abspath(args.embedding_file), source_vocab,
                                                                    args.embedding_length)
         else:
@@ -241,13 +242,13 @@ def preprocess_data(args, dataset):
              "seq_lens": seq_lens})
         num_test_examples += len(batch_data["X"])
 
-    print("number of train examples: %s, number of test examples: %s, size of source vocab: %s, "
+    logging.info("number of train examples: %s, number of test examples: %s, size of source vocab: %s, "
           "size of target vocab: %s" % (num_train_examples, num_test_examples, len(source_vocab), len(target_vocab)))
     return new_train_batch_data_list, new_test_batch_data_list, source_vocab, target_vocab, embedding_weights
 
 
 def create_model(args, model_name, input_size, output_size, embedding_weights):
-    print("create_model. model_name = %s, input_size = %s, output_size = %s"
+    logging.info("create_model. model_name = %s, input_size = %s, output_size = %s"
           % (model_name, input_size, output_size))
     model = None
     if model_name == "bilstm_attention":
@@ -278,7 +279,7 @@ def FedNLP_text_classification_centralized(client_index, model, train_data, test
         train_loss, train_acc = train_model(client_index, model, train_data, loss_func, optimizer, epoch, args)
         eval_loss, eval_acc = eval_model(model, test_data, loss_func, args)
         max_eval_acc = max(max_eval_acc, eval_acc)
-        print("Client index: %d, Epoch: %d, Train loss: %.4f, Train Accuracy: %.2f, Eval loss: %.4f, "
+        logging.info("Client index: %d, Epoch: %d, Train loss: %.4f, Train Accuracy: %.2f, Eval loss: %.4f, "
               "Eval Accuracy: %.2f" % (client_index, epoch + 1, train_loss, train_acc, eval_loss, eval_acc))
         wandb.log({"Epoch-Client %d" % client_index: epoch + 1, "Avg Training loss-Client %d" % client_index: train_loss,
                    "Avg Training Accuracy-Client %d" % client_index: train_acc,
@@ -311,7 +312,7 @@ def train_model(client_index, model, train_data, loss_func, optimizer, epoch, ar
         if steps % 100 == 0:
             wandb.log({"Training loss-Client %d" % client_index: loss.item(),
                        "Training Accuracy-Client %d:" % client_index: acc.item()})
-            print("Client index: %d, Epoch: %d, Training loss: %.4f, Training Accuracy: %.2f" %
+            logging.info("Client index: %d, Epoch: %d, Training loss: %.4f, Training Accuracy: %.2f" %
                   (client_index, epoch + 1, loss.item(), acc.item()))
 
         total_epoch_acc += acc.item()
@@ -344,10 +345,19 @@ def eval_model(model, test_data, loss_func, args):
 
 
 if __name__ == "__main__":
+    process_id = os.getpid()
+    # customize the log format
+    logging.getLogger().setLevel(logging.INFO)
+    logging.basicConfig(level=logging.INFO,
+                        format=str(
+                            process_id) + ' - %(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
+                        datefmt='%a, %d %b %Y %H:%M:%S')
+    logging.info("start")
+
     # parse python script input parameters
     parser = argparse.ArgumentParser()
     args = add_args(parser)
-    print(args)
+    logging.info(args)
 
     if args.embedding_name:
         embedding_name = args.embedding_name
@@ -388,6 +398,33 @@ if __name__ == "__main__":
 
         eval_acc = FedNLP_text_classification_centralized(idx, model, dataset[0], dataset[1], args)
         eval_accuracy_list.append(eval_acc)
+
+    logging.info("%s lower bound test eval accuracy statistics" % args.dataset)
+    logging.info("all eval accuracy %s" % ",".join([str(acc) for acc in eval_accuracy_list]))
+
     mean_accuracy = mean(eval_accuracy_list)
-    print("%s lower bound test mean eval accuracy: %.2f" % (args.dataset, mean_accuracy))
+    logging.info("Mean eval accuracy: %.2f" % mean_accuracy)
     wandb.log({"Mean eval accuracy": mean_accuracy})
+
+    max_accuracy = max(eval_accuracy_list)
+    logging.info("Maximum eval accuracy: %.2f" % max_accuracy)
+    wandb.log({"Maximum eval accuracy": max_accuracy})
+
+    min_accuracy = min(eval_accuracy_list)
+    logging.info("Minimum eval accuracy: %.2f" % min_accuracy)
+    wandb.log({"Minimum eval accuracy": min_accuracy})
+
+    median_accuracy = median(eval_accuracy_list)
+    logging.info("Median eval accuracy: %.2f" % median_accuracy)
+    wandb.log({"Median eval accuracy": median_accuracy})
+
+    pvariance_accuracy = pvariance(eval_accuracy_list)
+    logging.info("Pvariance of eval accuracy: %.2f" % pvariance_accuracy)
+    wandb.log({"Pvariance of eval accuracy": pvariance_accuracy})
+
+    pstdev_accuracy = pstdev(eval_accuracy_list)
+    logging.info("Pstdev of eval accuracy: %.2f" % pstdev_accuracy)
+    wandb.log({"Pstdev of eval accuracy": pstdev_accuracy})
+
+    logging.info("end")
+    

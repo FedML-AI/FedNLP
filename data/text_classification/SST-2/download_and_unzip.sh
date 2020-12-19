@@ -1,6 +1,6 @@
-rm stanfordSentimentTreebank.zip
-rm -rf stanfordSentimentTreebank
-wget http://nlp.stanford.edu/~socherr/stanfordSentimentTreebank.zip
+rm trainDevTestTrees_PTB.zip
+rm -rf trees
+wget http://nlp.stanford.edu/sentiment/trainDevTestTrees_PTB.zip
 
-unzip stanfordSentimentTreebank.zip
-rm stanfordSentimentTreebank.zip
+unzip trainDevTestTrees_PTB.zip
+rm trainDevTestTrees_PTB.zip

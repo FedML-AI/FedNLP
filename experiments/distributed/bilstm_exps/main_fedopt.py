@@ -14,7 +14,7 @@ from spacy.lang.en import STOP_WORDS
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "")))
 
-from FedML.fedml_api.distributed.fedavg.FedAvgAPI import FedML_init, FedML_FedAvg_distributed
+from FedML.fedml_api.distributed.fedopt.FedOptAPI import FedML_init, FedML_FedOpt_distributed
 
 import data_preprocessing.AGNews.data_loader
 import data_preprocessing.SST_2.data_loader
@@ -84,9 +84,15 @@ def add_args(parser):
 
     parser.add_argument('--client_optimizer', type=str, default='adam',
                         help='SGD with momentum; adam')
+    
+    parser.add_argument('--server_optimizer', type=str, default='sgd',
+                        help='Optimizer used on the server. This field can be the name of any subclass of the torch Opimizer class.')
 
     parser.add_argument('--lr', type=float, default=0.001, metavar='LR',
                         help='learning rate (default: 0.001)')
+    
+    parser.add_argument('--server_lr', type=float, default=0.001,
+                        help='server learning rate (default: 0.001)')
 
     parser.add_argument('--wd', help='weight decay parameter;', type=float, default=0.001)
 
@@ -284,7 +290,7 @@ def preprocess_data(args, dataset):
                  "Y": label_to_idx(batch_data["Y"], target_vocab),
                  "seq_lens": seq_lens})
         new_test_data_local_dict[client_index] = new_test_data_local
-    
+
     train_global_data = []
     test_global_data = []
     for key in train_data_local_num_dict.keys():
@@ -339,7 +345,9 @@ if __name__ == "__main__":
                         format=str(
                             process_id) + ' - %(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
                         datefmt='%a, %d %b %Y %H:%M:%S')
+    
     logging.info("start")
+
     # parse python script input parameters
     parser = argparse.ArgumentParser()
     args = add_args(parser)
@@ -362,7 +370,7 @@ if __name__ == "__main__":
         wandb.init(
             # project="federated_nas",
             project="fednlp",
-            name="FedAVG(d)-" + str(args.partition_method) + "-r" + str(args.comm_round) + "-e" + str(
+            name="FedOpt-" + str(args.partition_method) + "-r" + str(args.comm_round) + "-e" + str(
                 args.epochs) + "-lr" + str(
                 args.lr) + "-" + str(args.dataset),
             config=args
@@ -405,9 +413,8 @@ if __name__ == "__main__":
 
     # start FedAvg algorithm
     # for distributed algorithm, train_data_gloabl and test_data_global are required
-    FedML_FedAvg_distributed(process_id, worker_number, device, comm,
+    FedML_FedOpt_distributed(process_id, worker_number, device, comm,
                             model, train_data_num, train_data_global, test_data_global,
                             train_data_local_num_dict, train_data_local_dict, test_data_local_dict, args,
                             model_trainer)
-     
     logging.info("end")

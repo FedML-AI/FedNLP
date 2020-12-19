@@ -1,6 +1,7 @@
 import argparse
 import os
 import random
+import logging
 
 import torch
 import torch.nn.functional as F
@@ -93,27 +94,27 @@ def add_args(parser):
 def load_data(args, dataset_name):
     data_loader = None
     if dataset_name == "20news":
-        print("load_data. dataset_name = %s" % dataset_name)
+        logging.info("load_data. dataset_name = %s" % dataset_name)
         data_loader = data_preprocessing.news_20.data_loader. \
             ClientDataLoader(os.path.abspath(args.data_file), os.path.abspath(args.partition_file),
                              partition_method=args.partition_method, tokenize=True)
     elif dataset_name == "agnews":
-        print("load_data. dataset_name = %s" % dataset_name)
+        logging.info("load_data. dataset_name = %s" % dataset_name)
         data_loader = data_preprocessing.AGNews.data_loader. \
             ClientDataLoader(os.path.abspath(args.data_file), os.path.abspath(args.partition_file),
                              partition_method=args.partition_method, tokenize=True)
     elif dataset_name == "semeval_2010_task8":
-        print("load_data. dataset_name = %s" % dataset_name)
+        logging.info("load_data. dataset_name = %s" % dataset_name)
         data_loader = data_preprocessing.SemEval2010Task8.data_loader. \
             ClientDataLoader(os.path.abspath(args.data_file), os.path.abspath(args.partition_file),
                              partition_method=args.partition_method, tokenize=True)
     elif dataset_name == "sentiment140":
-        print("load_data. dataset_name = %s" % dataset_name)
+        logging.info("load_data. dataset_name = %s" % dataset_name)
         data_loader = data_preprocessing.Sentiment140.data_loader. \
             ClientDataLoader(os.path.abspath(args.data_file), os.path.abspath(args.partition_file),
                              partition_method=args.partition_method, tokenize=True)
     elif dataset_name == "sst_2":
-        print("load_data. dataset_name = %s" % dataset_name)
+        logging.info("load_data. dataset_name = %s" % dataset_name)
         data_loader = data_preprocessing.SST_2.data_loader. \
             ClientDataLoader(os.path.abspath(args.data_file), os.path.abspath(args.partition_file),
                              partition_method=args.partition_method, tokenize=True)
@@ -129,7 +130,7 @@ def preprocess_data(args, dataset):
     preprocessing data for further training, which includes load pretrianed embeddings, padding data and transforming
     token and label to index
     """
-    print("preproccess data")
+    logging.info("preproccess data")
     train_batch_data_list, test_batch_data_list, attributes = dataset
     target_vocab = attributes["target_vocab"]
 
@@ -141,10 +142,10 @@ def preprocess_data(args, dataset):
     for batch_data in test_batch_data_list:
         x.extend(batch_data["X"])
     freq_vocab = build_freq_vocab(x)
-    print("frequency vocab size", len(freq_vocab))
+    logging.info("frequency vocab size %d", len(freq_vocab))
 
     if args.do_remove_low_freq_words > 0:
-        print("remove low frequency words")
+        logging.info("remove low frequency words")
         # build low frequency words set
         low_freq_words = set()
         for token, freq in freq_vocab.items():
@@ -158,7 +159,7 @@ def preprocess_data(args, dataset):
             test_batch_data_list[i]["X"] = remove_words(batch_data["X"], low_freq_words)
 
     if args.do_remove_stop_words:
-        print("remove stop words")
+        logging.info("remove stop words")
         for i, batch_data in enumerate(train_batch_data_list):
             train_batch_data_list[i]["X"] = remove_words(batch_data["X"], STOP_WORDS)
 
@@ -172,16 +173,16 @@ def preprocess_data(args, dataset):
     for batch_data in test_batch_data_list:
         x.extend(batch_data["X"])
     source_vocab = build_vocab(x)
-    print("source vocab size", len(source_vocab))
+    logging.info("source vocab size %d", len(source_vocab))
 
     # load pretrained embeddings. Note that we use source vocabulary here to reduce the input size
     embedding_weights = None
     if args.embedding_name:
         if args.embedding_name == "word2vec":
-            print("load word embedding %s" % args.embedding_name)
+            logging.info("load word embedding %s" % args.embedding_name)
             source_vocab, embedding_weights = load_word2vec_embedding(os.path.abspath(args.embedding_file), source_vocab)
         elif args.embedding_name == "glove":
-            print("load word embedding %s" % args.embedding_name)
+            logging.info("load word embedding %s" % args.embedding_name)
             source_vocab, embedding_weights = load_glove_embedding(os.path.abspath(args.embedding_file), source_vocab,
                                                                    args.embedding_length)
         else:
@@ -216,13 +217,13 @@ def preprocess_data(args, dataset):
              "seq_lens": seq_lens})
         num_test_examples += len(batch_data["X"])
 
-    print("number of train examples: %s, number of test examples: %s, size of source vocab: %s, "
+    logging.info("number of train examples: %s, number of test examples: %s, size of source vocab: %s, "
           "size of target vocab: %s" % (num_train_examples, num_test_examples, len(source_vocab), len(target_vocab)))
     return new_train_batch_data_list, new_test_batch_data_list, source_vocab, target_vocab, embedding_weights
 
 
 def create_model(args, model_name, input_size, output_size, embedding_weights):
-    print("create_model. model_name = %s, input_size = %s, output_size = %s"
+    logging.info("create_model. model_name = %s, input_size = %s, output_size = %s"
           % (model_name, input_size, output_size))
     model = None
     if model_name == "bilstm_attention":
@@ -253,14 +254,14 @@ def FedNLP_text_classification_centralized(model, train_data, test_data, args):
         train_loss, train_acc = train_model(model, train_data, loss_func, optimizer, epoch, args)
         eval_loss, eval_acc = eval_model(model, test_data, loss_func, args)
         max_eval_acc = max(max_eval_acc, eval_acc)
-        print("Epoch: %d, Train loss: %.4f, Train Accuracy: %.2f, Eval loss: %.4f, Eval Accuracy: %.2f" % (epoch + 1,
+        logging.info("Epoch: %d, Train loss: %.4f, Train Accuracy: %.2f, Eval loss: %.4f, Eval Accuracy: %.2f" % (epoch + 1,
                                                                                                            train_loss,
                                                                                                            train_acc,
                                                                                                            eval_loss,
                                                                                                            eval_acc))
         wandb.log({"Epoch": epoch + 1, "Avg Training loss": train_loss, "Avg Training Accuracy:": train_acc,
                    "Avg Eval loss": eval_loss, "Avg Eval Accuracy": eval_acc})
-    print("Maximum Eval Accuracy: %.2f" % max_eval_acc)
+    logging.info("Maximum Eval Accuracy: %.2f" % max_eval_acc)
 
 
 def train_model(model, train_data, loss_func, optimizer, epoch, args):
@@ -286,7 +287,7 @@ def train_model(model, train_data, loss_func, optimizer, epoch, args):
         steps += 1
         if steps % 100 == 0:
             wandb.log({"Training loss": loss.item(), "Training Accuracy:": acc.item()})
-            print("Epoch: %d, Training loss: %.4f, Training Accuracy: %.2f" % (epoch + 1, loss.item(), acc.item()))
+            logging.info("Epoch: %d, Training loss: %.4f, Training Accuracy: %.2f" % (epoch + 1, loss.item(), acc.item()))
 
         total_epoch_acc += acc.item()
         total_epoch_loss += loss.item()
@@ -318,10 +319,19 @@ def eval_model(model, test_data, loss_func, args):
 
 
 if __name__ == "__main__":
+    process_id = os.getpid()
+    # customize the log format
+    logging.getLogger().setLevel(logging.INFO)
+    logging.basicConfig(level=logging.INFO,
+                        format=str(
+                            process_id) + ' - %(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
+                        datefmt='%a, %d %b %Y %H:%M:%S')
+    logging.info("start")
+
     # parse python script input parameters
     parser = argparse.ArgumentParser()
     args = add_args(parser)
-    print(args)
+    logging.info(args)
 
     if args.embedding_name:
         embedding_name = args.embedding_name
@@ -358,3 +368,4 @@ if __name__ == "__main__":
             args.device = 'cuda'
 
     FedNLP_text_classification_centralized(model, dataset[0], dataset[1], args)
+    logging.info("end")
