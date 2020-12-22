@@ -88,9 +88,7 @@ class ClientDataLoader(BaseClientDataLoader):
 
     def __init__(self, data_path, partition_path, client_idx=None, partition_method="uniform", tokenize=False):
         data_fields = ["X", "Y", "history"]
-        attribute_fields = []
-        super().__init__(data_path, partition_path, client_idx, partition_method, tokenize, data_fields,
-                         attribute_fields)
+        super().__init__(data_path, partition_path, client_idx, partition_method, tokenize, data_fields)
         if self.tokenize:
             self.tokenize_data()
 

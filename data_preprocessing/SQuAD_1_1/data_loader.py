@@ -1,6 +1,8 @@
 import json
 import os
 import random
+import re
+import nltk
 
 from data_preprocessing.base.base_client_data_loader import BaseClientDataLoader
 from data_preprocessing.base.base_raw_data_loader import BaseRawDataLoader
@@ -40,24 +42,24 @@ class RawDataLoader(BaseRawDataLoader):
         Y = []
         if "doc_index" not in self.attributes:
             self.attributes["doc_index"] = []
+        if "para_index" not in self.attributes:
+            self.attributes["para_index"] = []
         with open(file_path, "r", encoding='utf-8') as f:
             data = json.load(f)
 
-            for index, document in enumerate(data["data"]):
-                for paragraph in document["paragraphs"]:
+            for doc_idx, document in enumerate(data["data"]):
+                for para_idx, paragraph in enumerate(document["paragraphs"]):
                     for qas in paragraph["qas"]:
                         answers_index = []
                         answers_text = []
-                        context_X.append(paragraph["context"])
-                        question_X.append(qas["question"])
                         for answer in qas["answers"]:
-                            if answer["text"] not in answers_text:
-                                answers_text.append(answer["text"])
-                                start = answer["answer_start"]
-                                end = start + len(answer["text"].rstrip())
-                                answers_index.append((start, end))
-                        Y.append(answers_index)
-                        self.attributes["doc_index"].append(index)
+                            context_X.append(paragraph["context"])
+                            question_X.append(qas["question"])
+                            start = answer["answer_start"]
+                            end = start + len(answer["text"].rstrip())
+                            Y.append((start, end))
+                            self.attributes["doc_index"].append(doc_idx)
+                            self.attributes["para_index"].append(para_idx)
 
         return context_X, question_X, Y
 
@@ -91,22 +93,81 @@ class RawDataLoader(BaseRawDataLoader):
 
 class ClientDataLoader(BaseClientDataLoader):
 
-    def __init__(self, data_path, partition_path, client_idx=None, partition_method="uniform", tokenize=False):
+    def __init__(self, data_path, partition_path, client_idx=None, partition_method="uniform", tokenize=False, data_filter=None):
         data_fields = ["context_X", "question_X", "Y"]
-        attribute_fields = []
-        super().__init__(data_path, partition_path, client_idx, partition_method, tokenize, data_fields,
-                         attribute_fields)
+        super().__init__(data_path, partition_path, client_idx, partition_method, tokenize, data_fields)
+        self.clean_data()
         if self.tokenize:
             self.tokenize_data()
+        
+        self.transform_labels()
+
+        if data_filter:
+            data_filter(self.train_data)
+            data_filter(self.test_data)
+
+    def clean_data(self):
+        def __clean_data(data):
+            for i in range(len(data["context_X"])):
+                data["context_X"][i] = data["context_X"][i].replace("''", '" ').replace("``", '" ')
+        __clean_data(self.train_data)
+        __clean_data(self.test_data)
 
     def tokenize_data(self):
-        tokenizer = self.spacy_tokenizer.en_tokenizer
 
+        def word_tokenize(sent):
+             return [token.replace("''", '"').replace("``", '"') for token in nltk.word_tokenize(sent)]
         def __tokenize_data(data):
+            data["tokenized_context_X"] = list()
+            data["tokenized_question_X"] = list()
+            data["char_context_X"] = list()
+            data["char_question_X"] = list()
+            self.data_fields.extend(["tokenized_context_X", "tokenized_question_X", "char_context_X", "char_question_X"])
             for i in range(len(data["context_X"])):
-                data["context_X"][i] = [token.text.strip().lower() for token in tokenizer(data["context_X"][i].strip()) if token.text.strip()]
-                data["question_X"][i] = [token.text.strip().lower() for token in tokenizer(data["question_X"][i].strip()) if token.text.strip()]
+                temp_tokens = word_tokenize(data["context_X"][i])
+                data["tokenized_context_X"].append(self.remove_stop_tokens(temp_tokens))
+                data["tokenized_question_X"].append(word_tokenize(data["question_X"][i]))
+                context_chars = [list(token) for token in data["tokenized_context_X"][i]]
+                question_chars = [list(token) for token in data["tokenized_question_X"][i]]
+                data["char_context_X"].append(context_chars)
+                data["char_question_X"].append(question_chars)
 
         __tokenize_data(self.train_data)
         __tokenize_data(self.test_data)
 
+    def remove_stop_tokens(self, temp_tokens):
+        tokens = []
+        for token in temp_tokens:
+            flag = False
+            l = ("-", "\u2212", "\u2014", "\u2013", "/", "~", '"', "'", "\u201C", "\u2019", "\u201D", "\u2018", "\u00B0")
+            tokens.extend(re.split("([{}])".format("".join(l)), token))
+        return tokens
+
+    def transform_labels(self):
+        def __transform_labels(data):
+            for i in range(len(data["context_X"])):
+                context = data["context_X"][i]
+                context_tokens = data["tokenized_context_X"][i]
+                start, stop = data["Y"][i]
+
+                spans = self.get_spans(context, context_tokens)
+                idxs = []
+                for word_idx, span in enumerate(spans):
+                    if not (stop <= span[0] or start >= span[1]):
+                        idxs.append(word_idx)
+                
+                data["Y"][i] = (idxs[0], idxs[-1] + 1)
+        __transform_labels(self.train_data)
+        __transform_labels(self.test_data)
+
+    def get_spans(self, text, all_tokens):
+        spans = []
+        cur_idx = 0
+        for token in all_tokens:
+            if text.find(token, cur_idx) < 0:
+                print("{} {} {}".format(token, cur_idx, text))
+                raise Exception()
+            cur_idx = text.find(token, cur_idx)
+            spans.append((cur_idx, cur_idx + len(token)))
+            cur_idx += len(token)
+        return spans

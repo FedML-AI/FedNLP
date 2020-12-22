@@ -6,15 +6,13 @@ from .utils import SpacyTokenizer
 
 class BaseClientDataLoader(ABC):
     @abstractmethod
-    def __init__(self, data_path, partition_path, client_idx, partition_method, tokenize, data_fields,
-                 attribute_fields):
+    def __init__(self, data_path, partition_path, client_idx, partition_method, tokenize, data_fields):
         self.data_path = data_path
         self.partition_path = partition_path
         self.client_idx = client_idx
         self.partition_method = partition_method
         self.tokenize = tokenize
         self.data_fields = data_fields
-        self.attribute_fields = attribute_fields
         self.train_data = None
         self.test_data = None
         self.attributes = None
@@ -87,7 +85,5 @@ class BaseClientDataLoader(ABC):
             self.train_data = generate_client_data(data_dict, train_index_list)
             self.test_data = generate_client_data(data_dict, test_index_list)
 
-        self.attributes = dict()
-        for field in self.attribute_fields:
-            self.attributes[field] = data_dict[field]
+        self.attributes = data_dict["attributes"]
         self.attributes["n_clients"] = partition_dict[self.partition_method]["n_clients"]

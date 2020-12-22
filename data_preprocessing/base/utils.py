@@ -110,6 +110,26 @@ def padding_data(x, max_sequence_length):
         padding_x.append(new_single_x)
     return padding_x, seq_lens
 
+def padding_char_data(x, max_word_length):
+    padding_x = []
+    word_lens = []
+    for sent in x:
+        new_sent = []
+        temp_word_lens = []
+        for chars in sent:
+            new_chars = chars.copy()
+            if len(new_chars) <= max_word_length:
+                temp_word_lens.append(len(new_chars))
+                for _ in range(len(new_chars), max_word_length):
+                    new_chars.append(PAD_TOKEN)
+            else:
+                temp_word_lens.append(max_word_length)
+                new_chars = new_chars[:max_word_length]
+            new_sent.append(new_chars)
+        word_lens.append(temp_word_lens)
+        padding_x.append(new_sent)
+    return padding_x, word_lens
+
 
 def token_to_idx(x, vocab):
     idx_x = []
@@ -121,6 +141,21 @@ def token_to_idx(x, vocab):
             else:
                 new_single_x.append(vocab[UNK_TOKEN])
         idx_x.append(new_single_x)
+    return idx_x
+
+def char_to_idx(x, vocab):
+    idx_x = []
+    for sent in x:
+        new_sent = []
+        for token in sent:
+            new_token = []
+            for ch in token:
+                if ch in vocab:
+                    new_token.append(vocab[ch])
+                else:
+                    new_token.append(vocab[UNK_TOKEN])
+            new_sent.append(new_token)
+        idx_x.append(new_sent)
     return idx_x
 
 
@@ -147,7 +182,10 @@ def load_word2vec_embedding(path, source_vocab):
     model = gensim.models.KeyedVectors.load_word2vec_format(path, binary=True)
     weights = []
     for key, value in model.vocab.items():
-        if key in source_vocab:
+        if source_vocab is not None and key in source_vocab:
+            vocab[key] = len(vocab)
+            weights.append(model.vectors[value.index])
+        else:
             vocab[key] = len(vocab)
             weights.append(model.vectors[value.index])
     vocab[PAD_TOKEN] = len(vocab)
@@ -166,7 +204,10 @@ def load_glove_embedding(path, source_vocab, dimension):
             line = line.strip()
             temp = line.split(" ")
             word = " ".join(temp[:-dimension])
-            if word in source_vocab:
+            if source_vocab is not None and word in source_vocab:
+                vocab[word] = len(vocab)
+                weights.append(np.array([float(num) for num in temp[-dimension:]]))
+            else:
                 vocab[word] = len(vocab)
                 weights.append(np.array([float(num) for num in temp[-dimension:]]))
     vocab[PAD_TOKEN] = len(vocab)
