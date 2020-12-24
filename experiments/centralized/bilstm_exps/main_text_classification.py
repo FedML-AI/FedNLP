@@ -339,7 +339,6 @@ if __name__ == "__main__":
         embedding_name = "random"
     # initialize the wandb machine learning experimental tracking platform (https://wandb.ai/automl/fednlp).
     wandb.init(
-        # project="federated_nas",
         project="fednlp",
         entity="automl",
         name="FedCentralized" + "-" + str(args.dataset) + "-" + str(args.model) + "-" + str(embedding_name) + "-e" +

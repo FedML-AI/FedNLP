@@ -10,7 +10,7 @@ import wandb
 from torch.optim import *
 import numpy as np
 
-
+from torch import nn
 import data_preprocessing.SQuAD_1_1.data_loader
 from data_preprocessing.base.utils import *
 from data_preprocessing.base.globals import *
@@ -38,13 +38,13 @@ def add_args(parser):
     parser.add_argument('--partition_method', type=str, default='uniform', metavar='PM',
                         help='how to partition the dataset')
 
-    parser.add_argument('--hidden_size', type=int, default=300, metavar='H',
+    parser.add_argument('--hidden_size', type=int, default=100, metavar='H',
                         help='size of hidden layers')
 
-    parser.add_argument('--dropout', type=float, default=0.1, metavar='D',
+    parser.add_argument('--keep_prob', type=float, default=0.2, metavar='D',
                         help="dropout rate")
 
-    parser.add_argument('--batch_size', type=int, default=32, metavar='B',
+    parser.add_argument('--batch_size', type=int, default=60, metavar='B',
                         help='input batch size for training (default: 32)')
 
     parser.add_argument('--max_sent_len', type=int, default=400, metavar='MSL',
@@ -58,7 +58,7 @@ def add_args(parser):
 
     parser.add_argument('--word_emb_len', type=int, default=100, metavar="EL", help='dimension of word embedding')
 
-    parser.add_argument('--char_emb_len', type=int, default=100, metavar="EL", help='dimension of character embedding')
+    parser.add_argument('--char_emb_len', type=int, default=8, metavar="EL", help='dimension of character embedding')
 
     parser.add_argument('--use_char_emb', type=bool, default=True, metavar="UCE", help='whether use char embedding')
 
@@ -70,18 +70,30 @@ def add_args(parser):
     
     parser.add_argument('--use_highway_network', type=bool, default=True, metavar="UCE", help='whether use highway network')
 
-    parser.add_argument('--optimizer', type=str, default='adam', metavar="O",
-                        help='SGD with momentum; adam')
+    parser.add_argument('--highway_num_layers', type=int, default=2, metavar="HNL", help='the number of layers in highway network')
 
-    parser.add_argument('--lr', type=float, default=0.001, metavar='LR',
+    parser.add_argument('--out_channel_dims', type=str, default="100", metavar="OCD", help='Out channel dims of Char-CNN, separated by commas [100]')
+
+    parser.add_argument('--filter_heights', type=str, default="5", metavar="FH", help='Filter heights of Char-CNN, separated by commas [5]')
+
+    parser.add_argument('--share_cnn_weights', type=bool, default=True, metavar="SCW", help='whether share weights in CNN')
+
+    parser.add_argument('--share_lstm_weights', type=bool, default=True, metavar="SLW", help='whether share weights in LSTM')
+
+    parser.add_argument('--char_out_size', type=int, default=100, metavar="COS", help='char-CNN output size')
+
+    parser.add_argument('--optimizer', type=str, default='adadelta', metavar="O",
+                        help='adam, adadelta')
+
+    parser.add_argument('--lr', type=float, default=0.5, metavar='LR',
                         help='learning rate (default: 0.001)')
 
     parser.add_argument('--wd', help='weight decay parameter;', metavar="WD", type=float, default=0.001)
 
-    parser.add_argument('--epochs', type=int, default=5, metavar='EP',
+    parser.add_argument('--epochs', type=int, default=12, metavar='EP',
                         help='how many epochs will be trained locally')
 
-    parser.add_argument('--device', type=str, default="cuda:3", metavar="DV", help='gpu device for training')
+    parser.add_argument('--device', type=str, default="cuda:7", metavar="DV", help='gpu device for training')
 
     args = parser.parse_args()
 
@@ -128,11 +140,12 @@ def preprocess_data(args, dataset):
     char_vocab = build_vocab(char_x)
 
     addtional_word_emb_weights = None
+    additional_token_vocab = None
     if args.use_glove_for_unk:
         logging.info("load word embedding glove")
         addtional_token_vocab, addtional_word_emb_weights = load_glove_embedding(os.path.abspath(args.glove_emb_file), 
         None, args.word_emb_len)
-        addtional_word_emb_weights = np.array(addtional_word_emb_weights, dtype=np.float32)
+        addtional_word_emb_weights = torch.FloatTensor(addtional_word_emb_weights)
 
     new_train_batch_data_list = list()
     new_test_batch_data_list = list()
@@ -180,8 +193,8 @@ def preprocess_data(args, dataset):
                 new_batch_data["y2"][i][yi1] = True
             padding_context_tokens, context_lens = padding_data(new_batch_data["x"], args.max_sent_len)
             padding_question_tokens, question_lens = padding_data(new_batch_data["q"], args.max_ques_len)
-            padding_context_chars, context_word_lens = padding_char_data(new_batch_data["cx"], args.max_word_len)
-            padding_question_chars, question_word_lens = padding_char_data(new_batch_data["cq"], args.max_word_len)
+            padding_context_chars, context_word_lens = padding_char_data(new_batch_data["cx"], args.max_sent_len, args.max_word_len)
+            padding_question_chars, question_word_lens = padding_char_data(new_batch_data["cq"], args.max_ques_len, args.max_word_len)
             new_batch_data["x"] = np.array(_token_to_idx(padding_context_tokens, test))
             new_batch_data["cx"] = np.array(char_to_idx(padding_context_chars, char_vocab))
             new_batch_data["q"] = np.array(_token_to_idx(padding_question_tokens, test))
@@ -196,6 +209,9 @@ def preprocess_data(args, dataset):
     process_batch_data_list(train_batch_data_list, new_train_batch_data_list, False)
     process_batch_data_list(test_batch_data_list, new_test_batch_data_list, True)
 
+    return [new_test_batch_data_list, new_test_batch_data_list, token_vocab, char_vocab, additional_token_vocab, 
+    addtional_word_emb_weights, attributes]
+
 def data_filter(data, args):
     removed_indices = list()
     for i in range(len(data["tokenized_question_X"])):
@@ -209,14 +225,16 @@ def data_filter(data, args):
         
 
 
-def create_model(args, model_name, input_size, output_size, embedding_weights):
-    logging.info("create_model. model_name = %s, input_size = %s, output_size = %s"
-          % (model_name, input_size, output_size))
+def create_model(args, model_name, token_vocab_size, char_vocab_size, glove_emb_weights):
+    logging.info("create_model. model_name = %s, token_vocab_size = %s, char_vocab_size = %s"
+          % (model_name, token_vocab_size, char_vocab_size))
     model = None
     if model_name == "bidaf":
-        model = BIDAF_SpanExtraction(input_size, args.hidden_size, output_size, args.num_layers,
-                                          args.embedding_dropout, args.lstm_dropout, args.attention_dropout,
-                                          args.embedding_length, attention=True, embedding_weights=embedding_weights)
+        model = BIDAF_SpanExtraction(char_vocab_size, token_vocab_size, args.char_emb_len, args.word_emb_len,
+                                          args.out_channel_dims, args.filter_heights, args.share_cnn_weights,
+                                          args.max_word_len, args.char_out_size, args.keep_prob, args.share_lstm_weights, args.hidden_size,
+                                          args.use_char_emb, args.use_word_emb, args.use_glove_for_unk, args.use_highway_network, args.highway_num_layers, 
+                                          glove_emb_weights)
     else:
         raise Exception("No such model")
     return model
@@ -227,78 +245,111 @@ def FedNLP_span_extraction_centralized(model, train_data, test_data, args):
         model = model.to(device=args.device)
 
     optimizer = None
-    if args.optimizer == "adam":
+    if args.optimizer == "adadelta":
+        optimizer = Adadelta(filter(lambda x: x.requires_grad, model.parameters()), lr=args.lr, weight_decay=args.wd)
+    elif args.optimizer == "adam":
         optimizer = Adam(filter(lambda x: x.requires_grad, model.parameters()), lr=args.lr, weight_decay=args.wd)
     else:
         raise Exception("No such optimizer")
+    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer=optimizer, gamma=0.999)
     loss_func = F.cross_entropy
-    max_eval_acc = 0.0
+    max_eval_em = 0.0
     for epoch in range(args.epochs):
-        train_loss, train_acc = train_model(model, train_data, loss_func, optimizer, epoch, args)
-        eval_loss, eval_acc = eval_model(model, test_data, loss_func, args)
-        max_eval_acc = max(max_eval_acc, eval_acc)
-        logging.info("Epoch: %d, Train loss: %.4f, Train Accuracy: %.2f, Eval loss: %.4f, Eval Accuracy: %.2f" % (epoch + 1,
+        train_loss, train_em = train_model(model, train_data, loss_func, scheduler, epoch, args)
+        eval_loss, eval_em = eval_model(model, test_data, loss_func, args)
+        max_eval_em = max(max_eval_em, eval_em)
+        logging.info("Epoch: %d, Train loss: %.4f, Train Exact Match: %.2f, Eval loss: %.4f, Eval Exact Match: %.2f" % (epoch + 1,
                                                                                                            train_loss,
-                                                                                                           train_acc,
+                                                                                                           train_em,
                                                                                                            eval_loss,
-                                                                                                           eval_acc))
-        wandb.log({"Epoch": epoch + 1, "Avg Training loss": train_loss, "Avg Training Accuracy:": train_acc,
-                   "Avg Eval loss": eval_loss, "Avg Eval Accuracy": eval_acc})
-    logging.info("Maximum Eval Accuracy: %.2f" % max_eval_acc)
+                                                                                                           eval_em))
+        wandb.log({"Epoch": epoch + 1, "Avg Training loss": train_loss, "Avg Training Exact Match:": train_em,
+                   "Avg Eval loss": eval_loss, "Avg Eval Exact Match": eval_em})
+    logging.info("Maximum Eval Exact Match: %.2f" % max_eval_em)
+
+def build_loss(logits, logits2, y, y2, q_mask, loss_func):
+    loss_mask = torch.max(q_mask.float(), dim=1)[0]
+    losses = loss_func(logits, torch.argmax(y.long(), 1))
+    ce_loss = torch.mean(loss_mask * losses)
+    ce_loss2 = torch.mean(loss_func(logits2, torch.argmax(y2.long(), 1)))
+    return ce_loss + ce_loss2
 
 
 def train_model(model, train_data, loss_func, optimizer, epoch, args):
     total_epoch_loss = 0
-    total_epoch_acc = 0
+    total_epoch_em = 0
     model.train()
     steps = 0
     for batch_data in train_data:
-        x = torch.tensor(batch_data["X"])
-        y = torch.tensor(batch_data["Y"])
-        seq_lens = torch.tensor(batch_data["seq_lens"])
+        x = torch.tensor(batch_data["x"])
+        cx = torch.tensor(batch_data["cx"])
+        x_mask = torch.tensor(batch_data["x_mask"])
+        q = torch.tensor(batch_data["q"])
+        cq = torch.tensor(batch_data["cq"])
+        q_mask = torch.tensor(batch_data["q_mask"])
+        y = torch.tensor(batch_data["y"])
+        y2 = torch.tensor(batch_data["y2"])
         if args.device is not None:
             x = x.to(device=args.device)
+            cx = cx.to(device=args.device)
+            x_mask = x_mask.to(device=args.device)
+            q = q.to(device=args.device)
+            cq = cq.to(device=args.device)
+            q_mask = q_mask.to(device=args.device)
             y = y.to(device=args.device)
-            seq_lens = seq_lens.to(device=args.device)
+            y2 = y2.to(device=args.device)
         optimizer.zero_grad()
-        prediction = model(x, x.size()[0], seq_lens, args.device)
-        loss = loss_func(prediction, y)
-        num_corrects = torch.sum(torch.argmax(prediction, 1) == y)
-        acc = 100.0 * num_corrects / x.size()[0]
+        logits, logits2 = model(x, cx, x_mask, q, cq, q_mask, y, y2, args.device)
+        matched = [1 for l1, y1, l2, y2 in zip(torch.argmax(logits, 1), torch.argmax(y.long(), 1), torch.argmax(logits2, 1), torch.argmax(y2.long(), 1)) if l1 == y1 and l2 == y2]
+        num_corrects = sum(matched)
+        em = 100.0 * num_corrects / x.size()[0]
+        loss = build_loss(logits, logits2, y, y2, q_mask, loss_func)
         loss.backward()
         optimizer.step()
         steps += 1
         if steps % 100 == 0:
-            wandb.log({"Training loss": loss.item(), "Training Accuracy:": acc.item()})
-            logging.info("Epoch: %d, Training loss: %.4f, Training Accuracy: %.2f" % (epoch + 1, loss.item(), acc.item()))
-
-        total_epoch_acc += acc.item()
+            wandb.log({"Training loss": loss.item(), "Exact Match Accuracy:": em.item()})
+            logging.info("Epoch: %d, Training loss: %.4f, Training Accuracy: %.2f" % (epoch + 1, loss.item(), em.item()))
+        
+        total_epoch_em += em.item()
         total_epoch_loss += loss.item()
 
-    return total_epoch_loss / len(train_data), total_epoch_acc / len(train_data)
-
+    return total_epoch_loss / len(train_data), total_epoch_em / len(train_data)
 
 def eval_model(model, test_data, loss_func, args):
     total_epoch_loss = 0
-    total_epoch_acc = 0
+    total_epoch_em = 0
     model.eval()
     for batch_data in test_data:
-        x = torch.tensor(batch_data["X"])
-        y = torch.tensor(batch_data["Y"])
-        seq_lens = torch.tensor(batch_data["seq_lens"])
+        x = torch.tensor(batch_data["x"])
+        cx = torch.tensor(batch_data["cx"])
+        x_mask = torch.tensor(batch_data["x_mask"])
+        q = torch.tensor(batch_data["q"])
+        cq = torch.tensor(batch_data["cq"])
+        q_mask = torch.tensor(batch_data["q_mask"])
+        y = torch.tensor(batch_data["y"])
+        y2 = torch.tensor(batch_data["y2"])
         if args.device is not None:
             x = x.to(device=args.device)
+            cx = cx.to(device=args.device)
+            x_mask = x_mask.to(device=args.device)
+            q = q.to(device=args.device)
+            cq = cq.to(device=args.device)
+            q_mask = q_mask.to(device=args.device)
             y = y.to(device=args.device)
-            seq_lens = seq_lens.to(device=args.device)
-        prediction = model(x, x.size()[0], seq_lens, args.device)
-        loss = loss_func(prediction, y)
-        num_corrects = torch.sum(torch.argmax(prediction, 1) == y)
-        acc = 100.0 * num_corrects / x.size()[0]
-
-        total_epoch_acc += acc.item()
+            y2 = y2.to(device=args.device)
+        logits, logits2 = model(x, cx, x_mask, q, cq, q_mask, y, y2, args.device)
+        matched = [1 for l1, y1, l2, y2 in zip(torch.argmax(logits, 1), torch.argmax(y.long(), 1), torch.argmax(logits2, 1), torch.argmax(y2.long(), 1)) if l1 == y1 and l2 == y2]
+        num_corrects = sum(matched)
+        em = 100.0 * num_corrects / x.size()[0]
+        loss = build_loss(logits, logits2, y, y2, q_mask, loss_func)
+        
+        total_epoch_em += em.item()
         total_epoch_loss += loss.item()
+    
+    return total_epoch_loss / len(test_data), total_epoch_em / len(test_data)
 
-    return total_epoch_loss / len(test_data), total_epoch_acc / len(test_data)
+
 
 
 if __name__ == "__main__":
@@ -319,14 +370,13 @@ if __name__ == "__main__":
 
     word_emb_name = "random"
     # initialize the wandb machine learning experimental tracking platform (https://wandb.ai/automl/fednlp).
-    # wandb.init(
-    #     # project="federated_nas",
-    #     project="fednlp",
-    #     entity="automl",
-    #     name="FedCentralized" + "-" + str(args.dataset) + "-" + str(args.model) + "-" + str(word_emb_name) + "-e" +
-    #          str(args.epochs) + "-lr" + str(args.lr),
-    #     config=args
-    # )
+    wandb.init(
+        project="fednlp",
+        entity="automl",
+        name="FedCentralized" + "-" + str(args.dataset) + "-" + str(args.model) + "-" + str(word_emb_name) + "-e" +
+             str(args.epochs) + "-lr" + str(args.lr),
+        config=args
+    )
 
     # Set the random seed. The np.random seed determines the dataset partition.
     # The torch_manual_seed determines the initial weight.
@@ -341,8 +391,7 @@ if __name__ == "__main__":
     dataset = preprocess_data(args, dataset)
 
     # create model
-    model = create_model(args, model_name=args.model, input_size=len(dataset[2]), output_size=len(dataset[3]),
-                         embedding_weights=dataset[4])
+    model = create_model(args, args.model, len(dataset[2]), len(dataset[3]), dataset[5])
 
     if not args.device:
         if torch.cuda.is_available():

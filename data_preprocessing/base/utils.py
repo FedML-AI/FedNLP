@@ -110,7 +110,7 @@ def padding_data(x, max_sequence_length):
         padding_x.append(new_single_x)
     return padding_x, seq_lens
 
-def padding_char_data(x, max_word_length):
+def padding_char_data(x, max_sequence_length, max_word_length):
     padding_x = []
     word_lens = []
     for sent in x:
@@ -126,6 +126,12 @@ def padding_char_data(x, max_word_length):
                 temp_word_lens.append(max_word_length)
                 new_chars = new_chars[:max_word_length]
             new_sent.append(new_chars)
+        if len(new_sent) <= max_sequence_length:
+            for _ in range(len(new_sent), max_sequence_length):
+                new_sent.append([PAD_TOKEN for _ in range(max_word_length)])
+        else:
+            new_sent = new_sent[:max_sequence_length]
+            temp_word_lens = temp_word_lens[:max_sequence_length]
         word_lens.append(temp_word_lens)
         padding_x.append(new_sent)
     return padding_x, word_lens
