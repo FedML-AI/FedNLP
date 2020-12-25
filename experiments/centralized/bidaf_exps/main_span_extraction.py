@@ -88,12 +88,12 @@ def add_args(parser):
     parser.add_argument('--lr', type=float, default=0.5, metavar='LR',
                         help='learning rate (default: 0.001)')
 
-    parser.add_argument('--wd', help='weight decay parameter;', metavar="WD", type=float, default=0.001)
+    parser.add_argument('--wd', help='weight decay parameter;', metavar="WD", type=float, default=0)
 
     parser.add_argument('--epochs', type=int, default=12, metavar='EP',
                         help='how many epochs will be trained locally')
 
-    parser.add_argument('--device', type=str, default="cuda:7", metavar="DV", help='gpu device for training')
+    parser.add_argument('--device', type=str, default="cuda:0", metavar="DV", help='gpu device for training')
 
     args = parser.parse_args()
 
@@ -200,16 +200,16 @@ def preprocess_data(args, dataset):
             new_batch_data["q"] = np.array(_token_to_idx(padding_question_tokens, test))
             new_batch_data["cq"] = np.array(char_to_idx(padding_question_chars, char_vocab))
             for j, context_len in enumerate(context_lens):
-                new_batch_data["x_mask"][i][:context_len] = True 
+                new_batch_data["x_mask"][j, 0:context_len] = True 
             for j, question_len in enumerate(question_lens):
-                new_batch_data["q_mask"][i][:question_len] = True 
+                new_batch_data["q_mask"][j, 0:question_len] = True 
             new_batch_data_list.append(new_batch_data)
 
 
     process_batch_data_list(train_batch_data_list, new_train_batch_data_list, False)
     process_batch_data_list(test_batch_data_list, new_test_batch_data_list, True)
 
-    return [new_test_batch_data_list, new_test_batch_data_list, token_vocab, char_vocab, additional_token_vocab, 
+    return [new_train_batch_data_list, new_test_batch_data_list, token_vocab, char_vocab, additional_token_vocab, 
     addtional_word_emb_weights, attributes]
 
 def data_filter(data, args):
@@ -255,7 +255,7 @@ def FedNLP_span_extraction_centralized(model, train_data, test_data, args):
     loss_func = F.cross_entropy
     max_eval_em = 0.0
     for epoch in range(args.epochs):
-        train_loss, train_em = train_model(model, train_data, loss_func, scheduler, epoch, args)
+        train_loss, train_em = train_model(model, train_data, loss_func, optimizer, epoch, args)
         eval_loss, eval_em = eval_model(model, test_data, loss_func, args)
         max_eval_em = max(max_eval_em, eval_em)
         logging.info("Epoch: %d, Train loss: %.4f, Train Exact Match: %.2f, Eval loss: %.4f, Eval Exact Match: %.2f" % (epoch + 1,
@@ -265,6 +265,7 @@ def FedNLP_span_extraction_centralized(model, train_data, test_data, args):
                                                                                                            eval_em))
         wandb.log({"Epoch": epoch + 1, "Avg Training loss": train_loss, "Avg Training Exact Match:": train_em,
                    "Avg Eval loss": eval_loss, "Avg Eval Exact Match": eval_em})
+        scheduler.step()
     logging.info("Maximum Eval Exact Match: %.2f" % max_eval_em)
 
 def build_loss(logits, logits2, y, y2, q_mask, loss_func):
@@ -300,6 +301,10 @@ def train_model(model, train_data, loss_func, optimizer, epoch, args):
             y2 = y2.to(device=args.device)
         optimizer.zero_grad()
         logits, logits2 = model(x, cx, x_mask, q, cq, q_mask, y, y2, args.device)
+        temp1 = torch.argmax(logits, 1)
+        temp2 = torch.argmax(y.long(), 1)
+        temp3 = torch.argmax(logits2, 1)
+        temp4 = torch.argmax(y2.long(), 1)
         matched = [1 for l1, y1, l2, y2 in zip(torch.argmax(logits, 1), torch.argmax(y.long(), 1), torch.argmax(logits2, 1), torch.argmax(y2.long(), 1)) if l1 == y1 and l2 == y2]
         num_corrects = sum(matched)
         em = 100.0 * num_corrects / x.size()[0]
@@ -308,10 +313,10 @@ def train_model(model, train_data, loss_func, optimizer, epoch, args):
         optimizer.step()
         steps += 1
         if steps % 100 == 0:
-            wandb.log({"Training loss": loss.item(), "Exact Match Accuracy:": em.item()})
-            logging.info("Epoch: %d, Training loss: %.4f, Training Accuracy: %.2f" % (epoch + 1, loss.item(), em.item()))
+            wandb.log({"Training loss": loss.item(), "Exact Match:": em})
+            logging.info("Epoch: %d, Training loss: %.4f, Training Exact Match: %.2f" % (epoch + 1, loss.item(), em))
         
-        total_epoch_em += em.item()
+        total_epoch_em += em
         total_epoch_loss += loss.item()
 
     return total_epoch_loss / len(train_data), total_epoch_em / len(train_data)
@@ -344,7 +349,7 @@ def eval_model(model, test_data, loss_func, args):
         em = 100.0 * num_corrects / x.size()[0]
         loss = build_loss(logits, logits2, y, y2, q_mask, loss_func)
         
-        total_epoch_em += em.item()
+        total_epoch_em += em
         total_epoch_loss += loss.item()
     
     return total_epoch_loss / len(test_data), total_epoch_em / len(test_data)

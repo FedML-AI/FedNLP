@@ -1,0 +1,1 @@
+nohup python -m experiments.centralized.bidaf_exps.main_span_extraction > fednlp-centralized-bidaf.txt 2>&1 &
