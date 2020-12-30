@@ -102,6 +102,7 @@ class ClassificationModel:
         model_type,
         model_name,
         num_labels=None,
+        labels_map=None,
         weight=None,
         args=None,
         use_cuda=True,
@@ -117,6 +118,7 @@ class ClassificationModel:
             model_type: The type of model (bert, xlnet, xlm, roberta, distilbert)
             model_name: The exact architecture and trained weights to use. This may be a Hugging Face Transformers compatible pre-trained model, a community model, or the path to a directory containing model files.
             num_labels (optional): The number of labels or classes in the dataset.
+            labels_map (optional): The mapping of the labels.
             weight (optional): A list of length num_labels containing the weights to assign to each label for loss calculation.
             args (optional): Default args will be used if this parameter is not provided. If provided, it should be a dict containing the args that should be changed in the default args.
             use_cuda (optional): Use GPU if available. Setting to False will force model to use CPU only.
@@ -143,7 +145,7 @@ class ClassificationModel:
         }
 
         self.args = self._load_model_args(model_name)
-
+        
         if isinstance(args, dict):
             self.args.update_from_dict(args)
         elif isinstance(args, ClassificationArgs):
@@ -181,7 +183,7 @@ class ClassificationModel:
         else:
             len_labels_list = 2 if not num_labels else num_labels
             self.args.labels_list = [i for i in range(len_labels_list)]
-
+        self.labels_map = labels_map
         config_class, model_class, tokenizer_class = MODEL_CLASSES[model_type]
         if num_labels:
             self.config = config_class.from_pretrained(model_name, num_labels=num_labels, **self.args.config)
@@ -346,25 +348,10 @@ class ClassificationModel:
             if self.args.lazy_loading:
                 raise ValueError("Input must be given as a path to a file when using lazy loading")
             if "text" in train_df.columns and "labels" in train_df.columns:
-                if self.args.model_type == "layoutlm":
-                    train_examples = [
-                        InputExample(i, text, None, label, x0, y0, x1, y1)
-                        for i, (text, label, x0, y0, x1, y1) in enumerate(
-                            zip(
-                                train_df["text"].astype(str),
-                                train_df["labels"],
-                                train_df["x0"],
-                                train_df["y0"],
-                                train_df["x1"],
-                                train_df["y1"],
-                            )
-                        )
-                    ]
-                else:
-                    train_examples = [
-                        InputExample(i, text, None, label)
-                        for i, (text, label) in enumerate(zip(train_df["text"].astype(str), train_df["labels"]))
-                    ]
+                train_examples = [
+                    InputExample(i, text, None, label)
+                    for i, (text, label) in enumerate(zip(train_df["text"].astype(str), train_df["labels"]))
+                ]
             elif "text_a" in train_df.columns and "text_b" in train_df.columns:
                 if self.args.model_type == "layoutlm":
                     raise ValueError("LayoutLM cannot be used with sentence-pair tasks")
