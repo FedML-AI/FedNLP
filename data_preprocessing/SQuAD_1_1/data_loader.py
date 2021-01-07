@@ -99,8 +99,7 @@ class ClientDataLoader(BaseClientDataLoader):
         self.clean_data()
         if self.tokenize:
             self.tokenize_data()
-        
-        self.transform_labels()
+            self.transform_labels()
 
         if data_filter:
             data_filter(self.train_data)
