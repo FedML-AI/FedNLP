@@ -123,11 +123,11 @@ def main(args):
     # Loading full data (for centralized learning)
     train_data, test_data, _ = load_data(args, args.dataset_name) 
     
-    # train_data = reformat_squad(train_data, cut_off=None)
-    # test_data = reformat_squad(test_data, cut_off=None)  
+    train_data = reformat_squad(train_data, cut_off=None)
+    test_data = reformat_squad(test_data, cut_off=None)  
 
-    train_data = reformat_squad(train_data, cut_off=1000) # cut_off=1000 for debugging
-    test_data = reformat_squad(test_data, cut_off=100)  
+    # train_data = reformat_squad(train_data, cut_off=1000) # cut_off=1000 for debugging
+    # test_data = reformat_squad(test_data, cut_off=100)  
 
     # Create a ClassificationModel.
     model = QuestionAnsweringModel(
