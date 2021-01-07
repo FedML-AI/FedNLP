@@ -2,7 +2,7 @@
 An example of running centralized experiments of fed-transformer models in FedNLP.
 Example usage: 
 (under the root folder)
-python -m experiments.centralized.fed_transformer_exps.text_classification \
+python -m experiments.distributed.transformer_exps.text_classification_fedavg \
     --dataset_name 20news \
     --data_file data/data_loaders/20news_data_loader.pkl \
     --partition_file data/partition/20news_partition.pkl \
@@ -108,6 +108,34 @@ def add_args(parser):
     parser.add_argument('--output_dir', type=str, default="/tmp/", metavar='N',
                         help='path to save the trained results and ckpts')
 
+
+    # FedAVG related
+
+    
+    parser.add_argument('--comm_round', type=int, default=10,
+                        help='how many round of communications we shoud use')
+
+    parser.add_argument('--is_mobile', type=int, default=0,
+                        help='whether the program is running on the FedML-Mobile server side')
+
+    parser.add_argument('--frequency_of_the_test', type=int, default=1,
+                        help='the frequency of the algorithms')
+
+    parser.add_argument('--gpu_server_num', type=int, default=1,
+                        help='gpu_server_num')
+
+    parser.add_argument('--gpu_num_per_server', type=int, default=1,
+                        help='gpu_num_per_server')
+
+    parser.add_argument('--ci', type=int, default=0,
+                        help='CI')
+
+    parser.add_argument('--client_num_in_total', type=int, default=1000, metavar='NN',
+                        help='number of workers in a distributed cluster')
+
+    parser.add_argument('--client_num_per_round', type=int, default=4, metavar='NN',
+                        help='number of workers')                    
+
     args = parser.parse_args()
 
     return args
@@ -148,9 +176,9 @@ def load_data(args, dataset_name):
         train_data_local_num_dict[idx] = client_data_loaders[idx].get_train_data_num(
         )
         train_data_local_dict[idx] = client_data_loaders[idx].get_train_batch_data(
-            args.batch_size)
+            args.train_batch_size)
         test_data_local_dict[idx] = client_data_loaders[idx].get_test_batch_data(
-            args.batch_size)
+            args.eval_batch_size)
     train_data_num = server_data_loader.get_train_data_num()
     test_data_num = server_data_loader.get_test_data_num()
     train_data_global = server_data_loader.get_train_batch_data()
@@ -288,7 +316,7 @@ if __name__ == "__main__":
     if process_id == 0:
         # initialize the wandb machine learning experimental tracking platform (https://wandb.ai/automl/fednlp).
         wandb.init(
-            project="fednlp", entity="automl", name="FedNLP-Centralized" +
+            project="fednlp", entity="automl", name="FedNLP-FedAVG-Transformer" +
             "-TC-" + str(args.dataset_name) + "-" + str(args.model_name),
             config=args)
 
