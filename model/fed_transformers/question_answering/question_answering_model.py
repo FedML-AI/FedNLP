@@ -859,7 +859,7 @@ class QuestionAnsweringModel:
 
         if args.model_type in ["xlnet", "xlm"]:
             # XLNet uses a more complex post-processing procedure
-            (all_predictions, all_nbest_json, scores_diff_json,) = write_predictions_extended(
+            (all_predictions, all_nbest_json, scores_diff_json, out_eval) = write_predictions_extended(
                 examples,
                 features,
                 all_results,

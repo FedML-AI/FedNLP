@@ -2,29 +2,25 @@
 An example of running centralized experiments of fed-transformer models in FedNLP.
 Example usage: 
 (under the root folder)
-python -m experiments.centralized.transformer_exps.text_classification \
-    --dataset_name 20news \
-    --data_file data/data_loaders/20news_data_loader.pkl \
-    --partition_file data/partition/20news_partition.pkl \
+CUDA_VISIBLE_DEVICES=2 python -m experiments.centralized.transformer_exps.reading_comprehension \
+    --dataset_name squad_1.1 \
+    --data_file data/data_loaders/squad_1.1_data_loader.pkl \
+    --partition_file data/partition/squad_1.1_partition.pkl \
     --partition_method uniform \
     --model_type distilbert \
     --model_name distilbert-base-uncased \
     --do_lower_case True \
-    --train_batch_size 8 \
-    --eval_batch_size 8 \
-    --max_seq_length 128 \
+    --train_batch_size 64 \
+    --eval_batch_size 64 \
+    --max_seq_length 256 \
     --learning_rate 1e-5 \
-    --num_train_epochs 3 \
-    --output_dir /tmp/20news_fed/ \
+    --num_train_epochs 2 \
+    --output_dir /tmp/squad_1.1/ \
     --fp16
 """
-import data_preprocessing.AGNews.data_loader
-import data_preprocessing.SST_2.data_loader
-import data_preprocessing.SemEval2010Task8.data_loader
-import data_preprocessing.Sentiment140.data_loader
-import data_preprocessing.news_20.data_loader
+import data_preprocessing.SQuAD_1_1.data_loader
 from data_preprocessing.base.utils import *
-from model.fed_transformers.classification import ClassificationModel
+from model.fed_transformers.question_answering import QuestionAnsweringModel
 import pandas as pd
 import logging
 import sklearn
@@ -38,13 +34,13 @@ def add_args(parser):
     return a parser added with args required by fit
     """
     # Data related
-    parser.add_argument('--dataset_name', type=str, default='20news', metavar='N',
+    parser.add_argument('--dataset_name', type=str, default='squad_1.1', metavar='N',
                         help='dataset used for training')
 
-    parser.add_argument('--data_file', type=str, default='data/data_loaders/20news_data_loader.pkl',
+    parser.add_argument('--data_file', type=str, default='data/data_loaders/squad_1.1_data_loader.pkl',
                         help='data pickle file')
 
-    parser.add_argument('--partition_file', type=str, default='data/partition/20news_partition.pkl',
+    parser.add_argument('--partition_file', type=str, default='data/partition/squad_1.1_partition.pkl',
                         help='partition pickle file')
 
     parser.add_argument('--partition_method', type=str, default='uniform', metavar='N',
@@ -55,7 +51,7 @@ def add_args(parser):
                         help='transformer model type')
     parser.add_argument('--model_name', type=str, default='distilbert-base-uncased', metavar='N',
                         help='transformer model name')
-    parser.add_argument('--do_lower_case', type=bool, default=True, metavar='N',
+    parser.add_argument('--do_lower_case', type=bool, default=False, metavar='N',
                         help='transformer model name')
 
     # Learning related
@@ -86,7 +82,7 @@ def add_args(parser):
 
     # IO realted
 
-    parser.add_argument('--output_dir', type=str, default="/tmp/", metavar='N',
+    parser.add_argument('--output_dir', type=str, default="/tmp/squad_1.1", metavar='N',
                         help='path to save the trained results and ckpts')
 
     args = parser.parse_args()
@@ -97,25 +93,27 @@ def add_args(parser):
 def load_data(args, dataset_name):
     data_loader = None
     print("Loading dataset_name = %s" % dataset_name)
-    if dataset_name == "20news":
-        data_loader = data_preprocessing.news_20.data_loader.ClientDataLoader(
-            args.data_file, args.partition_file, partition_method=args.partition_method, tokenize=False)
-    elif dataset_name == "agnews":
-        data_loader = data_preprocessing.AGNews.data_loader.ClientDataLoader(
-            args.data_file, args.partition_file, partition_method=args.partition_method, tokenize=False)
-    elif dataset_name == "semeval_2010_task8":
-        data_loader = data_preprocessing.SemEval2010Task8.data_loader.ClientDataLoader(
-            args.data_file, args.partition_file, partition_method=args.partition_method, tokenize=False)
-    elif dataset_name == "sentiment140":
-        data_loader = data_preprocessing.Sentiment140.data_loader.ClientDataLoader(
-            args.data_file, args.partition_file, partition_method=args.partition_method, tokenize=False)
-    elif dataset_name == "sst_2":
-        data_loader = data_preprocessing.SST_2.data_loader.ClientDataLoader(
-            args.data_file, args.partition_file, partition_method=args.partition_method, tokenize=False)
-    else:
-        raise Exception("No such dataset")
+    assert dataset_name in ["squad_1.1"]
+    data_loader = data_preprocessing.SQuAD_1_1.data_loader.ClientDataLoader(
+        args.data_file, args.partition_file, partition_method=args.partition_method, tokenize=False) 
     return data_loader.get_train_batch_data(), data_loader.get_test_batch_data(), data_loader.get_attributes()
 
+def reformat_squad(dataset, cut_off=None):
+    reformatted_data = []
+    assert len(dataset["context_X"]) == len(dataset["question_X"]) == len(dataset["Y"]) 
+    for c, q, a in zip(dataset["context_X"], dataset["question_X"], dataset["Y"]):
+        item = {}
+        item["context"] = c
+        item["qas"] = [
+            {
+                "id": "%d"%(len(reformatted_data)+1),
+                "is_impossible": False,
+                "question": q,
+                "answers": [{"text": c[a[0][0]:a[0][1]], "answer_start": a[0][0]}],
+            }
+        ]
+        reformatted_data.append(item)
+    return reformatted_data[:cut_off]
 
 def main(args):
     logging.basicConfig(level=logging.INFO)
@@ -123,20 +121,17 @@ def main(args):
     transformers_logger.setLevel(logging.WARNING)
 
     # Loading full data (for centralized learning)
-    train_data, test_data, data_attr = load_data(args, args.dataset_name)
-    labels_map = data_attr["target_vocab"]
-    num_labels = len(labels_map)
+    train_data, test_data, _ = load_data(args, args.dataset_name) 
+    
+    # train_data = reformat_squad(train_data, cut_off=None)
+    # test_data = reformat_squad(test_data, cut_off=None)  
 
-    # Transform data to DataFrame.
-    train_data = [(x, labels_map[y]) for x, y in zip(train_data["X"], train_data["Y"])]
-    train_df = pd.DataFrame(train_data)
-
-    test_data = [(x, labels_map[y]) for x, y in zip(test_data["X"], test_data["Y"])]
-    test_df = pd.DataFrame(test_data)
+    train_data = reformat_squad(train_data, cut_off=1000) # cut_off=1000 for debugging
+    test_data = reformat_squad(test_data, cut_off=100)  
 
     # Create a ClassificationModel.
-    model = ClassificationModel(
-        args.model_type, args.model_name, num_labels=num_labels,
+    model = QuestionAnsweringModel(
+        args.model_type, args.model_name, 
         args={"num_train_epochs": args.num_train_epochs,
               "learning_rate": args.learning_rate,
               "gradient_accumulation_steps": args.gradient_accumulation_steps,
@@ -150,16 +145,15 @@ def main(args):
               "fp16": args.fp16,
               "n_gpu": args.n_gpu,
               "output_dir": args.output_dir,
+              "process_count": 1, 
               "wandb_project": "fednlp"})
 
     # Strat training.
-    model.train_model(train_df)
+    model.train_model(train_data)
 
     # Evaluate the model
-    result, model_outputs, wrong_predictions = model.eval_model(
-        test_df, acc=sklearn.metrics.accuracy_score)
-
-    print(result)
+    result, texts = model.eval_model(test_data, output_dir=args.output_dir, verbose=False, verbose_logging=False)
+    print(result) 
 
 
 if __name__ == "__main__":
@@ -171,7 +165,7 @@ if __name__ == "__main__":
     wandb.init(
         project="fednlp",
         entity="automl",
-        name="FedNLP-Centralized" + "-TC-" + str(args.dataset_name) + "-" + str(args.model_name),
+        name="FedNLP-Centralized" + "-RC-" + str(args.dataset_name) + "-" + str(args.model_name),
         config=args)
     # Start training.
     main(args)

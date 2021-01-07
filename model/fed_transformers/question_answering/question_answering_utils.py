@@ -1231,7 +1231,7 @@ def write_predictions_extended(
 
     find_all_best_thresh_v2(out_eval, all_predictions, exact_raw, f1_raw, scores_diff_json, qid_to_has_ans)
 
-    return all_predictions, all_nbest_json, scores_diff_json
+    return all_predictions, all_nbest_json, scores_diff_json, out_eval
 
 
 def get_best_predictions(
