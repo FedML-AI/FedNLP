@@ -39,4 +39,3 @@ mpirun -np $PROCESS_NUM -hostfile ./mpi_host_file python3 experiments/distribute
   --lr $LR \
   --ci $CI
 ```
-

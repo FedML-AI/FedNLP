@@ -14,7 +14,9 @@ import wandb
 
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "../../../")))
 
+from FedML.fedml_api.distributed.utils.gpu_mapping import mapping_processes_to_gpu_device_from_yaml_file
 from FedML.fedml_api.distributed.fedavg.FedAvgAPI import FedML_init, FedML_FedAvg_distributed
 
 from data_preprocessing.shakespeare.data_loader import load_partition_data_shakespeare
@@ -72,11 +74,12 @@ def add_args(parser):
     parser.add_argument('--frequency_of_the_test', type=int, default=1,
                         help='the frequency of the algorithms')
 
-    parser.add_argument('--gpu_server_num', type=int, default=1,
-                        help='gpu_server_num')
+    parser.add_argument('--gpu_mapping_file', type=str, default="gpu_mapping.yaml",
+                        help='the gpu utilization file for servers and clients. If there is no \
+                        gpu_util_file, gpu will not be used.')
 
-    parser.add_argument('--gpu_num_per_server', type=int, default=4,
-                        help='gpu_num_per_server')
+    parser.add_argument('--gpu_mapping_key', type=str, default="mapping_default",
+                        help='the key in gpu utilization file')
 
     parser.add_argument('--ci', type=int, default=0,
                         help='CI')
@@ -176,17 +179,9 @@ if __name__ == "__main__":
     torch.manual_seed(0)
     torch.cuda.manual_seed_all(0)
 
-    # GPU arrangement: Please customize this function according your own topology.
-    # The GPU server list is configured at "mpi_host_file".
-    # If we have 4 machines and each has two GPUs, and your FL network has 8 workers and a central worker.
-    # The 4 machines will be assigned as follows:
-    # machine 1: worker0, worker4, worker8;
-    # machine 2: worker1, worker5;
-    # machine 3: worker2, worker6;
-    # machine 4: worker3, worker7;
-    # Therefore, we can see that workers are assigned according to the order of machine list.
+    # Please check "GPU_MAPPING.md" to see how to define the topology
     logging.info("process_id = %d, size = %d" % (process_id, worker_number))
-    device = init_training_device(process_id, worker_number - 1, args.gpu_num_per_server)
+    device = mapping_processes_to_gpu_device_from_yaml_file(process_id, worker_number, args.gpu_mapping_file, args.gpu_mapping_key)
 
     # load data
     dataset = load_data(args, args.dataset)
