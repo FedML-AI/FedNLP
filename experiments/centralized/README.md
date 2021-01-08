@@ -8,7 +8,7 @@
 ## Transformer-based 
 
 ```bash 
-declare -a datasets=("20news" "agnews" "semeval_2010_task8" "sentiment140" "sst_2")
+declare -a datasets=("20news" "agnews" "sentiment140" "sst_2")
 for DATA_NAME in "${datasets[@]}"
 do
   CUDA_VISIBLE_DEVICES=1 \
@@ -28,6 +28,4 @@ do
       --output_dir /tmp/${DATA_NAME}_fed/ \
       --n_gpu 1 --fp16
 done
-
-
 ```

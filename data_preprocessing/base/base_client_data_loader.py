@@ -86,4 +86,7 @@ class BaseClientDataLoader(ABC):
             self.test_data = generate_client_data(data_dict, test_index_list)
 
         self.attributes = data_dict["attributes"]
+        if "target_vocab" in data_dict:
+            self.attributes["target_vocab"] = data_dict["target_vocab"]
         self.attributes["n_clients"] = partition_dict[self.partition_method]["n_clients"]
+        

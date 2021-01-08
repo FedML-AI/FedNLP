@@ -210,6 +210,7 @@ def main(args):
     train_data_num, test_data_num, train_data_global, test_data_global, \
         train_data_local_num_dict, train_data_local_dict, test_data_local_dict, \
             data_attr = load_data(args, args.dataset_name)
+    print(data_attr.keys())
     labels_map = data_attr["target_vocab"]
     num_labels = len(labels_map)
 

@@ -14,9 +14,11 @@ CI=0
 
 PROCESS_NUM=`expr $WORKER_NUM + 1`
 echo $PROCESS_NUM
- 
+HOST_FILE=experiments/distributed/transformer_exps/mpi_host_file
+hostname > HOST_FILE
+
 # CUDA_VISIBLE_DEVICES=4,5,6,7 
-mpirun -np $PROCESS_NUM -hostfile experiments/distributed/transformer_exps/mpi_host_file \
+mpirun -np $PROCESS_NUM -hostfile $HOST_FILE \
 python -m experiments.distributed.transformer_exps.text_classification_fedavg \
     --gpu_num_per_server $GPU_NUM_PER_SERVER \
     --gpu_server_num $SERVER_NUM \
