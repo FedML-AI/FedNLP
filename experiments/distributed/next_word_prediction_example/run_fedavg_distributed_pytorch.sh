@@ -2,26 +2,24 @@
 
 CLIENT_NUM=$1
 WORKER_NUM=$2
-SERVER_NUM=$3
-GPU_NUM_PER_SERVER=$4
-MODEL=$5
-DISTRIBUTION=$6
-ROUND=$7
-EPOCH=$8
-BATCH_SIZE=$9
-LR=${10}
-DATASET=${11}
-DATA_DIR=${12}
-CI=${13}
+MODEL=$3
+DISTRIBUTION=$4
+ROUND=$5
+EPOCH=$6
+BATCH_SIZE=$7
+LR=$8
+DATASET=$9
+DATA_DIR=${10}
+CI=${11}
 
 PROCESS_NUM=`expr $WORKER_NUM + 1`
 echo $PROCESS_NUM
 
 hostname > mpi_host_file
 
-mpirun -np $PROCESS_NUM -hostfile ./mpi_host_file python3 experiments/distributed/text_classification/main_fedavg.py \
-  --gpu_server_num $SERVER_NUM \
-  --gpu_num_per_server $GPU_NUM_PER_SERVER \
+mpirun -np $PROCESS_NUM -hostfile ./mpi_host_file python3 main_fedavg.py \
+  --gpu_mapping_file "gpu_mapping.yaml" \
+  --gpu_mapping_key "mapping_default" \
   --model $MODEL \
   --dataset $DATASET \
   --data_dir $DATA_DIR \
