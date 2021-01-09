@@ -3,7 +3,7 @@ An example of running centralized experiments of fed-transformer models in FedNL
 Example usage: 
 (under the root folder)
 python -m experiments.distributed.transformer_exps.text_classification_fedavg \
-    --dataset_name 20news \
+    --dataset 20news \
     --data_file data/data_loaders/20news_data_loader.pkl \
     --partition_file data/partition/20news_partition.pkl \
     --partition_method uniform \
@@ -40,6 +40,7 @@ import wandb
 # FedAVG-related
 from FedML.fedml_api.distributed.fedavg.FedAvgAPI import FedML_init, FedML_FedAvg_distributed
 from training.transformer_trainer import TransformerTrainer
+from FedML.fedml_api.distributed.utils.gpu_mapping import mapping_processes_to_gpu_device_from_yaml_file
 
 def add_args(parser):
     """
@@ -48,7 +49,7 @@ def add_args(parser):
     """
     # Data related
     parser.add_argument(
-        '--dataset_name', type=str, default='20news', metavar='N',
+        '--dataset', type=str, default='20news', metavar='N',
         help='dataset used for training')
 
     parser.add_argument(
@@ -121,12 +122,6 @@ def add_args(parser):
     parser.add_argument('--frequency_of_the_test', type=int, default=1,
                         help='the frequency of the algorithms')
 
-    parser.add_argument('--gpu_server_num', type=int, default=1,
-                        help='gpu_server_num')
-
-    parser.add_argument('--gpu_num_per_server', type=int, default=1,
-                        help='gpu_num_per_server')
-
     parser.add_argument('--ci', type=int, default=0,
                         help='CI')
 
@@ -134,25 +129,32 @@ def add_args(parser):
                         help='number of workers in a distributed cluster')
 
     parser.add_argument('--client_num_per_round', type=int, default=4, metavar='NN',
-                        help='number of workers')                    
+                        help='number of workers')           
+
+    parser.add_argument('--gpu_mapping_file', type=str, default="gpu_mapping.yaml",
+                    help='the gpu utilization file for servers and clients. If there is no \
+                    gpu_util_file, gpu will not be used.')
+
+    parser.add_argument('--gpu_mapping_key', type=str, default="mapping_default",
+                        help='the key in gpu utilization file')         
 
     args = parser.parse_args()
 
     return args
 
 
-def load_data(args, dataset_name):
+def load_data(args, dataset):
     data_loader = None
-    print("Loading dataset_name = %s" % dataset_name)
-    if dataset_name == "20news":
+    print("Loading dataset = %s" % dataset)
+    if dataset == "20news":
         data_loader_class = data_preprocessing.news_20.data_loader
-    elif dataset_name == "agnews":
+    elif dataset == "agnews":
         data_loader_class = data_preprocessing.AGNews.data_loader
-    elif dataset_name == "semeval_2010_task8":
+    elif dataset == "semeval_2010_task8":
         data_loader_class = data_preprocessing.SemEval2010Task8.data_loader
-    elif dataset_name == "sentiment140":
+    elif dataset == "sentiment140":
         data_loader_class = data_preprocessing.Sentiment140.data_loader
-    elif dataset_name == "sst_2":
+    elif dataset == "sst_2":
         data_loader_class = data_preprocessing.SST_2.data_loader
     else:
         raise Exception("No such dataset")
@@ -187,7 +189,8 @@ def load_data(args, dataset_name):
         train_data_local_num_dict, train_data_local_dict, test_data_local_dict, data_attr
 
 
-def main(args):
+
+def main(process_id, worker_number, args):
 
     # GPU arrangement: Please customize this function according your own topology.
     # The GPU server list is configured at "mpi_host_file".
@@ -198,10 +201,10 @@ def main(args):
     # machine 3: worker2, worker6;
     # machine 4: worker3, worker7;
     # Therefore, we can see that workers are assigned according to the order of machine list.
-    logging.info("process_id = %d, size = %d" % (process_id, worker_number))
-    device = init_training_device(
-        process_id, worker_number - 1, args.gpu_num_per_server)
-
+    
+    device = mapping_processes_to_gpu_device_from_yaml_file(process_id, worker_number, \
+                                                            args.gpu_mapping_file, args.gpu_mapping_key)
+    logging.info("process_id = %d, size = %d, device=%d" % (process_id, worker_number, device))
     # Set Transformer logger.
     transformers_logger = logging.getLogger("transformers")
     transformers_logger.setLevel(logging.WARNING)
@@ -209,7 +212,7 @@ def main(args):
     # Loading full data (for centralized learning)
     train_data_num, test_data_num, train_data_global, test_data_global, \
         train_data_local_num_dict, train_data_local_dict, test_data_local_dict, \
-            data_attr = load_data(args, args.dataset_name)
+            data_attr = load_data(args, args.dataset)
     print(data_attr.keys())
     labels_map = data_attr["target_vocab"]
     num_labels = len(labels_map)
@@ -262,22 +265,7 @@ def main(args):
     # print(result)
 
 
-def init_training_device(process_ID, fl_worker_num, gpu_num_per_machine):
-    # initialize the mapping from process ID to GPU ID: <process ID, GPU ID>
-    if process_ID == 0:
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        return device
-    process_gpu_dict = dict()
-    for client_index in range(fl_worker_num):
-        gpu_index = client_index % gpu_num_per_machine
-        process_gpu_dict[client_index] = gpu_index
 
-    logging.info(process_gpu_dict)
-    device = torch.device(
-        "cuda:" + str(process_gpu_dict[process_ID - 1])
-        if torch.cuda.is_available() else "cpu")
-    logging.info(device)
-    return device
 
 
 if __name__ == "__main__":
@@ -318,8 +306,8 @@ if __name__ == "__main__":
         # initialize the wandb machine learning experimental tracking platform (https://wandb.ai/automl/fednlp).
         wandb.init(
             project="fednlp", entity="automl", name="FedNLP-FedAVG-Transformer" +
-            "-TC-" + str(args.dataset_name) + "-" + str(args.model_name),
+            "-TC-" + str(args.dataset) + "-" + str(args.model_name),
             config=args)
 
     # Start training.
-    main(args)
+    main(process_id, worker_number, args)

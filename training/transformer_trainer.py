@@ -136,3 +136,10 @@ class TransformerTrainer(ModelTrainer):
         # return test_acc, test_total, test_loss
         # self.transformer_model.eval_model()
         return None
+
+    def test_on_the_server(self, test_data, device, args):
+        # TODO:
+        # return test_acc, test_total, test_loss
+        # self.transformer_model.eval_model()
+        return None
+    

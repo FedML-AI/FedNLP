@@ -28,9 +28,5 @@ mapping_config4_5:
     host1: [1, 0, 0, 1, 1, 0, 1, 1]
 
 # this is used for 4 clients and 1 server training using 6 machines, each machine has 2 GPUs inside, but you hope to use the second GPU.
-mapping_config5_6:
-    host1: [0, 1]
-    host2: [0, 1]
-    host3: [0, 1]
-    host4: [0, 1]
-    host5: [0, 1]
+mapping_ink-ron:
+    ink-ron: [3, 3, 0, 0, 0, 3, 2]

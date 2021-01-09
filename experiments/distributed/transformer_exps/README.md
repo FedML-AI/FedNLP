@@ -15,18 +15,18 @@ CI=0
 PROCESS_NUM=`expr $WORKER_NUM + 1`
 echo $PROCESS_NUM
 HOST_FILE=experiments/distributed/transformer_exps/mpi_host_file
-hostname > HOST_FILE
+hostname > $HOST_FILE
 
-# CUDA_VISIBLE_DEVICES=4,5,6,7 
+
 mpirun -np $PROCESS_NUM -hostfile $HOST_FILE \
 python -m experiments.distributed.transformer_exps.text_classification_fedavg \
-    --gpu_num_per_server $GPU_NUM_PER_SERVER \
-    --gpu_server_num $SERVER_NUM \
+    --gpu_mapping_file experiments/distributed/transformer_exps/gpu_mapping.yaml \
+    --gpu_mapping_key mapping_ink-ron \
     --client_num_in_total $CLIENT_NUM \
     --client_num_per_round $WORKER_NUM \
     --comm_round $ROUND \
     --ci $CI \
-    --dataset_name 20news \
+    --dataset 20news \
     --data_file data/data_loaders/20news_data_loader.pkl \
     --partition_file data/partition/20news_partition.pkl \
     --partition_method uniform \
@@ -41,3 +41,4 @@ python -m experiments.distributed.transformer_exps.text_classification_fedavg \
     --output_dir /tmp/20news_fedavg/ \
     --fp16
 ```
+
