@@ -14,7 +14,7 @@ python -m experiments.distributed.transformer_exps.text_classification_fedavg \
     --eval_batch_size 8 \
     --max_seq_length 128 \
     --learning_rate 1e-5 \
-    --num_train_epochs 3 \
+    --epochs 3 \
     --output_dir /tmp/20news_fed/ \
     --fp16
 """
@@ -92,7 +92,7 @@ def add_args(parser):
     parser.add_argument('--weight_decay', type=float, default=0, metavar='N',
                         help='L2 penalty')
 
-    parser.add_argument('--num_train_epochs', type=int, default=3, metavar='EP',
+    parser.add_argument('--epochs', type=int, default=3, metavar='EP',
                         help='how many epochs will be trained locally')
     parser.add_argument(
         '--gradient_accumulation_steps', type=int, default=1, metavar='EP',
@@ -204,10 +204,13 @@ def main(process_id, worker_number, args):
     
     device = mapping_processes_to_gpu_device_from_yaml_file(process_id, worker_number, \
                                                             args.gpu_mapping_file, args.gpu_mapping_key)
-    logging.info("process_id = %d, size = %d, device=%d" % (process_id, worker_number, device))
+    logging.info("process_id = %d, size = %d, device=%s" % (process_id, worker_number, str(device)))
     # Set Transformer logger.
     transformers_logger = logging.getLogger("transformers")
     transformers_logger.setLevel(logging.WARNING)
+    
+
+        
 
     # Loading full data (for centralized learning)
     train_data_num, test_data_num, train_data_global, test_data_global, \
@@ -229,7 +232,7 @@ def main(process_id, worker_number, args):
     # Create a ClassificationModel.
     transformer_model = ClassificationModel(
         args.model_type, args.model_name, num_labels=num_labels, labels_map=labels_map,
-        args={"num_train_epochs": args.num_train_epochs,
+        args={"num_train_epochs": args.epochs,
               "learning_rate": args.learning_rate,
               "gradient_accumulation_steps": args.gradient_accumulation_steps,
               "do_lower_case": args.do_lower_case,
@@ -239,10 +242,13 @@ def main(process_id, worker_number, args):
               "max_seq_length": args.max_seq_length,
               "train_batch_size": args.train_batch_size,
               "eval_batch_size": args.eval_batch_size,
+              "dataloader_num_workers": 1,
+              "thread_count": 1, 
+              "use_multiprocessing": False,
               "fp16": args.fp16,
               "n_gpu": args.n_gpu,
               "output_dir": args.output_dir,
-              "wandb_project": "fednlp", 
+            #   "wandb_project": "fednlp", 
               })
 
     # Strat training.
@@ -287,11 +293,9 @@ if __name__ == "__main__":
     comm, process_id, worker_number = FedML_init()
 
     # customize the log format
-    logging.getLogger().setLevel(logging.INFO)
-    logging.basicConfig(
-        level=logging.INFO, format=str(process_id) +
-        ' - %(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
-        datefmt='%a, %d %b %Y %H:%M:%S')
+    logging.basicConfig(level=logging.INFO,
+                    format='%(processName)s %(asctime)s.%(msecs)03d - {%(module)s.py (%(lineno)d)} - %(funcName)s(): %(message)s',
+                    datefmt='%Y-%m-%d,%H:%M:%S')
 
     logging.info("start")
     hostname = socket.gethostname()

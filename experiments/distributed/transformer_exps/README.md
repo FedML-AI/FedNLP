@@ -3,20 +3,20 @@ pip install setproctitle mpi4py
 pip install paho-mqtt 
 ```
 
+# FedAvg for Transformer-based Text Classifcation
 
 ```bash
 CLIENT_NUM=10
 WORKER_NUM=10
 SERVER_NUM=1
 GPU_NUM_PER_SERVER=4
-ROUND=500
+ROUND=5
 CI=0
 
 PROCESS_NUM=`expr $WORKER_NUM + 1`
 echo $PROCESS_NUM
 HOST_FILE=experiments/distributed/transformer_exps/mpi_host_file
 hostname > $HOST_FILE
-
 
 mpirun -np $PROCESS_NUM -hostfile $HOST_FILE \
 python -m experiments.distributed.transformer_exps.text_classification_fedavg \
@@ -37,7 +37,7 @@ python -m experiments.distributed.transformer_exps.text_classification_fedavg \
     --eval_batch_size 8 \
     --max_seq_length 128 \
     --learning_rate 1e-5 \
-    --num_train_epochs 3 \
+    --epochs 1 \
     --output_dir /tmp/20news_fedavg/ \
     --fp16
 ```
