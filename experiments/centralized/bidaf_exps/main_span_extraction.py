@@ -15,6 +15,7 @@ import data_preprocessing.SQuAD_1_1.data_loader
 from data_preprocessing.base.utils import *
 from data_preprocessing.base.globals import *
 from model.bidaf import BIDAF_SpanExtraction
+from experiments.centralized.bidaf_exps.ema import EMA
 
 
 def add_args(parser):
@@ -41,7 +42,7 @@ def add_args(parser):
     parser.add_argument('--hidden_size', type=int, default=100, metavar='H',
                         help='size of hidden layers')
 
-    parser.add_argument('--keep_prob', type=float, default=0.2, metavar='D',
+    parser.add_argument('--dropout', type=float, default=0.2, metavar='D',
                         help="dropout rate")
 
     parser.add_argument('--batch_size', type=int, default=60, metavar='B',
@@ -60,15 +61,9 @@ def add_args(parser):
 
     parser.add_argument('--char_emb_len', type=int, default=8, metavar="EL", help='dimension of character embedding')
 
-    parser.add_argument('--use_char_emb', type=bool, default=True, metavar="UCE", help='whether use char embedding')
+    parser.add_argument('--word_emb_name', type=str, default="glove", metavar="WEN", help='word embedding name')
 
-    parser.add_argument('--use_word_emb', type=bool, default=True, metavar="UWE", help='whether use word embedding')
-
-    parser.add_argument('--use_glove_for_unk', type=bool, default=True, metavar="UCE", help='whether use glove embedding for unkown tokens')
-
-    parser.add_argument('--glove_emb_file', type=str, default="data/pretrained/glove.6B.100d.txt", metavar="EF", help='character embedding file')
-    
-    parser.add_argument('--use_highway_network', type=bool, default=True, metavar="UCE", help='whether use highway network')
+    parser.add_argument('--word_emb_file', type=str, default="data/pretrained/glove.6B.100d.txt", metavar="EF", help='word embedding file')
 
     parser.add_argument('--highway_num_layers', type=int, default=2, metavar="HNL", help='the number of layers in highway network')
 
@@ -76,9 +71,9 @@ def add_args(parser):
 
     parser.add_argument('--filter_heights', type=str, default="5", metavar="FH", help='Filter heights of Char-CNN, separated by commas [5]')
 
-    parser.add_argument('--share_cnn_weights', type=bool, default=True, metavar="SCW", help='whether share weights in CNN')
+    parser.add_argument('--min_token_freq', type=int, default=10, metavar="MTF", help='Minimum token frequency')
 
-    parser.add_argument('--share_lstm_weights', type=bool, default=True, metavar="SLW", help='whether share weights in LSTM')
+    parser.add_argument('--min_char_freq', type=int, default=50, metavar="MCF", help='Minimum character frequency')
 
     parser.add_argument('--char_out_size', type=int, default=100, metavar="COS", help='char-CNN output size')
 
@@ -86,11 +81,13 @@ def add_args(parser):
                         help='adam, adadelta')
 
     parser.add_argument('--lr', type=float, default=0.5, metavar='LR',
-                        help='learning rate (default: 0.001)')
+                        help='learning rate (default: 0.5)')
 
     parser.add_argument('--wd', help='weight decay parameter;', metavar="WD", type=float, default=0)
 
-    parser.add_argument('--epochs', type=int, default=12, metavar='EP',
+    parser.add_argument('--decay_rate', type=float, default=0.999, metavar='DR', help='decay rate for learning rate')
+
+    parser.add_argument('--epochs', type=int, default=50, metavar='EP',
                         help='how many epochs will be trained locally')
 
     parser.add_argument('--device', type=str, default="cuda:0", metavar="DV", help='gpu device for training')
@@ -129,6 +126,7 @@ def preprocess_data(args, dataset):
     for batch_data in train_batch_data_list:
         token_x.extend(batch_data["tokenized_context_X"])
         token_x.extend(batch_data["tokenized_question_X"])
+    token_freq_vocab = build_freq_vocab(token_x)
     token_vocab = build_vocab(token_x)
 
     char_x = []
@@ -137,36 +135,40 @@ def preprocess_data(args, dataset):
             char_x.extend(sent)
         for sent in batch_data["char_question_X"]:
             char_x.extend(sent)
-    char_vocab = build_vocab(char_x)
+    char_freq_vocab = build_freq_vocab(char_x)
 
-    addtional_word_emb_weights = None
-    additional_token_vocab = None
-    if args.use_glove_for_unk:
-        logging.info("load word embedding glove")
-        addtional_token_vocab, addtional_word_emb_weights = load_glove_embedding(os.path.abspath(args.glove_emb_file), 
-        None, args.word_emb_len)
-        addtional_word_emb_weights = torch.FloatTensor(addtional_word_emb_weights)
+    char_vocab = dict()
+    for char, freq in char_freq_vocab.items():
+        if freq > args.min_char_freq:
+            char_vocab[char] = len(char_vocab)
+    char_vocab[UNK_TOKEN] = len(char_vocab)
+    char_vocab[PAD_TOKEN] = len(char_vocab)
+
+    args.char_vocab_size = len(char_vocab)
+
+    word_emb_weights = None
+    if args.word_emb_name:
+        logging.info("load word embedding %s" % args.word_emb_name)
+        token_vocab, word_emb_weights = load_glove_embedding(os.path.abspath(args.word_emb_file), 
+        token_vocab, args.word_emb_len)
+        word_emb_weights = torch.tensor(word_emb_weights, dtype=torch.float32)
+    
+    new_token_vocab = dict()
+    for token, freq in token_freq_vocab.items():
+        if token not in token_vocab and freq > args.min_token_freq:
+            new_token_vocab[token] = len(new_token_vocab)
+    
+    args.token_vocab_size = len(new_token_vocab)
+
+    for token, idx in token_vocab.items():
+        new_token_vocab[token] = idx + args.token_vocab_size
+    
+    token_vocab = new_token_vocab
 
     new_train_batch_data_list = list()
     new_test_batch_data_list = list()
 
-    def _token_to_idx(x, test):
-        idx_x = []
-        for single_x in x:
-            new_single_x = []
-            for token in single_x:
-                if token in token_vocab:
-                    new_single_x.append(token_vocab[token])
-                else:
-                    if test and args.use_glove_for_unk:
-                        if token in addtional_token_vocab:
-                            new_single_x.append(addtional_token_vocab[token] + len(token_vocab))
-                            continue
-                    new_single_x.append(token_vocab[UNK_TOKEN])
-            idx_x.append(new_single_x)
-        return idx_x
-
-    def process_batch_data_list(batch_data_list, new_batch_data_list, test):
+    def process_batch_data_list(batch_data_list, new_batch_data_list):
         for batch_data in batch_data_list:
             new_batch_data = dict()
             batch_size = len(batch_data["context_X"])
@@ -195,9 +197,9 @@ def preprocess_data(args, dataset):
             padding_question_tokens, question_lens = padding_data(new_batch_data["q"], args.max_ques_len)
             padding_context_chars, context_word_lens = padding_char_data(new_batch_data["cx"], args.max_sent_len, args.max_word_len)
             padding_question_chars, question_word_lens = padding_char_data(new_batch_data["cq"], args.max_ques_len, args.max_word_len)
-            new_batch_data["x"] = np.array(_token_to_idx(padding_context_tokens, test))
+            new_batch_data["x"] = np.array(token_to_idx(padding_context_tokens, token_vocab))
             new_batch_data["cx"] = np.array(char_to_idx(padding_context_chars, char_vocab))
-            new_batch_data["q"] = np.array(_token_to_idx(padding_question_tokens, test))
+            new_batch_data["q"] = np.array(token_to_idx(padding_question_tokens, token_vocab))
             new_batch_data["cq"] = np.array(char_to_idx(padding_question_chars, char_vocab))
             for j, context_len in enumerate(context_lens):
                 new_batch_data["x_mask"][j, 0:context_len] = True 
@@ -206,11 +208,11 @@ def preprocess_data(args, dataset):
             new_batch_data_list.append(new_batch_data)
 
 
-    process_batch_data_list(train_batch_data_list, new_train_batch_data_list, False)
-    process_batch_data_list(test_batch_data_list, new_test_batch_data_list, True)
+    process_batch_data_list(train_batch_data_list, new_train_batch_data_list)
+    process_batch_data_list(test_batch_data_list, new_test_batch_data_list)
 
-    return [new_train_batch_data_list, new_test_batch_data_list, token_vocab, char_vocab, additional_token_vocab, 
-    addtional_word_emb_weights, attributes]
+    return [new_train_batch_data_list, new_test_batch_data_list, token_vocab, char_vocab, 
+    word_emb_weights, attributes]
 
 def data_filter(data, args):
     removed_indices = list()
@@ -225,24 +227,28 @@ def data_filter(data, args):
         
 
 
-def create_model(args, model_name, token_vocab_size, char_vocab_size, glove_emb_weights):
+def create_model(args, model_name):
     logging.info("create_model. model_name = %s, token_vocab_size = %s, char_vocab_size = %s"
-          % (model_name, token_vocab_size, char_vocab_size))
+          % (model_name, args.token_vocab_size, args.char_vocab_size))
     model = None
     if model_name == "bidaf":
-        model = BIDAF_SpanExtraction(char_vocab_size, token_vocab_size, args.char_emb_len, args.word_emb_len,
-                                          args.out_channel_dims, args.filter_heights, args.share_cnn_weights,
-                                          args.max_word_len, args.char_out_size, args.keep_prob, args.share_lstm_weights, args.hidden_size,
-                                          args.use_char_emb, args.use_word_emb, args.use_glove_for_unk, args.use_highway_network, args.highway_num_layers, 
-                                          glove_emb_weights)
+        model = BIDAF_SpanExtraction(args.char_vocab_size, args.token_vocab_size, args.char_emb_len, args.word_emb_len,
+                                          args.out_channel_dims, args.filter_heights,
+                                          args.max_word_len, args.char_out_size, args.dropout, args.hidden_size, 
+                                          args.highway_num_layers)
     else:
         raise Exception("No such model")
     return model
 
 
-def FedNLP_span_extraction_centralized(model, train_data, test_data, args):
+def FedNLP_span_extraction_centralized(model, train_data, test_data, glove_emb_weights, args):
     if args.device is not None:
         model = model.to(device=args.device)
+
+    ema = EMA(args.decay_rate)
+    for name, param in model.named_parameters():
+        if param.requires_grad:
+            ema.register(name, param.data)
 
     optimizer = None
     if args.optimizer == "adadelta":
@@ -251,12 +257,11 @@ def FedNLP_span_extraction_centralized(model, train_data, test_data, args):
         optimizer = Adam(filter(lambda x: x.requires_grad, model.parameters()), lr=args.lr, weight_decay=args.wd)
     else:
         raise Exception("No such optimizer")
-    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer=optimizer, gamma=0.999)
     loss_func = F.cross_entropy
     max_eval_em = 0.0
     for epoch in range(args.epochs):
-        train_loss, train_em = train_model(model, train_data, loss_func, optimizer, epoch, args)
-        eval_loss, eval_em = eval_model(model, test_data, loss_func, args)
+        train_loss, train_em = train_model(model, train_data, glove_emb_weights, loss_func, optimizer, epoch, ema, args)
+        eval_loss, eval_em = eval_model(model, test_data, glove_emb_weights, loss_func, ema, args)
         max_eval_em = max(max_eval_em, eval_em)
         logging.info("Epoch: %d, Train loss: %.4f, Train Exact Match: %.2f, Eval loss: %.4f, Eval Exact Match: %.2f" % (epoch + 1,
                                                                                                            train_loss,
@@ -265,22 +270,20 @@ def FedNLP_span_extraction_centralized(model, train_data, test_data, args):
                                                                                                            eval_em))
         wandb.log({"Epoch": epoch + 1, "Avg Training loss": train_loss, "Avg Training Exact Match:": train_em,
                    "Avg Eval loss": eval_loss, "Avg Eval Exact Match": eval_em})
-        scheduler.step()
     logging.info("Maximum Eval Exact Match: %.2f" % max_eval_em)
 
-def build_loss(logits, logits2, y, y2, q_mask, loss_func):
-    loss_mask = torch.max(q_mask.float(), dim=1)[0]
-    losses = loss_func(logits, torch.argmax(y.long(), 1))
-    ce_loss = torch.mean(loss_mask * losses)
+def build_loss(logits, logits2, y, y2, loss_func):
+    ce_loss = loss_func(logits, torch.argmax(y.long(), 1))
     ce_loss2 = torch.mean(loss_func(logits2, torch.argmax(y2.long(), 1)))
     return ce_loss + ce_loss2
 
 
-def train_model(model, train_data, loss_func, optimizer, epoch, args):
+def train_model(model, train_data, glove_emb_weights, loss_func, optimizer, epoch, ema, args):
     total_epoch_loss = 0
     total_epoch_em = 0
     model.train()
     steps = 0
+    loss = 0
     for batch_data in train_data:
         x = torch.tensor(batch_data["x"])
         cx = torch.tensor(batch_data["cx"])
@@ -299,32 +302,45 @@ def train_model(model, train_data, loss_func, optimizer, epoch, args):
             q_mask = q_mask.to(device=args.device)
             y = y.to(device=args.device)
             y2 = y2.to(device=args.device)
+            glove_emb_weights = glove_emb_weights.to(device=args.device)
         optimizer.zero_grad()
-        logits, logits2 = model(x, cx, x_mask, q, cq, q_mask, y, y2, args.device)
-        temp1 = torch.argmax(logits, 1)
-        temp2 = torch.argmax(y.long(), 1)
-        temp3 = torch.argmax(logits2, 1)
-        temp4 = torch.argmax(y2.long(), 1)
-        matched = [1 for l1, y1, l2, y2 in zip(torch.argmax(logits, 1), torch.argmax(y.long(), 1), torch.argmax(logits2, 1), torch.argmax(y2.long(), 1)) if l1 == y1 and l2 == y2]
+        logits, logits2 = model(x, cx, x_mask, q, cq, q_mask, y, y2, glove_emb_weights, args.device)
+        x_mask_float = x_mask.float()
+        matched = [1 for l1, y1, l2, y2 in zip(torch.argmax(logits * x_mask_float, 1), torch.argmax(y.long(), 1), 
+        torch.argmax(logits2 * x_mask_float, 1), torch.argmax(y2.long(), 1)) if l1 == y1 and l2 == y2]
         num_corrects = sum(matched)
         em = 100.0 * num_corrects / x.size()[0]
-        loss = build_loss(logits, logits2, y, y2, q_mask, loss_func)
+        batch_loss = build_loss(logits, logits2, y, y2, loss_func)
+        loss += batch_loss
         loss.backward()
         optimizer.step()
+
+        for name, param in model.named_parameters():
+            if param.requires_grad:
+                ema.update(name, param.data)
+
         steps += 1
         if steps % 100 == 0:
-            wandb.log({"Training loss": loss.item(), "Exact Match:": em})
+            wandb.log({"Training loss": loss.item(), "Training Exact Match:": em})
             logging.info("Epoch: %d, Training loss: %.4f, Training Exact Match: %.2f" % (epoch + 1, loss.item(), em))
+            loss = 0
         
         total_epoch_em += em
         total_epoch_loss += loss.item()
 
     return total_epoch_loss / len(train_data), total_epoch_em / len(train_data)
 
-def eval_model(model, test_data, loss_func, args):
+def eval_model(model, test_data, glove_emb_weights, loss_func, ema, args):
     total_epoch_loss = 0
     total_epoch_em = 0
     model.eval()
+
+    backup_params = EMA(0)
+    for name, param in model.named_parameters():
+        if param.requires_grad:
+            backup_params.register(name, param.data)
+            param.data.copy_(ema.get(name))
+
     for batch_data in test_data:
         x = torch.tensor(batch_data["x"])
         cx = torch.tensor(batch_data["cx"])
@@ -343,14 +359,21 @@ def eval_model(model, test_data, loss_func, args):
             q_mask = q_mask.to(device=args.device)
             y = y.to(device=args.device)
             y2 = y2.to(device=args.device)
-        logits, logits2 = model(x, cx, x_mask, q, cq, q_mask, y, y2, args.device)
-        matched = [1 for l1, y1, l2, y2 in zip(torch.argmax(logits, 1), torch.argmax(y.long(), 1), torch.argmax(logits2, 1), torch.argmax(y2.long(), 1)) if l1 == y1 and l2 == y2]
+            glove_emb_weights = glove_emb_weights.to(device=args.device)
+        logits, logits2 = model(x, cx, x_mask, q, cq, q_mask, y, y2, glove_emb_weights, args.device)
+        x_mask_float = x_mask.float()
+        matched = [1 for l1, y1, l2, y2 in zip(torch.argmax(logits * x_mask_float, 1), torch.argmax(y.long(), 1), 
+        torch.argmax(logits2 * x_mask_float, 1), torch.argmax(y2.long(), 1)) if l1 == y1 and l2 == y2]
         num_corrects = sum(matched)
         em = 100.0 * num_corrects / x.size()[0]
-        loss = build_loss(logits, logits2, y, y2, q_mask, loss_func)
+        loss = build_loss(logits, logits2, y, y2, loss_func)
         
         total_epoch_em += em
         total_epoch_loss += loss.item()
+    
+    for name, param in model.named_parameters():
+        if param.requires_grad:
+            param.data.copy_(backup_params.get(name))
     
     return total_epoch_loss / len(test_data), total_epoch_em / len(test_data)
 
@@ -396,11 +419,19 @@ if __name__ == "__main__":
     dataset = preprocess_data(args, dataset)
 
     # create model
-    model = create_model(args, args.model, len(dataset[2]), len(dataset[3]), dataset[5])
+    model = create_model(args, args.model)
+
+    total_params = 0
+    for name, param in model.named_parameters():
+        print(name ,param.size())
+        if param.requires_grad:
+            total_params += param.numel()
+    print("total parameters:", total_params)
+
 
     if not args.device:
         if torch.cuda.is_available():
             args.device = 'cuda'
 
-    FedNLP_span_extraction_centralized(model, dataset[0], dataset[1], args)
+    FedNLP_span_extraction_centralized(model, dataset[0], dataset[1], dataset[4], args)
     logging.info("end")
