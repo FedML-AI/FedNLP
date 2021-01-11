@@ -10,13 +10,16 @@ from model.fed_transformers.classification.classification_utils import (
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
 import warnings
 import os
+import sklearn
 
 class TransformerTrainer(ModelTrainer):
 
-    def __init__(self, transformer_model):
+    def __init__(self, transformer_model, task_formulation="classification"):
         self.transformer_model = transformer_model
         self.model = self.transformer_model.model
         self.id = 0
+        assert task_formulation in ["classification", "sequence_tagging", "reading_comprehension", "seq2seq"]
+        self.task_formulation = task_formulation
         
     def get_model_params(self):
         return self.model.cpu().state_dict()
@@ -24,33 +27,51 @@ class TransformerTrainer(ModelTrainer):
     def set_model_params(self, model_parameters):
         self.model.load_state_dict(model_parameters)
 
+    def flatten_classification_data(self, train_data):
+        labels_map = self.transformer_model.labels_map
+        train_data_flat = dict(X=[], Y=[])
+        for item in train_data: 
+            train_data_flat["X"] += [t for t in item["X"]]
+            train_data_flat["Y"] += [t for t in item["Y"]]
+        train_data_flat = [(x, labels_map[y])
+                  for x, y in zip(train_data_flat["X"], train_data_flat["Y"])]
+        return train_data_flat
 
     def train(self, train_data, device, args):
         self.device = device
         self.transformer_model.device = device
         self.transformer_model._move_model_to_device() 
-        labels_map = self.transformer_model.labels_map
-        train_data_flat = dict(X=[], Y=[])
-
-        for item in train_data: 
-            train_data_flat["X"] += [t for t in item["X"]]
-            train_data_flat["Y"] += [t for t in item["Y"]]
-            break
-        train_data = [(x, labels_map[y])
-                  for x, y in zip(train_data_flat["X"], train_data_flat["Y"])]
-        train_df = pd.DataFrame(train_data)
-        global_step, training_details = self.transformer_model.train_model(train_df=train_df, client_desc="Client(%d)"%self.id)
-
-        # after the first round, we should turn off the caching for speeding up
-        self.transformer_model.args.reprocess_input_data = False
+        
+        if self.task_formulation == "classification":
+            train_data_flat = self.flatten_classification_data(train_data)
+            logging.info("Client(%d)"%self.id + ":| Local Train Data Size = %d" % (len(train_data_flat)))
+            train_df = pd.DataFrame(train_data_flat)
+            global_step, training_details = self.transformer_model.train_model(train_df=train_df, client_desc="Client(%d)"%self.id)
+        
+        # self.transformer_model.args.reprocess_input_data = False
 
 
     def test(self, test_data, device, args=None):
-        pass
+        if self.task_formulation == "classification":
+            test_data_flat = self.flatten_classification_data(test_data)
+            logging.info("Client(%d)"%self.id + ":| Local Test Data Size = %d" % (len(test_data_flat)))
+            test_df = pd.DataFrame(test_data_flat)
+            result, model_outputs, wrong_predictions = self.transformer_model.eval_model(test_df, acc=sklearn.metrics.accuracy_score) 
+            logging.info("Client(%d)"%self.id + ":| Local Test Evaluation Result =%s" % (str(result)))
+
 
     def test_on_the_server(self, train_data_local_dict, test_data_local_dict, device, args=None):
-        # TODO:
-        # return test_acc, test_total, test_loss
-        # self.transformer_model.eval_model()
+        # TODO:        
+        # result, model_outputs, wrong_predictions = self.transformer_model.eval_model(test_df, acc=sklearn.metrics.accuracy_score) 
+        global_test_data = []
+        for idx, local_test_data in test_data_local_dict.items():
+            global_test_data += local_test_data
+        
+        if self.task_formulation == "classification":
+            test_data_flat = self.flatten_classification_data(global_test_data)
+            logging.info("Client(%d)"%self.id + ":| Global Test Data Size = %d" % (len(test_data_flat)))
+            test_df = pd.DataFrame(test_data_flat)
+            result, model_outputs, wrong_predictions = self.transformer_model.eval_model(test_df, acc=sklearn.metrics.accuracy_score) 
+            logging.info("Client(%d)"%self.id + ":| Global Test Evaluation Result =%s" % (str(result)))
         return True
     

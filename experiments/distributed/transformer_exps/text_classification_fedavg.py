@@ -208,17 +208,17 @@ def main(process_id, worker_number, args):
     # Set Transformer logger.
     transformers_logger = logging.getLogger("transformers")
     transformers_logger.setLevel(logging.WARNING)
-    
-
-        
 
     # Loading full data (for centralized learning)
     train_data_num, test_data_num, train_data_global, test_data_global, \
         train_data_local_num_dict, train_data_local_dict, test_data_local_dict, \
-            data_attr = load_data(args, args.dataset)
-    print(data_attr.keys())
+            data_attr = load_data(args, args.dataset) 
+
     labels_map = data_attr["target_vocab"]
     num_labels = len(labels_map)
+
+    logging.info("num_clients = %d, train_data_num = %d, test_data_num = %d, num_labels = %d" % (data_attr["n_clients"], train_data_num, test_data_num, num_labels))
+
 
     # Transform data to DataFrame.
     # train_data = [(x, labels_map[y])
@@ -254,7 +254,7 @@ def main(process_id, worker_number, args):
     # Strat training.
     # model.train_model(train_df)
 
-    model_trainer = TransformerTrainer(transformer_model=transformer_model)
+    model_trainer = TransformerTrainer(transformer_model=transformer_model, task_formulation="classification")
 
     # start FedAvg algorithm
     # for distributed algorithm, train_data_gloabl and test_data_global are required

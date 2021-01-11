@@ -157,9 +157,8 @@ def main(args):
 
     # Evaluate the model
     result, model_outputs, wrong_predictions = model.eval_model(
-        test_df, acc=sklearn.metrics.accuracy_score)
-
-    print(result)
+        test_df, acc=sklearn.metrics.accuracy_score) 
+    logging.info("eval_res=%s" % (str(result)))
 
 
 if __name__ == "__main__":

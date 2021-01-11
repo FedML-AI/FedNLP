@@ -420,6 +420,7 @@ class ClassificationModel:
 
         model = self.model
         args = self.args
+        kwargs["client_desc"] = kwargs.get("client_desc", "")
 
         tb_writer = SummaryWriter(logdir=args.tensorboard_dir)
 
@@ -921,7 +922,7 @@ class ClassificationModel:
         if self.args.fp16:
             from torch.cuda import amp
 
-        for i, batch in enumerate(tqdm(eval_dataloader, disable=args.silent or silent, desc="Running Evaluation")):
+        for i, batch in enumerate(tqdm(eval_dataloader, disable=args.silent or silent, desc="{kwargs['client_desc']} :| Running Evaluation")):
             # batch = tuple(t.to(device) for t in batch)
 
             with torch.no_grad():
@@ -1282,7 +1283,7 @@ class ClassificationModel:
                 model.eval()
                 preds = None
                 out_label_ids = None
-                for i, batch in enumerate(tqdm(eval_dataloader, disable=args.silent, desc="Running Prediction")):
+                for i, batch in enumerate(tqdm(eval_dataloader, disable=args.silent, desc="{kwargs['client_desc']} :| Running Prediction")):
                     # batch = tuple(t.to(device) for t in batch)
                     with torch.no_grad():
                         inputs = self._get_inputs_dict(batch)
