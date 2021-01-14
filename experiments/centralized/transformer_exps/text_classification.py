@@ -3,7 +3,7 @@ An example of running centralized experiments of fed-transformer models in FedNL
 Example usage: 
 (under the root folder)
 python -m experiments.centralized.transformer_exps.text_classification \
-    --dataset_name 20news \
+    --dataset 20news \
     --data_file data/data_loaders/20news_data_loader.pkl \
     --partition_file data/partition/20news_partition.pkl \
     --partition_method uniform \
@@ -38,7 +38,7 @@ def add_args(parser):
     return a parser added with args required by fit
     """
     # Data related
-    parser.add_argument('--dataset_name', type=str, default='20news', metavar='N',
+    parser.add_argument('--dataset', type=str, default='20news', metavar='N',
                         help='dataset used for training')
 
     parser.add_argument('--data_file', type=str, default='data/data_loaders/20news_data_loader.pkl',
@@ -94,22 +94,22 @@ def add_args(parser):
     return args
 
 
-def load_data(args, dataset_name):
+def load_data(args, dataset):
     data_loader = None
-    print("Loading dataset_name = %s" % dataset_name)
-    if dataset_name == "20news":
+    print("Loading dataset = %s" % dataset)
+    if dataset == "20news":
         data_loader = data_preprocessing.news_20.data_loader.ClientDataLoader(
             args.data_file, args.partition_file, partition_method=args.partition_method, tokenize=False)
-    elif dataset_name == "agnews":
+    elif dataset == "agnews":
         data_loader = data_preprocessing.AGNews.data_loader.ClientDataLoader(
             args.data_file, args.partition_file, partition_method=args.partition_method, tokenize=False)
-    elif dataset_name == "semeval_2010_task8":
+    elif dataset == "semeval_2010_task8":
         data_loader = data_preprocessing.SemEval2010Task8.data_loader.ClientDataLoader(
             args.data_file, args.partition_file, partition_method=args.partition_method, tokenize=False)
-    elif dataset_name == "sentiment140":
+    elif dataset == "sentiment140":
         data_loader = data_preprocessing.Sentiment140.data_loader.ClientDataLoader(
             args.data_file, args.partition_file, partition_method=args.partition_method, tokenize=False)
-    elif dataset_name == "sst_2":
+    elif dataset == "sst_2":
         data_loader = data_preprocessing.SST_2.data_loader.ClientDataLoader(
             args.data_file, args.partition_file, partition_method=args.partition_method, tokenize=False)
     else:
@@ -123,7 +123,7 @@ def main(args):
     transformers_logger.setLevel(logging.WARNING)
 
     # Loading full data (for centralized learning)
-    train_data, test_data, data_attr = load_data(args, args.dataset_name)
+    train_data, test_data, data_attr = load_data(args, args.dataset)
     labels_map = data_attr["target_vocab"]
     num_labels = len(labels_map)
 
@@ -170,7 +170,7 @@ if __name__ == "__main__":
     wandb.init(
         project="fednlp",
         entity="automl",
-        name="FedNLP-Centralized" + "-TC-" + str(args.dataset_name) + "-" + str(args.model_name),
+        name="FedNLP-Centralized" + "-TC-" + str(args.dataset) + "-" + str(args.model_name),
         config=args)
     # Start training.
     main(args)

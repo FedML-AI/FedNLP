@@ -13,7 +13,7 @@ for DATA_NAME in "${datasets[@]}"
 do
   CUDA_VISIBLE_DEVICES=1 \
   python -m experiments.centralized.transformer_exps.text_classification \
-      --dataset_name ${DATA_NAME} \
+      --dataset ${DATA_NAME} \
       --data_file data/data_loaders/${DATA_NAME}_data_loader.pkl \
       --partition_file data/partition/${DATA_NAME}_partition.pkl \
       --partition_method uniform \
@@ -34,7 +34,7 @@ done
 
 ```bash
 CUDA_VISIBLE_DEVICES=2 python -m experiments.centralized.transformer_exps.question_answering \
-    --dataset_name squad_1.1 \
+    --dataset squad_1.1 \
     --data_file data/data_loaders/squad_1.1_data_loader.pkl \
     --partition_file data/partition/squad_1.1_partition.pkl \
     --partition_method uniform \

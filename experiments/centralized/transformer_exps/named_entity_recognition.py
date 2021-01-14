@@ -2,7 +2,7 @@
 An example of running centralized experiments of fed-transformer models in FedNLP.
 Example usage: 
 (under the root folder)
-CUDA_VISIBLE_DEVICES=2 python -m experiments.centralized.transformer_exps.question_answering \
+CUDA_VISIBLE_DEVICES=2 python -m experiments.centralized.transformer_exps.named_entity_recognition \
     --dataset squad_1.1 \
     --data_file data/data_loaders/squad_1.1_data_loader.pkl \
     --partition_file data/partition/squad_1.1_partition.pkl \
@@ -18,7 +18,8 @@ CUDA_VISIBLE_DEVICES=2 python -m experiments.centralized.transformer_exps.questi
     --output_dir /tmp/squad_1.1/ \
     --fp16
 """
-import data_preprocessing.SQuAD_1_1.data_loader
+import data_preprocessing.W_NUT.data_loader
+import data_preprocessing.wikigold.data_loader
 from data_preprocessing.base.utils import *
 from model.fed_transformers.question_answering import QuestionAnsweringModel
 import pandas as pd
@@ -90,10 +91,10 @@ def add_args(parser):
     return args
 
 
-def load_data(args, dataset):
+def load_data(args, dataset_name):
     data_loader = None
-    print("Loading dataset = %s" % dataset)
-    assert dataset in ["squad_1.1"]
+    print("Loading dataset_name = %s" % dataset_name)
+    assert dataset_name in ["squad_1.1"]
     data_loader = data_preprocessing.SQuAD_1_1.data_loader.ClientDataLoader(
         args.data_file, args.partition_file, partition_method=args.partition_method, tokenize=False) 
     return data_loader.get_train_batch_data(), data_loader.get_test_batch_data(), data_loader.get_attributes()
@@ -104,7 +105,7 @@ def main(args):
     transformers_logger.setLevel(logging.WARNING)
 
     # Loading full data (for centralized learning)
-    train_data, test_data, _ = load_data(args, args.dataset) 
+    train_data, test_data, _ = load_data(args, args.dataset_name) 
     
     train_data = data_preprocessing.SQuAD_1_1.data_loader.reformat_squad(train_data, cut_off=None)
     test_data = data_preprocessing.SQuAD_1_1.data_loader.reformat_squad(test_data, cut_off=None)  
@@ -145,7 +146,7 @@ if __name__ == "__main__":
     wandb.init(
         project="fednlp",
         entity="automl",
-        name="FedNLP-Centralized" + "-QA-" + str(args.dataset) + "-" + str(args.model_name),
+        name="FedNLP-Centralized" + "-NER-" + str(args.dataset_name) + "-" + str(args.model_name),
         config=args)
     # Start training.
     main(args)
