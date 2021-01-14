@@ -11,6 +11,7 @@ from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, Tenso
 import warnings
 import os
 import sklearn
+import data_preprocessing.SQuAD_1_1.data_loader
 
 class TransformerTrainer(ModelTrainer):
 
@@ -18,7 +19,7 @@ class TransformerTrainer(ModelTrainer):
         self.transformer_model = transformer_model
         self.model = self.transformer_model.model
         self.id = 0
-        assert task_formulation in ["classification", "sequence_tagging", "reading_comprehension", "seq2seq"]
+        assert task_formulation in ["classification", "sequence_tagging", "question_answering", "seq2seq"]
         self.task_formulation = task_formulation
         
     def get_model_params(self):
@@ -47,6 +48,12 @@ class TransformerTrainer(ModelTrainer):
             logging.info("Client(%d)"%self.id + ":| Local Train Data Size = %d" % (len(train_data_flat)))
             train_df = pd.DataFrame(train_data_flat)
             global_step, training_details = self.transformer_model.train_model(train_df=train_df, client_desc="Client(%d)"%self.id)
+        elif self.task_formulation == "question_answering":
+            train_data_flat = self.flatten_classification_data(train_data)
+            train_data_flat = data_preprocessing.SQuAD_1_1.data_loader.get_normal_format(train_data_flat)
+            logging.info("Client(%d)"%self.id + ":| Local Train Data Size = %d" % (len(train_data_flat)))
+            train_df = pd.DataFrame(train_data_flat)
+            global_step, training_details = self.transformer_model.train_model(train_data=train_data_flat, client_desc="Client(%d)"%self.id)
         
         # self.transformer_model.args.reprocess_input_data = False
 
@@ -58,7 +65,8 @@ class TransformerTrainer(ModelTrainer):
             test_df = pd.DataFrame(test_data_flat)
             result, model_outputs, wrong_predictions = self.transformer_model.eval_model(test_df, acc=sklearn.metrics.accuracy_score) 
             logging.info("Client(%d)"%self.id + ":| Local Test Evaluation Result =%s" % (str(result)))
-
+        elif self.task_formulation == "question_answering":
+            pass
 
     def test_on_the_server(self, train_data_local_dict, test_data_local_dict, device, args=None):
         # TODO:        
@@ -73,5 +81,7 @@ class TransformerTrainer(ModelTrainer):
             test_df = pd.DataFrame(test_data_flat)
             result, model_outputs, wrong_predictions = self.transformer_model.eval_model(test_df, acc=sklearn.metrics.accuracy_score) 
             logging.info("Client(%d)"%self.id + ":| Global Test Evaluation Result =%s" % (str(result)))
+        elif self.task_formulation == "question_answering":
+            pass
         return True
     

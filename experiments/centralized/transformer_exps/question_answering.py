@@ -2,7 +2,7 @@
 An example of running centralized experiments of fed-transformer models in FedNLP.
 Example usage: 
 (under the root folder)
-CUDA_VISIBLE_DEVICES=2 python -m experiments.centralized.transformer_exps.reading_comprehension \
+CUDA_VISIBLE_DEVICES=2 python -m experiments.centralized.transformer_exps.question_answering \
     --dataset_name squad_1.1 \
     --data_file data/data_loaders/squad_1.1_data_loader.pkl \
     --partition_file data/partition/squad_1.1_partition.pkl \
@@ -98,23 +98,6 @@ def load_data(args, dataset_name):
         args.data_file, args.partition_file, partition_method=args.partition_method, tokenize=False) 
     return data_loader.get_train_batch_data(), data_loader.get_test_batch_data(), data_loader.get_attributes()
 
-def reformat_squad(dataset, cut_off=None):
-    reformatted_data = []
-    assert len(dataset["context_X"]) == len(dataset["question_X"]) == len(dataset["Y"]) 
-    for c, q, a in zip(dataset["context_X"], dataset["question_X"], dataset["Y"]):
-        item = {}
-        item["context"] = c
-        item["qas"] = [
-            {
-                "id": "%d"%(len(reformatted_data)+1),
-                "is_impossible": False,
-                "question": q,
-                "answers": [{"text": c[a[0][0]:a[0][1]], "answer_start": a[0][0]}],
-            }
-        ]
-        reformatted_data.append(item)
-    return reformatted_data[:cut_off]
-
 def main(args):
     logging.basicConfig(level=logging.INFO)
     transformers_logger = logging.getLogger("transformers")
@@ -123,11 +106,8 @@ def main(args):
     # Loading full data (for centralized learning)
     train_data, test_data, _ = load_data(args, args.dataset_name) 
     
-    train_data = reformat_squad(train_data, cut_off=None)
-    test_data = reformat_squad(test_data, cut_off=None)  
-
-    # train_data = reformat_squad(train_data, cut_off=1000) # cut_off=1000 for debugging
-    # test_data = reformat_squad(test_data, cut_off=100)  
+    train_data = data_preprocessing.SQuAD_1_1.data_loader.reformat_squad(train_data, cut_off=None)
+    test_data = data_preprocessing.SQuAD_1_1.data_loader.reformat_squad(test_data, cut_off=None)  
 
     # Create a ClassificationModel.
     model = QuestionAnsweringModel(
@@ -165,7 +145,7 @@ if __name__ == "__main__":
     wandb.init(
         project="fednlp",
         entity="automl",
-        name="FedNLP-Centralized" + "-RC-" + str(args.dataset_name) + "-" + str(args.model_name),
+        name="FedNLP-Centralized" + "-QA-" + str(args.dataset_name) + "-" + str(args.model_name),
         config=args)
     # Start training.
     main(args)

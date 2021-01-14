@@ -63,6 +63,7 @@ class RawDataLoader(BaseRawDataLoader):
 
         return context_X, question_X, Y
 
+    
     # TODO: Unified Partition Interface
     @staticmethod
     def nature_partition(attributes):
@@ -90,8 +91,8 @@ class RawDataLoader(BaseRawDataLoader):
 
         return partition_dict
 
-
 class ClientDataLoader(BaseClientDataLoader):
+
 
     def __init__(self, data_path, partition_path, client_idx=None, partition_method="uniform", tokenize=False, data_filter=None):
         data_fields = ["context_X", "question_X", "Y"]
@@ -170,3 +171,25 @@ class ClientDataLoader(BaseClientDataLoader):
             spans.append((cur_idx, cur_idx + len(token)))
             cur_idx += len(token)
         return spans
+
+
+
+def get_normal_format(dataset, cut_off=None):
+    """
+    reformat the dataset to normal version.
+    """
+    reformatted_data = []
+    assert len(dataset["context_X"]) == len(dataset["question_X"]) == len(dataset["Y"]) 
+    for c, q, a in zip(dataset["context_X"], dataset["question_X"], dataset["Y"]):
+        item = {}
+        item["context"] = c
+        item["qas"] = [
+            {
+                "id": "%d"%(len(reformatted_data)+1),
+                "is_impossible": False,
+                "question": q,
+                "answers": [{"text": c[a[0][0]:a[0][1]], "answer_start": a[0][0]}],
+            }
+        ]
+        reformatted_data.append(item)
+    return reformatted_data[:None]

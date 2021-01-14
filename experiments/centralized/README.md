@@ -29,3 +29,23 @@ do
       --n_gpu 1 --fp16
 done
 ```
+
+
+
+```bash
+CUDA_VISIBLE_DEVICES=2 python -m experiments.centralized.transformer_exps.question_answering \
+    --dataset_name squad_1.1 \
+    --data_file data/data_loaders/squad_1.1_data_loader.pkl \
+    --partition_file data/partition/squad_1.1_partition.pkl \
+    --partition_method uniform \
+    --model_type distilbert \
+    --model_name distilbert-base-uncased \
+    --do_lower_case True \
+    --train_batch_size 64 \
+    --eval_batch_size 64 \
+    --max_seq_length 256 \
+    --learning_rate 1e-5 \
+    --num_train_epochs 2 \
+    --output_dir /tmp/squad_1.1/ \
+    --fp16
+```

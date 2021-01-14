@@ -44,3 +44,45 @@ python -m experiments.distributed.transformer_exps.text_classification_fedavg \
     # 2> ${LOG_FILE} &
 ```
 
+
+
+# FedAvg for Transformer-based Text Classifcation
+
+```bash
+LOG_FILE="experiments/distributed/transformer_exps/fedavg_transformer_qa.log"
+CLIENT_NUM=10
+WORKER_NUM=10
+SERVER_NUM=1
+GPU_NUM_PER_SERVER=4
+ROUND=500
+CI=0
+
+PROCESS_NUM=`expr $WORKER_NUM + 1`
+echo $PROCESS_NUM
+HOST_FILE=experiments/distributed/transformer_exps/mpi_host_file
+hostname > $HOST_FILE
+
+mpirun -np $PROCESS_NUM -hostfile $HOST_FILE \
+python -m experiments.distributed.transformer_exps.question_answering_fedavg \
+    --gpu_mapping_file "experiments/distributed/transformer_exps/gpu_mapping.yaml" \
+    --gpu_mapping_key mapping_ink-ron \
+    --client_num_in_total $CLIENT_NUM \
+    --client_num_per_round $WORKER_NUM \
+    --comm_round $ROUND \
+    --ci $CI \
+    --dataset squad_1.1 \
+    --data_file data/data_loaders/squad_1.1_data_loader.pkl \
+    --partition_file data/partition/squad_1.1_partition.pkl \
+    --partition_method uniform \
+    --model_type distilbert \
+    --model_name distilbert-base-uncased \
+    --do_lower_case True \
+    --train_batch_size 8 \
+    --eval_batch_size 8 \
+    --max_seq_length 256 \
+    --learning_rate 1e-5 \
+    --epochs 1 \
+    --output_dir "/tmp/squad_fedavg/" \
+    --fp16 
+    # 2> ${LOG_FILE} &
+```
