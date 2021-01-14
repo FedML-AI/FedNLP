@@ -37,6 +37,15 @@ class TransformerTrainer(ModelTrainer):
         train_data_flat = [(x, labels_map[y])
                   for x, y in zip(train_data_flat["X"], train_data_flat["Y"])]
         return train_data_flat
+    
+    def flatten_question_answering_data(self, train_data):
+        train_data_flat = dict(context_X=[], question_X=[], Y=[])
+        for item in train_data: 
+            train_data_flat["context_X"] += [t for t in item["context_X"]]
+            train_data_flat["question_X"] += [t for t in item["question_X"]]
+            train_data_flat["Y"] += [t for t in item["Y"]]
+        return train_data_flat
+
 
     def train(self, train_data, device, args):
         self.device = device
@@ -49,7 +58,7 @@ class TransformerTrainer(ModelTrainer):
             train_df = pd.DataFrame(train_data_flat)
             global_step, training_details = self.transformer_model.train_model(train_df=train_df, client_desc="Client(%d)"%self.id)
         elif self.task_formulation == "question_answering":
-            train_data_flat = self.flatten_classification_data(train_data)
+            train_data_flat = self.flatten_question_answering_data(train_data)
             train_data_flat = data_preprocessing.SQuAD_1_1.data_loader.get_normal_format(train_data_flat)
             logging.info("Client(%d)"%self.id + ":| Local Train Data Size = %d" % (len(train_data_flat)))
             train_df = pd.DataFrame(train_data_flat)

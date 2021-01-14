@@ -429,7 +429,7 @@ class QuestionAnsweringModel:
         training_progress_scores = None
         tr_loss, logging_loss = 0.0, 0.0
         model.zero_grad()
-        train_iterator = trange(int(args.num_train_epochs), kwargs["client_desc"] + "|: Epoch ", disable=args.silent, mininterval=0)
+        train_iterator = trange(int(args.num_train_epochs), desc=kwargs["client_desc"] + "|: Epoch ", disable=args.silent, mininterval=0)
         epoch_number = 0
         best_eval_metric = None
         early_stopping_counter = 0
