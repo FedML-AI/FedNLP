@@ -181,15 +181,14 @@ def main(process_id, worker_number, args):
         train_data_local_num_dict, train_data_local_dict, test_data_local_dict, \
             data_attr = load_data(args, args.dataset) 
 
-    labels_map = data_attr["target_vocab"]
-    num_labels = len(labels_map)
+    
 
-    logging.info("num_clients = %d, train_data_num = %d, test_data_num = %d, num_labels = %d" % (data_attr["n_clients"], train_data_num, test_data_num, num_labels))
+    logging.info("num_clients = %d, train_data_num = %d, test_data_num = %d" % (data_attr["n_clients"], train_data_num, test_data_num))
 
     
     # Create a QuestinoAnsweringModel object.
     transformer_model = QuestionAnsweringModel(
-        args.model_type, args.model_name, num_labels=num_labels, labels_map=labels_map,
+        args.model_type, args.model_name,
         args={"num_train_epochs": args.epochs,
               "learning_rate": args.learning_rate,
               "gradient_accumulation_steps": args.gradient_accumulation_steps,

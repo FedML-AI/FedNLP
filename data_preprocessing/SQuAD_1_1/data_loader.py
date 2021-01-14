@@ -63,12 +63,6 @@ class RawDataLoader(BaseRawDataLoader):
 
         return context_X, question_X, Y
 
-    def get_train_data_num(self):
-        return len(self.train_data["context_X"])
-
-    def get_test_data_num(self):
-        return len(self.test_data["context_X"])
-
     
     # TODO: Unified Partition Interface
     @staticmethod
