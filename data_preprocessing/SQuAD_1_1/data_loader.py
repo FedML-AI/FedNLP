@@ -192,4 +192,4 @@ def get_normal_format(dataset, cut_off=None):
             }
         ]
         reformatted_data.append(item)
-    return reformatted_data[:None]
+    return reformatted_data[:cut_off]
