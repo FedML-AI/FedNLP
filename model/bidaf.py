@@ -1,17 +1,14 @@
 import torch
 from torch import nn
+import torch.nn.functional as F
+import numpy as np
 
 VERY_BIG_NUMBER = 1e30
 VERY_NEGATIVE_NUMBER = -VERY_BIG_NUMBER
 
 class BIDAF_SpanExtraction(nn.Module):
-    def __init__(self, char_vocab_size, word_vocab_size, char_emb_len, word_emb_len, out_channel_dims, filter_heights, 
-    share_cnn_weights, max_word_len, char_out_size, keep_prob, share_lstm_weights, hidden_size,
-    use_char_emb, 
-    use_word_emb, 
-    use_glove_for_unk,
-    use_highway_network,
-    highway_num_layers, glove_emb_weights=None):
+    def __init__(self, char_vocab_size, word_vocab_size, char_emb_len, word_emb_len, out_channel_dims, filter_heights,
+    max_word_len, char_out_size, dropout_rate, hidden_size, highway_num_layers):
         super(BIDAF_SpanExtraction, self).__init__()
         self.char_vocab_size = char_vocab_size
         self.word_vocab_size = word_vocab_size
@@ -19,60 +16,75 @@ class BIDAF_SpanExtraction(nn.Module):
         self.word_emb_len = word_emb_len
         self.out_channel_dims = list(map(int, out_channel_dims.split(',')))
         self.filter_heights = list(map(int, filter_heights.split(',')))
-        self.share_cnn_weights = share_cnn_weights
         self.max_word_len = max_word_len
         self.char_out_size = char_out_size
-        self.keep_prob = keep_prob
-        self.use_highway_network = use_highway_network
-        self.use_glove_for_unk = use_glove_for_unk
-        self.use_char_emb = use_char_emb
-        self.use_word_emb = use_word_emb
+        self.dropout_rate = dropout_rate
         self.highway_num_layers = highway_num_layers
-        self.share_lstm_weights = share_lstm_weights
         self.hidden_size = hidden_size
-        input_size = 0
-        if use_char_emb:
-            self.char_emb = nn.Embedding(self.char_vocab_size, self.char_emb_len)
-            input_size += self.char_out_size
-        if use_word_emb:
-            if self.use_glove_for_unk and glove_emb_weights is not None:
-                word_emb_weights = torch.cat([torch.Tensor(self.word_vocab_size, self.word_emb_len), glove_emb_weights], dim=0)
-                self.word_emb = nn.Embedding.from_pretrained(word_emb_weights, freeze=False)
-            else:
-                self.word_emb = nn.Embedding(self.word_vocab_size, self.word_emb_len)
-            input_size += self.word_emb_len
-        self.conv1d_layers = nn.ModuleList()
+
+        # 1. Character Embedding Layer
+        self.char_emb = nn.Embedding(self.char_vocab_size, self.char_emb_len)
+        nn.init.uniform_(self.char_emb.weight, -0.001, 0.001)
+
+        self.char_conv_layers = nn.ModuleList()
         for out_channel_dim, filter_height in zip(self.out_channel_dims, self.filter_heights):
-            self.conv1d_layers.append(nn.Conv1d(self.char_emb_len, out_channel_dim, (1, filter_height)))
-        if not share_cnn_weights:
-            self.conv1d_layers_2 = nn.ModuleList()
-            for out_channel_dim, filter_height in zip(self.out_channel_dims, self.filter_heights):
-                self.conv1d_layers_2.append(nn.Conv1d(self.char_emb_len, out_channel_dim, (1, filter_height)))
+            self.char_conv_layers.append(nn.Sequential(
+                nn.Dropout(p=self.dropout_rate),
+                nn.Conv2d(1, out_channel_dim, (self.char_emb_len, filter_height)),
+                nn.ReLU()
+                ))
+
+        # word embedding layer
+        self.word_emb = nn.Parameter(torch.Tensor(self.word_vocab_size, self.word_emb_len), requires_grad=True)
+        nn.init.normal_(self.word_emb)
+
+        # highway network
+        assert self.hidden_size * 2 == (sum(self.out_channel_dims) + self.word_emb_len)
+        for i in range(self.highway_num_layers):
+            setattr(self, 'highway_linear{}'.format(i),
+                    nn.Sequential(nn.Linear(self.hidden_size * 2, self.hidden_size * 2),
+                                  nn.ReLU()))
+            setattr(self, 'highway_gate{}'.format(i),
+                    nn.Sequential(nn.Linear(self.hidden_size * 2, self.hidden_size * 2),
+                                  nn.Sigmoid()))
+
+        # 3. Contextual Embedding Layer
+        self.context_LSTM = nn.LSTM(input_size=self.hidden_size * 2,
+                                 hidden_size=self.hidden_size,
+                                 bidirectional=True,
+                                 batch_first=True)
+
+        # 4. Attention Flow Layer
+        self.att_weight_c = nn.Linear(self.hidden_size * 2, 1)
+        self.att_weight_q = nn.Linear(self.hidden_size * 2, 1)
+        self.att_weight_cq = nn.Linear(self.hidden_size * 2, 1)
+
+        # 5. Modeling Layer
+        self.modeling_LSTM1 = nn.LSTM(input_size=self.hidden_size * 8,
+                                   hidden_size=self.hidden_size,
+                                   bidirectional=True,
+                                   batch_first=True)
+
+        self.modeling_LSTM2 = nn.LSTM(input_size=self.hidden_size * 2,
+                                   hidden_size=self.hidden_size,
+                                   bidirectional=True,
+                                   batch_first=True)
+
+        # 6. Output Layer
+        self.p1_weight_g = nn.Linear(self.hidden_size * 8, 1)
+        self.p1_weight_m = nn.Linear(self.hidden_size * 2, 1)
+        self.p2_weight_g = nn.Linear(self.hidden_size * 8, 1)
+        self.p2_weight_m = nn.Linear(self.hidden_size * 2, 1)
+
+        self.output_LSTM = nn.LSTM(input_size=self.hidden_size * 14,
+                                hidden_size=self.hidden_size,
+                                bidirectional=True,
+                                batch_first=True)
+
+        self.dropout = nn.Dropout(p=self.dropout_rate)
         
-        if self.use_highway_network:
-            self.highway_layers = nn.ModuleList()
-            for idx in range(self.highway_num_layers):
-                # trans layer
-                self.highway_layers.append(nn.Linear(input_size, input_size))
-                # gate layer
-                self.highway_layers.append(nn.Linear(input_size, input_size))
-        
-        self.prepro_lstm_layer = nn.LSTM(input_size, self.hidden_size, bidirectional=True)
-        if not self.share_lstm_weights:
-            self.prepro_lstm_layer_2 = nn.LSTM(input_size, self.hidden_size, bidirectional=True)
-        
-        self.biattention_layer = nn.Linear(6 * self.hidden_size, 1)
 
-        self.main_lstm_layer = nn.LSTM(8 * self.hidden_size, self.hidden_size, bidirectional=True)
-        self.main_lstm_layer_2 = nn.LSTM(2 * self.hidden_size, self.hidden_size, bidirectional=True)
-
-        self.main_logits_layer = nn.Linear(10 * self.hidden_size, 1)
-
-        self.main_lstm_layer_3 = nn.LSTM(14 * self.hidden_size, self.hidden_size, bidirectional=True)
-
-        self.main_logits_layer_2 = nn.Linear(10 * self.hidden_size, 1)
-
-    def forward(self, x, cx, x_mask, q, cq, q_mask, y, y2, device):
+    def forward(self, x, cx, x_mask, q, cq, q_mask, y, y2, glove_emb_weights, device):
         """
         x -> [batch_size, max_sent_len]
         cx -> [batch_size, max_sent_len, word_len]
@@ -82,141 +94,142 @@ class BIDAF_SpanExtraction(nn.Module):
         y2 -> [batch_size, max_sent_len]
         x_mask -> [batch_size, max_sent_len]
         q_mask -> [batch_size, max_ques_len]
-        new_emb_mat -> [addtional_token_vocab_size, word_emb_len]
         """
-        max_sent_len = x.size()[1]
-        max_ques_len = q.size()[1]
-        batch_size = x.size()[0]
-        A_cx = self.char_emb(cx) # [batch_size, max_sent_len, max_word_len, char_emb_len]
-        A_cq = self.char_emb(cq) # [batch_size, max_ques_len ,max_word_len, char_emb_len]
-        A_cx = torch.reshape(A_cx, [batch_size, self.char_emb_len, max_sent_len, self.max_word_len])
-        A_cq = torch.reshape(A_cq, [batch_size, self.char_emb_len, max_ques_len, self.max_word_len])
 
-        if self.use_char_emb:
-            xx = []
-            qq = []
-            for i in range(len(self.out_channel_dims)):
-                xxc = self.conv1d_layers[i](torch.dropout(A_cx, p=self.keep_prob, train=self.training)) # [batch_size, out_channel_dims[i], max_sent_len, max_word_len - filter_height + 1]
-                # torch.max along dimension will return max_elements and max_indices
-                xx.append(torch.max(torch.relu(xxc), dim=3)[0]) # [batch_size, out_channel_dims[i], max_sent_len]
-                if self.share_cnn_weights:
-                    xxcq = self.conv1d_layers[i](torch.dropout(A_cq, p=self.keep_prob, train=self.training))
-                    # torch.max along dimension will return max_elements and max_indices
-                    qq.append(torch.max(torch.relu(xxcq), dim=3)[0])
-                else:
-                    xxcq = self.conv1d_layers_2[i](torch.dropout(A_cq, p=self.keep_prob, train=self.training))
-                    # torch.max along dimension will return max_elements and max_indices
-                    qq.append(torch.max(torch.relu(xxcq), dim=3)[0])
-            xx = torch.reshape(torch.cat(xx, 1), [-1, max_sent_len, self.char_out_size]) # [batch_size, max_sent_len, char_out_size]
-            qq = torch.reshape(torch.cat(qq, 1), [-1, max_ques_len, self.char_out_size]) # [batch_size, max_sent_len, char_out_size]
 
-        if self.use_word_emb:
-            A_x = self.word_emb(x) # [batch_size, max_sent_len, word_emb_len]
-            A_q = self.word_emb(q) # [batch_size, max_ques_len, word_emb_len]
-        
-        if self.use_char_emb:
-            xx = torch.cat([xx, A_x], dim=2) # [batch_size, max_sent_len, word_emb_len + char_out_size]
-            qq = torch.cat([qq, A_q], dim=2) # [batch_size, max_ques_len, word_emb_len + char_out_size]
-        else:
-            xx = A_x
-            qq = A_q
-        
-        if self.use_highway_network:
-            # need to add weight decay here
+        def char_emb_layer(x):
+            """
+            :param x: (batch, seq_len, word_len)
+            :return: (batch, seq_len, char_channel_size)
+            """
+            batch_size = x.size(0)
+            seq_len = x.size(1)
+            # (batch, seq_len, word_len, char_dim)
+            x = self.dropout(self.char_emb(x))
+            # (batch， seq_len, char_dim, word_len)
+            x = x.transpose(2, 3)
+            # (batch * seq_len, 1, char_dim, word_len)
+            x = x.view(-1, self.char_emb_len, x.size(3)).unsqueeze(1)
+            # (batch * seq_len, char_channel_size, 1, conv_len) -> (batch * seq_len, char_channel_size, conv_len)
+            out = []
+            for char_conv_layers in self.char_conv_layers:
+                out.append(char_conv_layers(x).squeeze())
+            x = torch.cat(out, dim=-1)
+            # (batch * seq_len, char_channel_size, 1) -> (batch * seq_len, char_channel_size)
+            x = F.max_pool1d(x, x.size(2)).squeeze()
+            # (batch, seq_len, char_channel_size)
+            x = x.view(batch_size, seq_len, -1)
+
+            return x
+
+        def highway_network(x1, x2):
+            """
+            :param x1: (batch, seq_len, char_channel_size)
+            :param x2: (batch, seq_len, word_dim)
+            :return: (batch, seq_len, hidden_size * 2)
+            """
+            # (batch, seq_len, char_channel_size + word_dim)
+            x = torch.cat([x1, x2], dim=-1)
             for i in range(self.highway_num_layers):
-                xx_trans = torch.relu(self.highway_layers[i*2](torch.dropout(xx, p=self.keep_prob, train=self.training)))
-                xx_gate = torch.sigmoid(self.highway_layers[i*2+1](torch.dropout(xx, p=self.keep_prob, train=self.training)))
-                xx = xx_gate * xx_trans + (1 - xx_gate) * xx
+                h = getattr(self, 'highway_linear{}'.format(i))(x)
+                g = getattr(self, 'highway_gate{}'.format(i))(x)
+                x = g * h + (1 - g) * x
+            # (batch, seq_len, hidden_size * 2)
+            return x
 
-                qq_trans = torch.relu(self.highway_layers[i*2](torch.dropout(qq, p=self.keep_prob, train=self.training)))
-                qq_gate = torch.sigmoid(self.highway_layers[i*2+1](torch.dropout(qq, p=self.keep_prob, train=self.training)))
-                qq = qq_gate * qq_trans + (1 - qq_gate) * qq
-        
-        xx = torch.reshape(xx, [max_sent_len, batch_size, -1]) # xx -> [batch_size, max_ques_len, word_emb_len + char_out_size]
-        qq = torch.reshape(qq, [max_ques_len, batch_size, -1]) # qq -> [batch_size, max_ques_len, word_emb_len + char_out_size]
-        
-        # prepro
-        x_lens = torch.sum(x_mask.int(), dim=1)
+        def att_flow_layer(c, q):
+            """
+            :param c: (batch, c_len, hidden_size * 2)
+            :param q: (batch, q_len, hidden_size * 2)
+            :return: (batch, c_len, q_len)
+            """
+            c_len = c.size(1)
+            q_len = q.size(1)
+
+            # (batch, c_len, q_len, hidden_size * 2)
+            #c_tiled = c.unsqueeze(2).expand(-1, -1, q_len, -1)
+            # (batch, c_len, q_len, hidden_size * 2)
+            #q_tiled = q.unsqueeze(1).expand(-1, c_len, -1, -1)
+            # (batch, c_len, q_len, hidden_size * 2)
+            #cq_tiled = c_tiled * q_tiled
+            #cq_tiled = c.unsqueeze(2).expand(-1, -1, q_len, -1) * q.unsqueeze(1).expand(-1, c_len, -1, -1)
+
+            cq = []
+            for i in range(q_len):
+                #(batch, 1, hidden_size * 2)
+                qi = q.select(1, i).unsqueeze(1)
+                #(batch, c_len, 1)
+                ci = self.att_weight_cq(c * qi).squeeze()
+                cq.append(ci)
+            # (batch, c_len, q_len)
+            cq = torch.stack(cq, dim=-1)
+
+            # (batch, c_len, q_len)
+            s = self.att_weight_c(c).expand(-1, -1, q_len) + \
+                self.att_weight_q(q).permute(0, 2, 1).expand(-1, c_len, -1) + \
+                cq
+
+            # (batch, c_len, q_len)
+            a = F.softmax(s, dim=2)
+            # (batch, c_len, q_len) * (batch, q_len, hidden_size * 2) -> (batch, c_len, hidden_size * 2)
+            c2q_att = torch.bmm(a, q)
+            # (batch, 1, c_len)
+            b = F.softmax(torch.max(s, dim=2)[0], dim=1).unsqueeze(1)
+            # (batch, 1, c_len) * (batch, c_len, hidden_size * 2) -> (batch, hidden_size * 2)
+            q2c_att = torch.bmm(b, c).squeeze()
+            # (batch, c_len, hidden_size * 2) (tiled)
+            q2c_att = q2c_att.unsqueeze(1).expand(-1, c_len, -1)
+            # q2c_att = torch.stack([q2c_att] * c_len, dim=1)
+
+            # (batch, c_len, hidden_size * 8)
+            x = torch.cat([c, c2q_att, c * c2q_att, c * q2c_att], dim=-1)
+            return x
+
+        def output_layer(g, m, l):
+            """
+            :param g: (batch, c_len, hidden_size * 8)
+            :param m: (batch, c_len ,hidden_size * 2)
+            :return: p1: (batch, c_len), p2: (batch, c_len)
+            """
+            # (batch, c_len)
+            p1 = (self.dropout(self.p1_weight_g(g)) + self.dropout(self.p1_weight_m(m))).squeeze()
+            # (batch, c_len, hidden_size * 2)
+            m1 = torch.sum(torch.softmax(torch.unsqueeze(p1, -1), -1) * m, dim=1, keepdim=True).repeat(1, p1.size(1), 1)
+            # (batch, c_len, hidden_size * 2)
+            # m2 = self.dropout(self.output_LSTM(m)[0])
+            m2 = self.dropout(self.output_LSTM(torch.cat([g, m, m1, m * m1], -1))[0])
+            # (batch, c_len)
+            p2 = (self.dropout(self.p2_weight_g(g)) + self.dropout(self.p2_weight_m(m2))).squeeze()
+
+            return p1, p2
+
+        word_emb = torch.cat([self.word_emb, glove_emb_weights], 0)
+
+        # 1. Character Embedding Layer
+        c_char = char_emb_layer(cx)
+        q_char = char_emb_layer(cq)
+        # 2. Word Embedding Layer
+        c_word = F.embedding(x, word_emb)
+        q_word = F.embedding(q, word_emb)
+        c_lens = torch.sum(x_mask.int(), dim=1)
         q_lens = torch.sum(q_mask.int(), dim=1)
 
-        u_h_0 = torch.zeros((2, batch_size, self.hidden_size)).to(device=device)
-        u_c_0 = torch.zeros((2, batch_size, self.hidden_size)).to(device=device)
+        # Highway network
+        c = highway_network(c_char, c_word)
+        q = highway_network(q_char, q_word)
+        # 3. Contextual Embedding Layer
+        c = self.dropout(self.context_LSTM((c))[0])
+        q = self.dropout(self.context_LSTM((q))[0])
+        # 4. Attention Flow Layer
+        g = att_flow_layer(c, q)
+        # 5. Modeling Layer
+        m = self.dropout(self.modeling_LSTM2(self.dropout(self.modeling_LSTM1(g)[0]))[0])
+        # 6. Output Layer
+        p1, p2 = output_layer(g, m, c_lens)
 
-        output, _ = self.prepro_lstm_layer(qq, (u_h_0, u_c_0))
-        output = torch.reshape(output, [batch_size, max_ques_len, -1])
-        output = torch.dropout(output, p=self.keep_prob, train=self.training)
-        u = output
+        # (batch, c_len), (batch, c_len)
+        return p1, p2
 
-        h_h_0 = torch.zeros((2, batch_size, self.hidden_size)).to(device=device)
-        h_c_0 = torch.zeros((2, batch_size, self.hidden_size)).to(device=device)
-        if self.share_lstm_weights:
-            output, _ = self.prepro_lstm_layer(xx, (h_h_0, h_c_0))
-        else:
-            output, _ = self.prepro_lstm_layer_2(xx, (h_h_0, h_c_0))
-        output = torch.reshape(output, [batch_size, max_sent_len, -1])
-        h = output
-
-        # main
-        # attention layer (h_mask=x_mask, u_mask=q_mask)
-        h_aug = torch.unsqueeze(h, 2).repeat(1, 1, max_ques_len, 1) # [batch_size, max_sent_len, max_question_len, 2 * hidden_size]
-        u_aug = torch.unsqueeze(u, 1).repeat(1, max_sent_len, 1, 1) # [batch_size, max_sent_len, max_question_len, 2 * hidden_size]
-
-        h_mask_aug = torch.unsqueeze(x_mask, 2).repeat(1, 1, max_ques_len) # [batch_size, max_sent_len, max_ques_len]
-        u_mask_aug = torch.unsqueeze(q_mask, 1).repeat(1, max_sent_len, 1) # [batch_size, max_sent_len, max_ques_len]
-
-        hu_mask = h_mask_aug & u_mask_aug
-
-        hu_aug = h_aug * u_aug
-        biattention_input = torch.cat([h_aug, u_aug, hu_aug], dim=3)
-        biattention_output = self.biattention_layer(biattention_input)
-        biattention_output = torch.squeeze(biattention_output) # [batch_size, max_sent_len, max_question_len]
-
-        # exp_mask
-        if hu_mask is not None:
-            biattention_output = biattention_output + (1 - hu_mask.float()) * VERY_NEGATIVE_NUMBER
-
-        u_a = torch.sum(u_aug * torch.softmax(torch.unsqueeze(biattention_output, dim=3), dim=2), dim=2) # [batch_size, max_sent_len, 2 * hidden_size]
-
-        h_a = torch.sum(h * torch.softmax(torch.max(biattention_output, dim=2, keepdim=True)[0], dim=1), dim=1) # [batch_size, 2 * hidden_size]
-        h_a = torch.unsqueeze(h_a, dim=1).repeat(1, max_sent_len, 1) # [batch_size, max_sent_len, 2 * hidden_size]
-
-        # if tensor_dict is not None
-        a_u = torch.softmax(biattention_output, dim=2)
-        a_h = torch.softmax(torch.sum(biattention_output, dim=2), dim=1)
-
-        p0 = torch.cat([h, u_a, h * u_a, h * h_a], dim=2) # [batch_size, max_sent_len, 8 * hidden_size]
-
-        p0 = torch.reshape(p0, [max_sent_len, batch_size, -1])
-        g0, _ = self.main_lstm_layer(p0) # [max_sent_len, batch_size, 2 * hidden_size]
-        g0 = torch.dropout(g0, p=self.keep_prob, train=self.training)
-
-        g1, _ = self.main_lstm_layer_2(g0) # [max_sent_len, batch_size, 2 * hidden_size]
-        g1 = torch.dropout(g1, p=self.keep_prob, train=self.training)
-
-
-        main_logits_input = torch.reshape(torch.cat([g1, p0], dim=2), [batch_size, max_sent_len, -1])
-        main_logits_output = self.main_logits_layer(torch.dropout(main_logits_input, p=self.keep_prob, train=self.training))
-        main_logits_output = torch.squeeze(main_logits_output) # [batch_size, max_sent_len]
-
-        if x_mask is not None:
-            main_logits_output = main_logits_output + (1 - x_mask.float()) * VERY_NEGATIVE_NUMBER
-
-        a1i = torch.sum(torch.reshape(g1, [batch_size, max_sent_len, -1]) * torch.softmax(torch.unsqueeze(main_logits_output, dim=2), dim=1), dim=1) # [batch_size, 2 * hidden_size]
-
-        a1i = torch.unsqueeze(a1i, dim=1).repeat(1, max_sent_len, 1) # [batch_size, max_sent_len, 2 * hidden_size]
-        a1i = torch.reshape(a1i, [max_sent_len, batch_size, -1])
-
-        main_lstm_3_input = torch.cat([p0, g1, a1i, g1 * a1i], dim=2)
-        g2, _ = self.main_lstm_layer_3(main_lstm_3_input)
-
-        main_logits_input_2 = torch.reshape(torch.cat([g2, p0], dim=2), [batch_size, max_sent_len, -1])
-        main_logits_output_2 = self.main_logits_layer_2(torch.dropout(main_logits_input_2, p=self.keep_prob, train=self.training))
-        main_logits_output_2 = torch.squeeze(main_logits_output_2) # [batch_size, max_sent_len]
-
-        # yp = torch.softmax(main_logits_output, dim=1)
-        # yp2 = torch.softmax(main_logits_output_2, dim=1)
-
-        return main_logits_output, main_logits_output_2
         
 
 

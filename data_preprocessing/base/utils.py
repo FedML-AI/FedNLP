@@ -210,9 +210,10 @@ def load_glove_embedding(path, source_vocab, dimension):
             line = line.strip()
             temp = line.split(" ")
             word = " ".join(temp[:-dimension])
-            if source_vocab is not None and word in source_vocab:
-                vocab[word] = len(vocab)
-                weights.append(np.array([float(num) for num in temp[-dimension:]]))
+            if source_vocab is not None:
+                if word in source_vocab:
+                    vocab[word] = len(vocab)
+                    weights.append(np.array([float(num) for num in temp[-dimension:]]))
             else:
                 vocab[word] = len(vocab)
                 weights.append(np.array([float(num) for num in temp[-dimension:]]))
