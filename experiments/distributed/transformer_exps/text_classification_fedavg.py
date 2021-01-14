@@ -1,22 +1,5 @@
 """
-An example of running centralized experiments of fed-transformer models in FedNLP.
-Example usage: 
-(under the root folder)
-python -m experiments.distributed.transformer_exps.text_classification_fedavg \
-    --dataset 20news \
-    --data_file data/data_loaders/20news_data_loader.pkl \
-    --partition_file data/partition/20news_partition.pkl \
-    --partition_method uniform \
-    --model_type distilbert \
-    --model_name distilbert-base-uncased \
-    --do_lower_case True \
-    --train_batch_size 8 \
-    --eval_batch_size 8 \
-    --max_seq_length 128 \
-    --learning_rate 1e-5 \
-    --epochs 3 \
-    --output_dir /tmp/20news_fed/ \
-    --fp16
+An example of running fedavg experiments of fed-transformer models in FedNLP.
 """
 import data_preprocessing.AGNews.data_loader
 import data_preprocessing.SST_2.data_loader
