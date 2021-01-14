@@ -11,6 +11,7 @@ from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, Tenso
 import warnings
 import os
 import sklearn
+import data_preprocessing.base.utils
 import data_preprocessing.SQuAD_1_1.data_loader
 
 class TransformerTrainer(ModelTrainer):
@@ -46,6 +47,14 @@ class TransformerTrainer(ModelTrainer):
             train_data_flat["Y"] += [t for t in item["Y"]]
         return train_data_flat
 
+    def flatten_sequence_tagging_data(self, train_data): 
+        train_data_flat = dict(X=[], Y=[])
+        for item in train_data: 
+            train_data_flat["X"] += [t for t in item["X"]]
+            train_data_flat["Y"] += [t for t in item["Y"]]
+        train_data_flat = data_preprocessing.base.utils.NER_data_formatter(train_data_flat)
+        return train_data_flat
+
 
     def train(self, train_data, device, args):
         self.device = device
@@ -57,6 +66,11 @@ class TransformerTrainer(ModelTrainer):
             logging.info("Client(%d)"%self.id + ":| Local Train Data Size = %d" % (len(train_data_flat)))
             train_df = pd.DataFrame(train_data_flat)
             global_step, training_details = self.transformer_model.train_model(train_df=train_df, client_desc="Client(%d)"%self.id)
+        elif self.task_formulation == "sequence_tagging":
+            train_data_flat = self.flatten_sequence_tagging_data(train_data) 
+            logging.info("Client(%d)"%self.id + ":| Local Train Data Size = %d" % (len(train_data_flat)))
+            train_df = pd.DataFrame(train_data_flat, columns=["sentence_id", "words", "labels"])
+            global_step, training_details = self.transformer_model.train_model(train_data=train_df, client_desc="Client(%d)"%self.id)
         elif self.task_formulation == "question_answering":
             train_data_flat = self.flatten_question_answering_data(train_data)
             train_data_flat = data_preprocessing.SQuAD_1_1.data_loader.get_normal_format(train_data_flat)
@@ -74,12 +88,17 @@ class TransformerTrainer(ModelTrainer):
             test_df = pd.DataFrame(test_data_flat)
             result, model_outputs, wrong_predictions = self.transformer_model.eval_model(test_df, acc=sklearn.metrics.accuracy_score) 
             logging.info("Client(%d)"%self.id + ":| Local Test Evaluation Result =%s" % (str(result)))
+        elif self.task_formulation == "sequence_tagging":
+            test_data_flat = self.flatten_sequence_tagging_data(test_data)
+            logging.info("Client(%d)"%self.id + ":| Local Test Data Size = %d" % (len(test_data_flat)))
+            test_df = pd.DataFrame(test_data_flat, columns=["sentence_id", "words", "labels"])
+            result, model_outputs, preds_list = self.transformer_model.eval_model(test_df) 
+            logging.info("Client(%d)"%self.id + ":| Local Test Evaluation Result =%s" % (str(result)))
         elif self.task_formulation == "question_answering":
+            # TODO: 
             pass
 
     def test_on_the_server(self, train_data_local_dict, test_data_local_dict, device, args=None):
-        # TODO:        
-        # result, model_outputs, wrong_predictions = self.transformer_model.eval_model(test_df, acc=sklearn.metrics.accuracy_score) 
         global_test_data = []
         for idx, local_test_data in test_data_local_dict.items():
             global_test_data += local_test_data
@@ -90,7 +109,14 @@ class TransformerTrainer(ModelTrainer):
             test_df = pd.DataFrame(test_data_flat)
             result, model_outputs, wrong_predictions = self.transformer_model.eval_model(test_df, acc=sklearn.metrics.accuracy_score) 
             logging.info("Client(%d)"%self.id + ":| Global Test Evaluation Result =%s" % (str(result)))
+        elif self.task_formulation == "sequence_tagging":
+            test_data_flat = self.flatten_sequence_tagging_data(global_test_data)
+            logging.info("Client(%d)"%self.id + ":| Local Test Data Size = %d" % (len(test_data_flat)))
+            test_df = pd.DataFrame(test_data_flat, columns=["sentence_id", "words", "labels"])
+            result, model_outputs, preds_list = self.transformer_model.eval_model(test_df) 
+            logging.info("Client(%d)"%self.id + ":| Local Test Evaluation Result =%s" % (str(result)))
         elif self.task_formulation == "question_answering":
+            # TODO: 
             pass
         return True
     

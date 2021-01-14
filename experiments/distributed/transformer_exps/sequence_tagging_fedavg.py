@@ -1,9 +1,10 @@
 """
 An example of running fedavg experiments of fed-transformer models in FedNLP.
 """
-import data_preprocessing.SQuAD_1_1.data_loader
+import data_preprocessing.W_NUT.data_loader
+import data_preprocessing.wikigold.data_loader
 from data_preprocessing.base.utils import *
-from model.fed_transformers.question_answering import QuestionAnsweringModel
+from model.fed_transformers.ner import NERModel
 import pandas as pd
 import logging
 import sklearn
@@ -123,7 +124,12 @@ def add_args(parser):
 
 
 def load_data(args, dataset):
-    data_loader_class = data_preprocessing.SQuAD_1_1.data_loader
+    data_loader_class = None
+    print("Loading dataset = %s" % dataset)
+    if dataset == "w_nut":
+        data_loader_class = data_preprocessing.W_NUT.data_loader
+    elif dataset == "wikigold":
+        data_loader_class = data_preprocessing.wikigold.data_loader
     server_data_loader = data_loader_class.ClientDataLoader(
         args.data_file, args.partition_file,
         partition_method=args.partition_method, tokenize=False, client_idx=None)
@@ -187,7 +193,7 @@ def main(process_id, worker_number, args):
 
     
     # Create a QuestinoAnsweringModel object.
-    transformer_model = QuestionAnsweringModel(
+    transformer_model = NERModel(
         args.model_type, args.model_name,
         args={"num_train_epochs": args.epochs,
               "learning_rate": args.learning_rate,
@@ -211,7 +217,7 @@ def main(process_id, worker_number, args):
     # Strat training.
     # model.train_model(train_df)
 
-    model_trainer = TransformerTrainer(transformer_model=transformer_model, task_formulation="question_answering")
+    model_trainer = TransformerTrainer(transformer_model=transformer_model, task_formulation="sequence_tagging")
 
     # start FedAvg algorithm
     # for distributed algorithm, train_data_gloabl and test_data_global are required
@@ -259,7 +265,7 @@ if __name__ == "__main__":
         # initialize the wandb machine learning experimental tracking platform (https://wandb.ai/automl/fednlp).
         wandb.init(
             project="fednlp", entity="automl", name="FedNLP-FedAVG-Transformer" +
-            "-QA-" + str(args.dataset) + "-" + str(args.model_name),
+            "-NER-" + str(args.dataset) + "-" + str(args.model_name),
             config=args)
 
     # Start training.
