@@ -2,25 +2,26 @@
 An example of running centralized experiments of fed-transformer models in FedNLP.
 Example usage: 
 (under the root folder)
-CUDA_VISIBLE_DEVICES=2 python -m experiments.centralized.transformer_exps.reading_comprehension \
-    --dataset_name squad_1.1 \
-    --data_file data/data_loaders/squad_1.1_data_loader.pkl \
-    --partition_file data/partition/squad_1.1_partition.pkl \
+CUDA_VISIBLE_DEVICES=2 python -m experiments.centralized.transformer_exps.named_entity_recognition \
+    --dataset wikigold \
+    --data_file data/data_loaders/wikigold_data_loader.pkl \
+    --partition_file data/partition/wikigold_partition.pkl \
     --partition_method uniform \
     --model_type distilbert \
     --model_name distilbert-base-uncased \
-    --do_lower_case True \
-    --train_batch_size 64 \
-    --eval_batch_size 64 \
-    --max_seq_length 256 \
-    --learning_rate 1e-5 \
+    --do_lower_case False \
+    --train_batch_size 32 \
+    --eval_batch_size 32 \
+    --max_seq_length 128 \
+    --learning_rate 4e-5 \
     --num_train_epochs 2 \
-    --output_dir /tmp/squad_1.1/ \
+    --output_dir /tmp/wikigold/ \
     --fp16
 """
-import data_preprocessing.SQuAD_1_1.data_loader
+import data_preprocessing.W_NUT.data_loader
+import data_preprocessing.wikigold.data_loader
 from data_preprocessing.base.utils import *
-from model.fed_transformers.question_answering import QuestionAnsweringModel
+from model.fed_transformers.ner import NERModel
 import pandas as pd
 import logging
 import sklearn
@@ -34,7 +35,7 @@ def add_args(parser):
     return a parser added with args required by fit
     """
     # Data related
-    parser.add_argument('--dataset_name', type=str, default='squad_1.1', metavar='N',
+    parser.add_argument('--dataset', type=str, default='squad_1.1', metavar='N',
                         help='dataset used for training')
 
     parser.add_argument('--data_file', type=str, default='data/data_loaders/squad_1.1_data_loader.pkl',
@@ -90,30 +91,17 @@ def add_args(parser):
     return args
 
 
-def load_data(args, dataset_name):
+def load_data(args, dataset):
     data_loader = None
-    print("Loading dataset_name = %s" % dataset_name)
-    assert dataset_name in ["squad_1.1"]
-    data_loader = data_preprocessing.SQuAD_1_1.data_loader.ClientDataLoader(
-        args.data_file, args.partition_file, partition_method=args.partition_method, tokenize=False) 
+    print("Loading dataset = %s" % dataset)
+    assert dataset in ["w_nut", "wikigold"]
+    if dataset == "w_nut":
+        data_loader = data_preprocessing.W_NUT.data_loader.ClientDataLoader(
+            args.data_file, args.partition_file, partition_method=args.partition_method, tokenize=False) 
+    elif dataset == "wikigold":
+        data_loader = data_preprocessing.wikigold.data_loader.ClientDataLoader(
+            args.data_file, args.partition_file, partition_method=args.partition_method, tokenize=False) 
     return data_loader.get_train_batch_data(), data_loader.get_test_batch_data(), data_loader.get_attributes()
-
-def reformat_squad(dataset, cut_off=None):
-    reformatted_data = []
-    assert len(dataset["context_X"]) == len(dataset["question_X"]) == len(dataset["Y"]) 
-    for c, q, a in zip(dataset["context_X"], dataset["question_X"], dataset["Y"]):
-        item = {}
-        item["context"] = c
-        item["qas"] = [
-            {
-                "id": "%d"%(len(reformatted_data)+1),
-                "is_impossible": False,
-                "question": q,
-                "answers": [{"text": c[a[0][0]:a[0][1]], "answer_start": a[0][0]}],
-            }
-        ]
-        reformatted_data.append(item)
-    return reformatted_data[:cut_off]
 
 def main(args):
     logging.basicConfig(level=logging.INFO)
@@ -121,16 +109,19 @@ def main(args):
     transformers_logger.setLevel(logging.WARNING)
 
     # Loading full data (for centralized learning)
-    train_data, test_data, _ = load_data(args, args.dataset_name) 
+    train_data, test_data, _ = load_data(args, args.dataset) 
     
-    train_data = reformat_squad(train_data, cut_off=None)
-    test_data = reformat_squad(test_data, cut_off=None)  
+    train_data = NER_data_formatter(train_data)
+    test_data = NER_data_formatter(test_data)  
+    
+    print(train_data[:30])
+    print(len(train_data), train_data[-1][0])
 
-    # train_data = reformat_squad(train_data, cut_off=1000) # cut_off=1000 for debugging
-    # test_data = reformat_squad(test_data, cut_off=100)  
-
+    train_df = pd.DataFrame(train_data, columns=["sentence_id", "words", "labels"])
+    test_df = pd.DataFrame(test_data, columns=["sentence_id", "words", "labels"])
+ 
     # Create a ClassificationModel.
-    model = QuestionAnsweringModel(
+    model = NERModel(
         args.model_type, args.model_name, 
         args={"num_train_epochs": args.num_train_epochs,
               "learning_rate": args.learning_rate,
@@ -145,14 +136,17 @@ def main(args):
               "fp16": args.fp16,
               "n_gpu": args.n_gpu,
               "output_dir": args.output_dir,
+              "dataloader_num_workers": 1,
+              "thread_count": 1, 
+              "use_multiprocessing": False,
               "process_count": 1, 
               "wandb_project": "fednlp"})
 
     # Strat training.
-    model.train_model(train_data)
+    model.train_model(train_df)
 
-    # Evaluate the model
-    result, texts = model.eval_model(test_data, output_dir=args.output_dir, verbose=False, verbose_logging=False)
+    # Evaluate the model 
+    result, model_outputs, preds_list = model.eval_model(test_df, output_dir=args.output_dir, verbose=False, silent=False)
     print(result) 
 
 
@@ -165,7 +159,7 @@ if __name__ == "__main__":
     wandb.init(
         project="fednlp",
         entity="automl",
-        name="FedNLP-Centralized" + "-RC-" + str(args.dataset_name) + "-" + str(args.model_name),
+        name="FedNLP-Centralized" + "-NER-" + str(args.dataset) + "-" + str(args.model_name),
         config=args)
     # Start training.
     main(args)

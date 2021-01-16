@@ -11,9 +11,9 @@
 declare -a datasets=("20news" "agnews" "sentiment140" "sst_2")
 for DATA_NAME in "${datasets[@]}"
 do
-  CUDA_VISIBLE_DEVICES=1 \
+  CUDA_VISIBLE_DEVICES=0 \
   python -m experiments.centralized.transformer_exps.text_classification \
-      --dataset_name ${DATA_NAME} \
+      --dataset ${DATA_NAME} \
       --data_file data/data_loaders/${DATA_NAME}_data_loader.pkl \
       --partition_file data/partition/${DATA_NAME}_partition.pkl \
       --partition_method uniform \
@@ -28,4 +28,44 @@ do
       --output_dir /tmp/${DATA_NAME}_fed/ \
       --n_gpu 1 --fp16
 done
+```
+
+## Question Answering (SQuAD)
+
+```bash
+CUDA_VISIBLE_DEVICES=0 python -m experiments.centralized.transformer_exps.question_answering \
+    --dataset squad_1.1 \
+    --data_file data/data_loaders/squad_1.1_data_loader.pkl \
+    --partition_file data/partition/squad_1.1_partition.pkl \
+    --partition_method uniform \
+    --model_type distilbert \
+    --model_name distilbert-base-uncased \
+    --do_lower_case True \
+    --train_batch_size 64 \
+    --eval_batch_size 64 \
+    --max_seq_length 256 \
+    --learning_rate 1e-5 \
+    --num_train_epochs 2 \
+    --output_dir /tmp/squad_1.1/ \
+    --fp16
+```
+
+## Named Entity Recognition
+
+```bash
+CUDA_VISIBLE_DEVICES=0 python -m experiments.centralized.transformer_exps.named_entity_recognition \
+    --dataset wikigold \
+    --data_file data/data_loaders/wikigold_data_loader.pkl \
+    --partition_file data/partition/wikigold_partition.pkl \
+    --partition_method uniform \
+    --model_type distilbert \
+    --model_name distilbert-base-uncased \
+    --do_lower_case False \
+    --train_batch_size 32 \
+    --eval_batch_size 32 \
+    --max_seq_length 128 \
+    --learning_rate 4e-5 \
+    --num_train_epochs 2 \
+    --output_dir /tmp/wikigold/ \
+    --fp16
 ```

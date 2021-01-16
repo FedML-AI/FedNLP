@@ -225,3 +225,17 @@ def load_glove_embedding(path, source_vocab, dimension):
     return vocab, weights
 
 
+def NER_data_formatter(ner_data):
+    formatted_data = []
+    if len(ner_data["X"]) != len(ner_data["Y"]):
+        print(ner_data["X"])
+        print(ner_data["Y"])
+        print(len(ner_data["X"]), len(ner_data["Y"]))
+    assert len(ner_data["X"]) == len(ner_data["Y"])
+    sent_id = 0
+    for x, y in zip(ner_data["X"], ner_data["Y"]):
+        assert len(x) == len(y)
+        for token, tag in zip(x, y):
+            formatted_data.append([sent_id, token, tag])
+        sent_id += 1
+    return formatted_data

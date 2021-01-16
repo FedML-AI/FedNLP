@@ -52,11 +52,23 @@ class BaseClientDataLoader(ABC):
                 start = end
             return batch_data_list
 
+   
     def get_train_data_num(self):
-        return len(self.train_data["X"])
-
+        if "X" in self.train_data:
+            return len(self.train_data["X"])
+        elif "context_X" in self.train_data:
+            return len(self.train_data["context_X"])
+        else:
+            print(self.train_data.keys())
+            return None
+     
     def get_test_data_num(self):
-        return len(self.test_data["X"])
+        if "X" in self.test_data:
+            return len(self.test_data["X"])
+        elif "context_X" in self.test_data:
+            return len(self.test_data["context_X"])
+        else:
+            return None
 
     def get_attributes(self):
         return self.attributes
