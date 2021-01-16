@@ -12,7 +12,7 @@ wandb login ee0b5f53d949c84cee7decbe7a629e63fb2f8408
 
 ### shakespeare experiments
 ```
-sh run_fedavg_distributed_pytorch.sh 4 4 1 4 rnn hetero 100 1 10 0.8 shakespeare "./../../../data/text_classification/shakespeare/" 0
+sh run_fedavg_distributed_pytorch.sh 4 4 rnn hetero 100 1 10 0.8 shakespeare "./../../../data/text_classification/shakespeare/" 0
 
 ##run on background
 nohup sh run_fedavg_distributed_pytorch.sh 4 4 1 4 rnn hetero 100 1 10 0.8 shakespeare "./../../../data/text_classification/shakespeare/" 0 > ./fedavg-rnn-shakespeare.txt 2>&1 &
@@ -24,9 +24,7 @@ echo $PROCESS_NUM
 
 hostname > mpi_host_file
 
-mpirun -np $PROCESS_NUM -hostfile ./mpi_host_file python3 experiments/distributed/text_classification/main_fedavg.py \
-  --gpu_server_num $SERVER_NUM \
-  --gpu_num_per_server $GPU_NUM_PER_SERVER \
+mpirun -np $PROCESS_NUM -hostfile ./mpi_host_file python3 experiments/distributed/next_word_prediction_example/main_fedavg.py \
   --model $MODEL \
   --dataset $DATASET \
   --data_dir $DATA_DIR \
