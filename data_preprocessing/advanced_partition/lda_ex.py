@@ -53,9 +53,9 @@ def main():
     
     parser.add_argument('--task_type', type=str, metavar="TT", help='task type')
 
-    parser.add_argument('--min_size', type=float, default = 1.0, metavar="MS", help='minimal size of each client sample')
+    parser.add_argument('--min_size', type=int, metavar="MS", help='minimal size of each client sample')
 
-    parser.add_argument('--alpha', type=int, metavar="A", help='alpha value for LDA')
+    parser.add_argument('--alpha', type=float, metavar="A", help='alpha value for LDA')
     
     args = parser.parse_args()
 
