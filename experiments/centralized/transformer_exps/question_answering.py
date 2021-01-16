@@ -2,7 +2,7 @@
 An example of running centralized experiments of fed-transformer models in FedNLP.
 Example usage: 
 (under the root folder)
-CUDA_VISIBLE_DEVICES=2 python -m experiments.centralized.transformer_exps.question_answering \
+  python -m experiments.centralized.transformer_exps.question_answering \
     --dataset squad_1.1 \
     --data_file data/data_loaders/squad_1.1_data_loader.pkl \
     --partition_file data/partition/squad_1.1_partition.pkl \
@@ -42,6 +42,9 @@ def add_args(parser):
 
     parser.add_argument('--partition_file', type=str, default='data/partition/squad_1.1_partition.pkl',
                         help='partition pickle file')
+
+    parser.add_argument('--eval_data_file', type=str, default='data/span_extraction/SQuAD_1.1/dev-v1.1.json',
+                        help='this argument is set up for using official script to evaluate the model')
 
     parser.add_argument('--partition_method', type=str, default='uniform', metavar='N',
                         help='how to partition the dataset')
@@ -106,8 +109,8 @@ def main(args):
     # Loading full data (for centralized learning)
     train_data, test_data, _ = load_data(args, args.dataset) 
     
-    train_data = data_preprocessing.SQuAD_1_1.data_loader.reformat_squad(train_data, cut_off=None)
-    test_data = data_preprocessing.SQuAD_1_1.data_loader.reformat_squad(test_data, cut_off=None)  
+    train_data = data_preprocessing.SQuAD_1_1.data_loader.get_normal_format(train_data, cut_off=None)
+    test_data = data_preprocessing.SQuAD_1_1.data_loader.get_normal_format(test_data, cut_off=None)  
 
     # Create a ClassificationModel.
     model = QuestionAnsweringModel(
@@ -133,7 +136,9 @@ def main(args):
 
     # Evaluate the model
     result, texts = model.eval_model(test_data, output_dir=args.output_dir, verbose=False, verbose_logging=False)
-    print(result) 
+    print(result)
+    result = model.eval_model_by_offical_script(test_data, args.eval_data_file, output_dir=args.output_dir, verbose=False, verbose_logging=False)
+    print(result)
 
 
 if __name__ == "__main__":
