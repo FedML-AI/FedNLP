@@ -2,11 +2,9 @@
 An example of running centralized experiments of fed-transformer models in FedNLP.
 Example usage: 
 (under the root folder)
-  python -m experiments.centralized.transformer_exps.question_answering \
+  python -m experiments.centralized.transformer_exps.question_answering_raw_data \
     --dataset squad_1.1 \
     --data_file data/data_loaders/squad_1.1_data_loader.pkl \
-    --partition_file data/partition/squad_1.1_partition.pkl \
-    --partition_method uniform \
     --model_type distilbert \
     --model_name distilbert-base-uncased \
     --do_lower_case True \
@@ -18,10 +16,6 @@ Example usage:
     --output_dir /tmp/squad_1.1/ \
     --fp16
 """
-import os
-import sys
-sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), ".")))
-
 import data_preprocessing.SQuAD_1_1.data_loader
 from data_preprocessing.base.utils import *
 from model.fed_transformers.question_answering import QuestionAnsweringModel
@@ -30,6 +24,7 @@ import logging
 import sklearn
 import argparse
 import wandb
+import pickle
 
 
 def add_args(parser):
@@ -44,14 +39,8 @@ def add_args(parser):
     parser.add_argument('--data_file', type=str, default='data/data_loaders/squad_1.1_data_loader.pkl',
                         help='data pickle file')
 
-    parser.add_argument('--partition_file', type=str, default='data/partition/squad_1.1_partition.pkl',
-                        help='partition pickle file')
-
     parser.add_argument('--eval_data_file', type=str, default='data/span_extraction/SQuAD_1.1/dev-v1.1.json',
                         help='this argument is set up for using official script to evaluate the model')
-
-    parser.add_argument('--partition_method', type=str, default='uniform', metavar='N',
-                        help='how to partition the dataset')
 
     # Model related
     parser.add_argument('--model_type', type=str, default='distilbert', metavar='N',
@@ -101,9 +90,23 @@ def load_data(args, dataset):
     data_loader = None
     print("Loading dataset = %s" % dataset)
     assert dataset in ["squad_1.1"]
-    data_loader = data_preprocessing.SQuAD_1_1.data_loader.ClientDataLoader(
-        args.data_file, args.partition_file, partition_method=args.partition_method, tokenize=False) 
-    return data_loader.get_train_batch_data(), data_loader.get_test_batch_data(), data_loader.get_attributes()
+    all_data = pickle.load(open(args.data_file, "rb"))
+    context_X, question_X, question_ids, Y, attributes = all_data["context_X"], all_data["question_X"], all_data["question_ids"], all_data["Y"], all_data["attributes"]
+
+    def get_data_by_index_list(dataset, index_list):
+        data = dict()
+        for key in dataset.keys():
+            data[key] = []
+        for idx in index_list:
+            for key in dataset.keys():
+                data[key].append(dataset[key][idx])
+        return data
+    input_dataset = {"context_X": context_X, "question_X": question_X, "question_ids": question_ids, "Y": Y}
+    train_data = get_data_by_index_list(input_dataset, attributes["train_index_list"])
+    test_data = get_data_by_index_list(input_dataset, attributes["test_index_list"])
+
+    return train_data, test_data
+
 
 def main(args):
     logging.basicConfig(level=logging.INFO)
@@ -111,7 +114,7 @@ def main(args):
     transformers_logger.setLevel(logging.WARNING)
 
     # Loading full data (for centralized learning)
-    train_data, test_data, _ = load_data(args, args.dataset) 
+    train_data, test_data = load_data(args, args.dataset) 
     
     train_data = data_preprocessing.SQuAD_1_1.data_loader.get_normal_format(train_data, cut_off=None)
     test_data = data_preprocessing.SQuAD_1_1.data_loader.get_normal_format(test_data, cut_off=None)  

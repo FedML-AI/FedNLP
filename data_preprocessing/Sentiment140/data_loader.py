@@ -10,7 +10,7 @@ from data_preprocessing.base.base_raw_data_loader import BaseRawDataLoader
 class RawDataLoader(BaseRawDataLoader):
     def __init__(self, data_path):
         super().__init__(data_path)
-        self.task_type = "bilstm_exps"
+        self.task_type = "text_classification"
         self.target_vocab = None
         self.test_file_name = "testdata.manual.2009.06.14.csv"
         self.train_file_name = "training.1600000.processed.noemoticon.csv"

@@ -757,6 +757,44 @@ class QuestionAnsweringModel:
             logger.info(self.results)
 
         return result, texts
+    
+    def eval_model_by_offical_script(self, eval_data, eval_data_path, output_dir=None, verbose=False, verbose_logging=False, **kwargs):
+        """
+        Evaluates the model on eval_data. Saves results to output_dir.
+
+        Args:
+            eval_data: list of Python dicts in the correct format. The model will be evaluated on this data.
+            eval_data_path: Path to JSON file containing evaluation data
+            output_dir: The directory where model files will be saved. If not given, self.args.output_dir will be used.
+            verbose: If verbose, results will be printed to the console on completion of evaluation.
+            verbose_logging: Log info related to feature conversion and writing predictions.
+            **kwargs: Additional metrics that should be used. Pass in the metrics as keyword arguments (name of metric: function to use).
+                A metric function should take in two parameters. The first parameter will be the true labels, and the second parameter will be the predictions.
+
+        Returns:
+            result: Dictionary containing evaluation results. (exact match score, F1 score)
+        """
+        if not output_dir:
+            output_dir = self.args.output_dir
+
+        self._move_model_to_device()
+
+        all_predictions, all_nbest_json, scores_diff_json, eval_loss = self.evaluate(
+            eval_data, output_dir, verbose_logging=verbose
+        )
+
+        prediction_dict = dict()
+        for i, prediction in all_predictions.items():
+            qid = eval_data[int(i)-1]["qas"][0]["qid"]
+            prediction_dict[qid] = prediction
+        
+        with open(os.path.join(output_dir, "prediction.json"), "w") as f:
+            json.dump(prediction_dict, f)
+        
+        f = os.popen("python ./model/fed_transformers/question_answering/evaluate-v1.1.py %s %s" % (eval_data_path, os.path.join(output_dir, "prediction.json")))
+
+        result = eval(f.read().strip())
+        return result
 
     def evaluate(self, eval_data, output_dir, verbose_logging=False):
         """

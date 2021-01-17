@@ -2,34 +2,28 @@
 An example of running centralized experiments of fed-transformer models in FedNLP.
 Example usage: 
 (under the root folder)
-  python -m experiments.centralized.transformer_exps.question_answering \
-    --dataset squad_1.1 \
-    --data_file data/data_loaders/squad_1.1_data_loader.pkl \
-    --partition_file data/partition/squad_1.1_partition.pkl \
-    --partition_method uniform \
+python -m experiments.centralized.transformer_exps.text_classification_raw_data \
+    --dataset sentiment_140 \
+    --data_file data/data_loaders/sentiment_140_data_loader.pkl \
     --model_type distilbert \
     --model_name distilbert-base-uncased \
     --do_lower_case True \
-    --train_batch_size 64 \
-    --eval_batch_size 64 \
-    --max_seq_length 256 \
+    --train_batch_size 8 \
+    --eval_batch_size 8 \
+    --max_seq_length 128 \
     --learning_rate 1e-5 \
-    --num_train_epochs 2 \
-    --output_dir /tmp/squad_1.1/ \
+    --num_train_epochs 3 \
+    --output_dir /tmp/sentiment_140_fed/ \
     --fp16
 """
-import os
-import sys
-sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), ".")))
-
-import data_preprocessing.SQuAD_1_1.data_loader
 from data_preprocessing.base.utils import *
-from model.fed_transformers.question_answering import QuestionAnsweringModel
+from model.fed_transformers.classification import ClassificationModel
 import pandas as pd
 import logging
 import sklearn
 import argparse
 import wandb
+import pickle
 
 
 def add_args(parser):
@@ -38,27 +32,18 @@ def add_args(parser):
     return a parser added with args required by fit
     """
     # Data related
-    parser.add_argument('--dataset', type=str, default='squad_1.1', metavar='N',
+    parser.add_argument('--dataset', type=str, default='20news', metavar='N',
                         help='dataset used for training')
 
-    parser.add_argument('--data_file', type=str, default='data/data_loaders/squad_1.1_data_loader.pkl',
+    parser.add_argument('--data_file', type=str, default='data/data_loaders/20news_data_loader.pkl',
                         help='data pickle file')
-
-    parser.add_argument('--partition_file', type=str, default='data/partition/squad_1.1_partition.pkl',
-                        help='partition pickle file')
-
-    parser.add_argument('--eval_data_file', type=str, default='data/span_extraction/SQuAD_1.1/dev-v1.1.json',
-                        help='this argument is set up for using official script to evaluate the model')
-
-    parser.add_argument('--partition_method', type=str, default='uniform', metavar='N',
-                        help='how to partition the dataset')
 
     # Model related
     parser.add_argument('--model_type', type=str, default='distilbert', metavar='N',
                         help='transformer model type')
     parser.add_argument('--model_name', type=str, default='distilbert-base-uncased', metavar='N',
                         help='transformer model name')
-    parser.add_argument('--do_lower_case', type=bool, default=False, metavar='N',
+    parser.add_argument('--do_lower_case', type=bool, default=True, metavar='N',
                         help='transformer model name')
 
     # Learning related
@@ -89,7 +74,7 @@ def add_args(parser):
 
     # IO realted
 
-    parser.add_argument('--output_dir', type=str, default="/tmp/squad_1.1", metavar='N',
+    parser.add_argument('--output_dir', type=str, default="/tmp/", metavar='N',
                         help='path to save the trained results and ckpts')
 
     args = parser.parse_args()
@@ -100,10 +85,12 @@ def add_args(parser):
 def load_data(args, dataset):
     data_loader = None
     print("Loading dataset = %s" % dataset)
-    assert dataset in ["squad_1.1"]
-    data_loader = data_preprocessing.SQuAD_1_1.data_loader.ClientDataLoader(
-        args.data_file, args.partition_file, partition_method=args.partition_method, tokenize=False) 
-    return data_loader.get_train_batch_data(), data_loader.get_test_batch_data(), data_loader.get_attributes()
+    all_data = pickle.load(open(args.data_file, "rb"))
+    X, Y, target_vocab, attributes = all_data["X"], all_data["Y"], all_data["target_vocab"], all_data["attributes"]
+    train_data = [(X[idx], target_vocab[Y[idx]]) for idx in attributes["train_index_list"]]
+    test_data = [(X[idx], target_vocab[Y[idx]]) for idx in attributes["test_index_list"]]
+    return pd.DataFrame(train_data), pd.DataFrame(test_data), len(target_vocab)
+
 
 def main(args):
     logging.basicConfig(level=logging.INFO)
@@ -111,14 +98,11 @@ def main(args):
     transformers_logger.setLevel(logging.WARNING)
 
     # Loading full data (for centralized learning)
-    train_data, test_data, _ = load_data(args, args.dataset) 
-    
-    train_data = data_preprocessing.SQuAD_1_1.data_loader.get_normal_format(train_data, cut_off=None)
-    test_data = data_preprocessing.SQuAD_1_1.data_loader.get_normal_format(test_data, cut_off=None)  
+    train_data, test_data, num_labels = load_data(args, args.dataset)
 
     # Create a ClassificationModel.
-    model = QuestionAnsweringModel(
-        args.model_type, args.model_name, 
+    model = ClassificationModel(
+        args.model_type, args.model_name, num_labels=num_labels,
         args={"num_train_epochs": args.num_train_epochs,
               "learning_rate": args.learning_rate,
               "gradient_accumulation_steps": args.gradient_accumulation_steps,
@@ -132,17 +116,15 @@ def main(args):
               "fp16": args.fp16,
               "n_gpu": args.n_gpu,
               "output_dir": args.output_dir,
-              "process_count": 1, 
               "wandb_project": "fednlp"})
 
     # Strat training.
     model.train_model(train_data)
 
     # Evaluate the model
-    result, texts = model.eval_model(test_data, output_dir=args.output_dir, verbose=False, verbose_logging=False)
-    print(result)
-    result = model.eval_model_by_offical_script(test_data, args.eval_data_file, output_dir=args.output_dir, verbose=False, verbose_logging=False)
-    print(result)
+    result, model_outputs, wrong_predictions = model.eval_model(
+        test_data, acc=sklearn.metrics.accuracy_score) 
+    logging.info("eval_res=%s" % (str(result)))
 
 
 if __name__ == "__main__":
@@ -154,7 +136,7 @@ if __name__ == "__main__":
     wandb.init(
         project="fednlp",
         entity="automl",
-        name="FedNLP-Centralized" + "-QA-" + str(args.dataset) + "-" + str(args.model_name),
+        name="FedNLP-Centralized" + "-TC-" + str(args.dataset) + "-" + str(args.model_name),
         config=args)
     # Start training.
     main(args)
