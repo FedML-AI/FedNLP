@@ -100,6 +100,7 @@ def load_data(args, dataset):
         for idx in index_list:
             for key in dataset.keys():
                 data[key].append(dataset[key][idx])
+        data["original_index"] = index_list
         return data
     input_dataset = {"context_X": context_X, "question_X": question_X, "question_ids": question_ids, "Y": Y}
     train_data = get_data_by_index_list(input_dataset, attributes["train_index_list"])
