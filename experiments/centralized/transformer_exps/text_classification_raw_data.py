@@ -16,8 +16,12 @@ python -m experiments.centralized.transformer_exps.text_classification_raw_data 
     --output_dir /tmp/sentiment_140_fed/ \
     --fp16
 """
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), ".")))
+
 from data_preprocessing.base.utils import *
-from model.fed_transformers.classification import ClassificationModel
+from model.fed_transformers.classification.classification_model_raw_data import ClassificationModel
 import pandas as pd
 import logging
 import sklearn
@@ -32,10 +36,10 @@ def add_args(parser):
     return a parser added with args required by fit
     """
     # Data related
-    parser.add_argument('--dataset', type=str, default='20news', metavar='N',
+    parser.add_argument('--dataset', type=str, default='sentiment_140', metavar='N',
                         help='dataset used for training')
 
-    parser.add_argument('--data_file', type=str, default='data/data_loaders/20news_data_loader.pkl',
+    parser.add_argument('--data_file', type=str, default='data/data_loaders/sentiment_140_data_loader.pkl',
                         help='data pickle file')
 
     # Model related
@@ -87,8 +91,8 @@ def load_data(args, dataset):
     print("Loading dataset = %s" % dataset)
     all_data = pickle.load(open(args.data_file, "rb"))
     X, Y, target_vocab, attributes = all_data["X"], all_data["Y"], all_data["target_vocab"], all_data["attributes"]
-    train_data = [(X[idx], target_vocab[Y[idx]]) for idx in attributes["train_index_list"]]
-    test_data = [(X[idx], target_vocab[Y[idx]]) for idx in attributes["test_index_list"]]
+    train_data = [(X[idx], target_vocab[Y[idx]], idx) for idx in attributes["train_index_list"]]
+    test_data = [(X[idx], target_vocab[Y[idx]], idx) for idx in attributes["test_index_list"]]
     return pd.DataFrame(train_data), pd.DataFrame(test_data), len(target_vocab)
 
 
