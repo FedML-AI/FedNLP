@@ -118,9 +118,9 @@ def get_normal_format(dataset, cut_off=None):
         item["context"] = c
         item["qas"] = [
             {
-                "id": "%d"%(len(reformatted_data)+1),
+                # "id": "%d"%(len(reformatted_data)+1),
                 "qid": qid,
-                "oid": oid,
+                "id": oid,
                 "is_impossible": False,
                 "question": q,
                 "answers": [{"text": c[a[0]:a[1]], "answer_start": a[0]}],

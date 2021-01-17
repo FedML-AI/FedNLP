@@ -16,10 +16,6 @@ python -m experiments.centralized.transformer_exps.text_classification_raw_data 
     --output_dir /tmp/sentiment_140_fed/ \
     --fp16
 """
-import sys
-import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), ".")))
-
 from data_preprocessing.base.utils import *
 from model.fed_transformers.classification.classification_model_raw_data import ClassificationModel
 import pandas as pd
