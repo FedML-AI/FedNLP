@@ -138,8 +138,8 @@ def main(args):
     # Loading full data (for centralized learning)
     train_data, test_data = load_data(args, args.dataset) 
     
-    train_data = data_preprocessing.SQuAD_1_1.data_loader.get_normal_format(train_data, cut_off=None)
-    test_data = data_preprocessing.SQuAD_1_1.data_loader.get_normal_format(test_data, cut_off=None)  
+    train_data = get_normal_format(train_data, cut_off=None)
+    test_data = get_normal_format(test_data, cut_off=None)  
 
     # Create a ClassificationModel.
     model = QuestionAnsweringModel(
