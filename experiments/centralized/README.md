@@ -11,7 +11,7 @@
 declare -a datasets=("20news" "agnews" "sentiment140" "sst_2")
 for DATA_NAME in "${datasets[@]}"
 do
-  CUDA_VISIBLE_DEVICES=0 \
+  export CUDA_VISIBLE_DEVICES=0 \
   python -m experiments.centralized.transformer_exps.text_classification \
       --dataset ${DATA_NAME} \
       --data_file data/data_loaders/${DATA_NAME}_data_loader.pkl \
@@ -33,7 +33,8 @@ done
 ## Question Answering (SQuAD)
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 python -m experiments.centralized.transformer_exps.question_answering \
+export CUDA_VISIBLE_DEVICES=0 \
+python -m experiments.centralized.transformer_exps.question_answering \
     --dataset squad_1.1 \
     --data_file data/data_loaders/squad_1.1_data_loader.pkl \
     --partition_file data/partition/squad_1.1_partition.pkl \
