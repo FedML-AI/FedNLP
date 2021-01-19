@@ -11,3 +11,5 @@ tensorboardx
 pandas
 wandb
 streamlit
+gensim
+nltk
