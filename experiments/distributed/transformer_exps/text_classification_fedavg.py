@@ -1,29 +1,33 @@
 """
 An example of running fedavg experiments of fed-transformer models in FedNLP.
 """
+import argparse
+import logging
+import os
+import random
+import socket
+import sys
+
+import psutil
+import torch
+import wandb
+
+# this is a temporal import, we will refactor FedML as a package installation
+sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "../../../")))
+
 import data_preprocessing.AGNews.data_loader
 import data_preprocessing.SST_2.data_loader
 import data_preprocessing.SemEval2010Task8.data_loader
 import data_preprocessing.Sentiment140.data_loader
 import data_preprocessing.news_20.data_loader
+
+from FedML.fedml_api.distributed.fedavg.FedAvgAPI import FedML_init, FedML_FedAvg_distributed
+from FedML.fedml_api.distributed.utils.gpu_mapping import mapping_processes_to_gpu_device_from_yaml_file
 from data_preprocessing.base.utils import *
 from model.fed_transformers.classification import ClassificationModel
-import pandas as pd
-import logging
-import sklearn
-import socket
-import os
-import random
-import psutil
-import setproctitle
-import torch
-import argparse
-import wandb
-
-# FedAVG-related
-from FedML.fedml_api.distributed.fedavg.FedAvgAPI import FedML_init, FedML_FedAvg_distributed
 from training.transformer_trainer import TransformerTrainer
-from FedML.fedml_api.distributed.utils.gpu_mapping import mapping_processes_to_gpu_device_from_yaml_file
+
 
 def add_args(parser):
     """
@@ -92,10 +96,8 @@ def add_args(parser):
     parser.add_argument('--output_dir', type=str, default="/tmp/", metavar='N',
                         help='path to save the trained results and ckpts')
 
-
     # FedAVG related
 
-    
     parser.add_argument('--comm_round', type=int, default=10,
                         help='how many round of communications we shoud use')
 
@@ -112,14 +114,14 @@ def add_args(parser):
                         help='number of workers in a distributed cluster')
 
     parser.add_argument('--client_num_per_round', type=int, default=4, metavar='NN',
-                        help='number of workers')           
+                        help='number of workers')
 
     parser.add_argument('--gpu_mapping_file', type=str, default="gpu_mapping.yaml",
-                    help='the gpu utilization file for servers and clients. If there is no \
+                        help='the gpu utilization file for servers and clients. If there is no \
                     gpu_util_file, gpu will not be used.')
 
     parser.add_argument('--gpu_mapping_key', type=str, default="mapping_default",
-                        help='the key in gpu utilization file')         
+                        help='the key in gpu utilization file')
 
     args = parser.parse_args()
 
@@ -127,8 +129,7 @@ def add_args(parser):
 
 
 def load_data(args, dataset):
-    data_loader = None
-    print("Loading dataset = %s" % dataset)
+    logging.info("Loading ClientDataLoader = %s" % dataset)
     if dataset == "20news":
         data_loader_class = data_preprocessing.news_20.data_loader
     elif dataset == "agnews":
@@ -145,8 +146,10 @@ def load_data(args, dataset):
     server_data_loader = data_loader_class.ClientDataLoader(
         args.data_file, args.partition_file,
         partition_method=args.partition_method, tokenize=False, client_idx=None)
+
     client_data_loaders = []
     for client_index in range(server_data_loader.get_attributes()["n_clients"]):
+        logging.info("loading client %d" % client_index)
         client_data_loader = data_loader_class.ClientDataLoader(
             args.data_file, args.partition_file,
             partition_method=args.partition_method, tokenize=False,
@@ -158,6 +161,7 @@ def load_data(args, dataset):
     train_data_local_dict = dict()
     test_data_local_dict = dict()
     for idx in range(data_attr["n_clients"]):
+        logging.info("idx = %d" % idx)
         train_data_local_num_dict[idx] = client_data_loaders[idx].get_train_data_num(
         )
         train_data_local_dict[idx] = client_data_loaders[idx].get_train_batch_data(
@@ -168,23 +172,13 @@ def load_data(args, dataset):
     test_data_num = server_data_loader.get_test_data_num()
     train_data_global = server_data_loader.get_train_batch_data()
     test_data_global = server_data_loader.get_test_batch_data()
+    logging.info("Finished loading %s (END)" % dataset)
     return train_data_num, test_data_num, train_data_global, test_data_global, \
-        train_data_local_num_dict, train_data_local_dict, test_data_local_dict, data_attr
-
+           train_data_local_num_dict, train_data_local_dict, test_data_local_dict, data_attr
 
 
 def main(process_id, worker_number, args):
-
-    # GPU arrangement: Please customize this function according your own topology.
-    # The GPU server list is configured at "mpi_host_file".
-    # If we have 4 machines and each has two GPUs, and your FL network has 8 workers and a central worker.
-    # The 4 machines will be assigned as follows:
-    # machine 1: worker0, worker4, worker8;
-    # machine 2: worker1, worker5;
-    # machine 3: worker2, worker6;
-    # machine 4: worker3, worker7;
-    # Therefore, we can see that workers are assigned according to the order of machine list.
-    
+    # check "gpu_mapping.yaml" to see how to define the topology
     device = mapping_processes_to_gpu_device_from_yaml_file(process_id, worker_number, \
                                                             args.gpu_mapping_file, args.gpu_mapping_key)
     logging.info("process_id = %d, size = %d, device=%s" % (process_id, worker_number, str(device)))
@@ -194,14 +188,14 @@ def main(process_id, worker_number, args):
 
     # Loading full data (for centralized learning)
     train_data_num, test_data_num, train_data_global, test_data_global, \
-        train_data_local_num_dict, train_data_local_dict, test_data_local_dict, \
-            data_attr = load_data(args, args.dataset) 
+    train_data_local_num_dict, train_data_local_dict, test_data_local_dict, \
+    data_attr = load_data(args, args.dataset)
 
     labels_map = data_attr["target_vocab"]
     num_labels = len(labels_map)
 
-    logging.info("num_clients = %d, train_data_num = %d, test_data_num = %d, num_labels = %d" % (data_attr["n_clients"], train_data_num, test_data_num, num_labels))
-
+    logging.info("num_clients = %d, train_data_num = %d, test_data_num = %d, num_labels = %d" % (
+        data_attr["n_clients"], train_data_num, test_data_num, num_labels))
 
     # Transform data to DataFrame.
     # train_data = [(x, labels_map[y])
@@ -226,12 +220,12 @@ def main(process_id, worker_number, args):
               "train_batch_size": args.train_batch_size,
               "eval_batch_size": args.eval_batch_size,
               "dataloader_num_workers": 1,
-              "thread_count": 1, 
+              "thread_count": 1,
               "use_multiprocessing": False,
               "fp16": args.fp16,
               "n_gpu": args.n_gpu,
               "output_dir": args.output_dir,
-            #   "wandb_project": "fednlp", 
+              #   "wandb_project": "fednlp",
               })
 
     # Strat training.
@@ -242,10 +236,9 @@ def main(process_id, worker_number, args):
     # start FedAvg algorithm
     # for distributed algorithm, train_data_gloabl and test_data_global are required
     FedML_FedAvg_distributed(process_id, worker_number, device, comm,
-                            transformer_model, train_data_num, train_data_global, test_data_global,
-                            train_data_local_num_dict, train_data_local_dict, test_data_local_dict, args,
-                            model_trainer)
-
+                             transformer_model, train_data_num, train_data_global, test_data_global,
+                             train_data_local_num_dict, train_data_local_dict, test_data_local_dict, args,
+                             model_trainer)
 
     # # Evaluate the model
     # result, model_outputs, wrong_predictions = model.eval_model(
@@ -254,14 +247,10 @@ def main(process_id, worker_number, args):
     # print(result)
 
 
-
-
-
 if __name__ == "__main__":
     # parse python script input parameters
     parser = argparse.ArgumentParser()
     args = add_args(parser)
-    print(args)
 
     # Set manual seed.
     # Set the random seed. The np.random seed determines the dataset partition.
@@ -277,10 +266,10 @@ if __name__ == "__main__":
 
     # customize the log format
     logging.basicConfig(level=logging.INFO,
-                    format='%(processName)s %(asctime)s.%(msecs)03d - {%(module)s.py (%(lineno)d)} - %(funcName)s(): %(message)s',
-                    datefmt='%Y-%m-%d,%H:%M:%S')
+                        format='%(process)s %(asctime)s.%(msecs)03d - {%(module)s.py (%(lineno)d)} - %(funcName)s(): %(message)s',
+                        datefmt='%Y-%m-%d,%H:%M:%S')
+    logging.info(args)
 
-    logging.info("start")
     hostname = socket.gethostname()
     logging.info("#############process ID = " + str(process_id) +
                  ", host name = " + hostname + "########" +
@@ -293,7 +282,7 @@ if __name__ == "__main__":
         # initialize the wandb machine learning experimental tracking platform (https://wandb.ai/automl/fednlp).
         wandb.init(
             project="fednlp", entity="automl", name="FedNLP-FedAVG-Transformer" +
-            "-TC-" + str(args.dataset) + "-" + str(args.model_name),
+                                                    "-TC-" + str(args.dataset) + "-" + str(args.model_name),
             config=args)
 
     # Start training.

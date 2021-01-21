@@ -16,6 +16,10 @@ Example usage:
     --output_dir /tmp/squad_1.1/ \
     --fp16
 """
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), ".")))
+
 import data_preprocessing.SQuAD_1_1.data_loader
 from data_preprocessing.base.utils import *
 from model.fed_transformers.question_answering import QuestionAnsweringModel
@@ -100,12 +104,37 @@ def load_data(args, dataset):
         for idx in index_list:
             for key in dataset.keys():
                 data[key].append(dataset[key][idx])
+        data["original_index"] = index_list
         return data
     input_dataset = {"context_X": context_X, "question_X": question_X, "question_ids": question_ids, "Y": Y}
     train_data = get_data_by_index_list(input_dataset, attributes["train_index_list"])
     test_data = get_data_by_index_list(input_dataset, attributes["test_index_list"])
 
     return train_data, test_data
+
+def get_normal_format(dataset, cut_off=None):
+    """
+    reformat the dataset to normal version.
+    """
+    reformatted_data = []
+    id_mapping_dict = dict()
+    assert len(dataset["context_X"]) == len(dataset["question_X"]) == len(dataset["Y"]) == len(dataset["question_ids"]) == len(dataset["original_index"])
+    for c, q, a, qid, oid in zip(dataset["context_X"], dataset["question_X"], dataset["Y"], dataset["question_ids"], dataset["original_index"]):
+        item = {}
+        item["context"] = c
+        id_mapping_dict[len(reformatted_data)+1] = oid
+        item["qas"] = [
+            {
+                "id": "%d"%(len(reformatted_data)+1),
+                "qid": qid,
+                # "id": oid,
+                "is_impossible": False,
+                "question": q,
+                "answers": [{"text": c[a[0]:a[1]], "answer_start": a[0]}],
+            }
+        ]
+        reformatted_data.append(item)
+    return reformatted_data[:cut_off], id_mapping_dict
 
 
 def main(args):
@@ -116,8 +145,8 @@ def main(args):
     # Loading full data (for centralized learning)
     train_data, test_data = load_data(args, args.dataset) 
     
-    train_data = data_preprocessing.SQuAD_1_1.data_loader.get_normal_format(train_data, cut_off=None)
-    test_data = data_preprocessing.SQuAD_1_1.data_loader.get_normal_format(test_data, cut_off=None)  
+    train_data, train_id_mapping = get_normal_format(train_data, cut_off=100)
+    test_data, test_id_mapping = get_normal_format(test_data, cut_off=100)  
 
     # Create a ClassificationModel.
     model = QuestionAnsweringModel(

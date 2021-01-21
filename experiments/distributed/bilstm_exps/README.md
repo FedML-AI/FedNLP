@@ -8,44 +8,7 @@ wandb login ee0b5f53d949c84cee7decbe7a629e63fb2f8408
 ```
 
 ## How to Run
-### FedAvg Example
-
-```bash
-CLIENT_NUM=10
-WORKER_NUM=10
-SERVER_NUM=1
-GPU_NUM_PER_SERVER=4
-CI=0
-
-PROCESS_NUM=`expr $WORKER_NUM + 1`
-echo $PROCESS_NUM
-HOST_FILE=experiments/distributed/bilstm_exps/mpi_host_file
-hostname > $HOST_FILE
-
-mpirun -np $PROCESS_NUM -hostfile $HOST_FILE \
-python -m experiments.distributed.bilstm_exps.main_fedavg \
-    --gpu_num_per_server $GPU_NUM_PER_SERVER \
-    --gpu_server_num $SERVER_NUM \
-    --dataset 20news \
-    --data_file data/data_loaders/20news_data_loader.pkl \
-    --partition_file data/partition/20news_partition.pkl \
-    --embedding_file data/pretrained/glove.6B.300d.txt \
-    --client_num_in_total $CLIENT_NUM \
-    --client_num_per_round $WORKER_NUM \
-    --comm_round 100 \
-    --epochs 1 \
-    --batch_size 32 \
-    --lr 0.005 \
-    --wd 0.0001 \
-    --lstm_dropout 0.5 \
-    --embedding_dropout 0 \
-    --max_seq_len 512 \
-    --do_remove_stop_words True \
-    --do_remove_low_freq_words 5 \
-    --ci $CI
-```
-
-### FedOpt Example
+### Example
 
 ```bash
 CLIENT_NUM=10
@@ -74,6 +37,8 @@ python -m experiments.distributed.bilstm_exps.main_fedopt \
     --batch_size 32 \
     --lr 0.005 \
     --server_lr 0.1 \
+    --optimizer adam \
+    --server_optimizer sgd \
     --wd 0.0001 \
     --lstm_dropout 0.5 \
     --embedding_dropout 0 \

@@ -18,18 +18,19 @@ python -m experiments.centralized.transformer_exps.text_classification \
     --output_dir /tmp/20news_fed/ \
     --fp16
 """
+import argparse
+import logging
+
+import pandas as pd
+import sklearn
+import wandb
+
 import data_preprocessing.AGNews.data_loader
 import data_preprocessing.SST_2.data_loader
 import data_preprocessing.SemEval2010Task8.data_loader
 import data_preprocessing.Sentiment140.data_loader
 import data_preprocessing.news_20.data_loader
-from data_preprocessing.base.utils import *
 from model.fed_transformers.classification import ClassificationModel
-import pandas as pd
-import logging
-import sklearn
-import argparse
-import wandb
 
 
 def add_args(parser):
@@ -95,7 +96,6 @@ def add_args(parser):
 
 
 def load_data(args, dataset):
-    data_loader = None
     print("Loading dataset = %s" % dataset)
     if dataset == "20news":
         data_loader = data_preprocessing.news_20.data_loader.ClientDataLoader(
@@ -157,7 +157,7 @@ def main(args):
 
     # Evaluate the model
     result, model_outputs, wrong_predictions = model.eval_model(
-        test_df, acc=sklearn.metrics.accuracy_score) 
+        test_df, acc=sklearn.metrics.accuracy_score)
     logging.info("eval_res=%s" % (str(result)))
 
 

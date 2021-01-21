@@ -16,7 +16,7 @@ import data_preprocessing.Sentiment140.data_loader
 import data_preprocessing.SQuAD_1_1.data_loader
 import data_preprocessing.SST_2.data_loader
 import data_preprocessing.W_NUT.data_loader
-import data_preprocessing.wikigold.data_loader
+import data_preprocessing.wikiner.data_loader
 import data_preprocessing.WMT.data_loader
 
 from data_preprocessing.base.partition import uniform_partition
@@ -66,8 +66,8 @@ def test_raw_data_loader(args, dataset_name):
         data_loader = data_preprocessing.SST_2.data_loader.RawDataLoader(args.data_dir)
     elif dataset_name == "w_nut":
         data_loader = data_preprocessing.W_NUT.data_loader.RawDataLoader(args.data_dir)
-    elif dataset_name == "wikigold":
-        data_loader = data_preprocessing.wikigold.data_loader.RawDataLoader(args.data_dir)
+    elif dataset_name == "wikiner":
+        data_loader = data_preprocessing.wikiner.data_loader.RawDataLoader(args.data_dir)
     elif dataset_name == "wmt":
         data_loader = data_preprocessing.WMT.data_loader.RawDataLoader(args.data_dir.split(","))
     else:
@@ -144,10 +144,10 @@ def test_client_data_loader(args, dataset_name, data_path, partition_path):
                                                                  partition_method=args.partition_method)
         client_data_loader = data_preprocessing.W_NUT.data_loader.ClientDataLoader(data_path, partition_path, client_idx=0,
                                                                  partition_method=args.partition_method)
-    elif dataset_name == "wikigold":
-        server_data_loader = data_preprocessing.wikigold.data_loader.ClientDataLoader(data_path, partition_path, client_idx=None,
+    elif dataset_name == "wikiner":
+        server_data_loader = data_preprocessing.wikiner.data_loader.ClientDataLoader(data_path, partition_path, client_idx=None,
                                                                  partition_method=args.partition_method)
-        client_data_loader = data_preprocessing.wikigold.data_loader.ClientDataLoader(data_path, partition_path, client_idx=0,
+        client_data_loader = data_preprocessing.wikiner.data_loader.ClientDataLoader(data_path, partition_path, client_idx=0,
                                                                  partition_method=args.partition_method)
     elif dataset_name == "wmt":
         data_file_paths = args.data_dir.split(",")

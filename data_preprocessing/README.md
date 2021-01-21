@@ -52,8 +52,8 @@ sh run_fednlp_dataloader.sh sst_2 ../../data/text_classification/SST-2/trees uni
 ## W_NUT
 sh run_fednlp_dataloader.sh w_nut ../../data/sequence_tagging/W-NUT2017/data uniform 32 100
 
-## wikigold
-sh run_fednlp_dataloader.sh wikigold ../../data/sequence_tagging/wikigold/wikigold/CONLL-format/data/wikigold.conll.txt uniform 32 100
+## wikiner
+sh run_fednlp_dataloader.sh wikiner ../../data/sequence_tagging/wikiner uniform 32 100
 
 ## WMT
 sh run_fednlp_dataloader.sh wmt ../../data/seq2seq/WMT/training-parallel-nc-v13/news-commentary-v13.zh-en.zh,../../data/seq2seq/WMT/training-parallel-nc-v13/news-commentary-v13.zh-en.en uniform 32 100

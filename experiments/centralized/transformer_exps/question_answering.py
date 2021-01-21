@@ -18,10 +18,6 @@ Example usage:
     --output_dir /tmp/squad_1.1/ \
     --fp16
 """
-import os
-import sys
-sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), ".")))
-
 import data_preprocessing.SQuAD_1_1.data_loader
 from data_preprocessing.base.utils import *
 from model.fed_transformers.question_answering import QuestionAnsweringModel
@@ -113,8 +109,8 @@ def main(args):
     # Loading full data (for centralized learning)
     train_data, test_data, _ = load_data(args, args.dataset) 
     
-    train_data = data_preprocessing.SQuAD_1_1.data_loader.get_normal_format(train_data, cut_off=None)
-    test_data = data_preprocessing.SQuAD_1_1.data_loader.get_normal_format(test_data, cut_off=None)  
+    train_data = data_preprocessing.SQuAD_1_1.data_loader.get_normal_format(train_data, cut_off=100)
+    test_data = data_preprocessing.SQuAD_1_1.data_loader.get_normal_format(test_data, cut_off=100)  
 
     # Create a ClassificationModel.
     model = QuestionAnsweringModel(
