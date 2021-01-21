@@ -125,8 +125,8 @@ def get_normal_format(dataset, cut_off=None):
         id_mapping_dict[len(reformatted_data)+1] = oid
         item["qas"] = [
             {
-                "id": "%d"%(len(reformatted_data)+1),
-                "qid": qid,
+                # "id": "%d"%(len(reformatted_data)+1),
+                "id": qid,
                 # "id": oid,
                 "is_impossible": False,
                 "question": q,

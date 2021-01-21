@@ -783,13 +783,13 @@ class QuestionAnsweringModel:
             eval_data, output_dir, verbose_logging=verbose
         )
 
-        prediction_dict = dict()
-        for i, prediction in all_predictions.items():
-            qid = eval_data[int(i)-1]["qas"][0]["qid"]
-            prediction_dict[qid] = prediction
+        # prediction_dict = dict()
+        # for qid, prediction in all_predictions.items():
+        #     # qid = eval_data[int(i)-1]["qas"][0]["qid"]
+        #     prediction_dict[qid] = prediction
         
         with open(os.path.join(output_dir, "prediction.json"), "w") as f:
-            json.dump(prediction_dict, f)
+            json.dump(all_predictions, f)
         
         f = os.popen("python ./model/fed_transformers/question_answering/evaluate-v1.1.py %s %s" % (eval_data_path, os.path.join(output_dir, "prediction.json")))
 

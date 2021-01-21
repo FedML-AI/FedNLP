@@ -253,7 +253,7 @@ class QuestionAnsweringTrainer:
 
         prediction_dict = dict()
         for i, prediction in all_predictions.items():
-            qid = eval_data[int(i) - 1]["qas"][0]["qid"]
+            qid = eval_data[int(i) - 1]["qas"][0]["id"]
             prediction_dict[qid] = prediction
 
         with open(os.path.join(output_dir, "prediction.json"), "w") as f:
