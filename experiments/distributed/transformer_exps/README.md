@@ -38,8 +38,11 @@ python -m experiments.distributed.transformer_exps.text_classification_fedavg \
     --eval_batch_size 8 \
     --max_seq_length 128 \
     --learning_rate 1e-5 \
+    --server_lr 1e-5 \
+    --server_optimizer admn \
     --epochs 1 \
     --output_dir "/tmp/20news_fedavg/" \
+    --fed_alg fedavg \
     --fp16 
     # 2> ${LOG_FILE} &
 ```
@@ -81,8 +84,11 @@ python -m experiments.distributed.transformer_exps.question_answering_fedavg \
     --eval_batch_size 8 \
     --max_seq_length 256 \
     --learning_rate 1e-5 \
+    --server_lr 1e-5 \
+    --server_optimizer adam \
     --epochs 1 \
     --output_dir "/tmp/squad_fedavg/" \
+    --fed_alg fedavg \
     --fp16 
     # 2> ${LOG_FILE} &
 ```
