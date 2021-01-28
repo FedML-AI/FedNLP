@@ -40,8 +40,9 @@ class TransformerTrainer(ModelTrainer):
         return train_data_flat
     
     def flatten_question_answering_data(self, train_data):
-        train_data_flat = dict(context_X=[], question_X=[], Y=[])
+        train_data_flat = dict(context_X=[], question_X=[], Y=[], question_ids=[])
         for item in train_data: 
+            train_data_flat["question_ids"] += [t for t in item["question_ids"]]
             train_data_flat["context_X"] += [t for t in item["context_X"]]
             train_data_flat["question_X"] += [t for t in item["question_X"]]
             train_data_flat["Y"] += [t for t in item["Y"]]
