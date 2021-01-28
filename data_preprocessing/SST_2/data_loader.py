@@ -21,14 +21,15 @@ class RawDataLoader(BaseRawDataLoader):
             temp_X, temp_Y = self.process_data(os.path.join(self.data_path, self.test_file_name))
             X.extend(temp_X)
             Y.extend(temp_Y)
-            self.X, self.Y = X, Y
+            self.X = {i: d for i, d in enumerate(X)}
+            self.Y = {i: d for i, d in enumerate(Y)}
             train_index_list = [i for i in range(train_size)]
             test_index_list = [i for i in range(train_size, len(X))]
             index_list = train_index_list + test_index_list
-            self.attributes = {"index_list": index_list, "train_index_list": train_index_list,
-                               "test_index_list": test_index_list}
             self.target_vocab = {key: i for i, key in enumerate(set(Y))}
-        return {"X": self.X, "Y": self.Y, "target_vocab": self.target_vocab, "task_type": self.task_type,
+            self.attributes = {"index_list": index_list, "train_index_list": train_index_list,
+                               "test_index_list": test_index_list, "target_vocab": self.target_vocab}
+        return {"X": self.X, "Y": self.Y, "task_type": self.task_type,
                 "attributes": self.attributes}
 
     def label_level(self, label):

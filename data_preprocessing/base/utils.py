@@ -9,7 +9,9 @@ import spacy
 from data_preprocessing.base.globals import *
 
 import gensim
+import h5py
 import numpy as np
+
 
 FLOAT_SIZE = 4
 
@@ -239,3 +241,17 @@ def NER_data_formatter(ner_data):
             formatted_data.append([sent_id, token, tag])
         sent_id += 1
     return formatted_data
+
+
+def generate_h5_from_dict(file_name, data_dict):
+    def dict_to_h5_recursive(h5_file, path, dic):
+        for key, value in dic.items():
+            if isinstance(value, dict):
+                if key == "attributes":
+                    h5_file[path + str(key)] = str(value)
+                else:
+                    dict_to_h5_recursive(h5_file, path + str(key) + "/", value)
+            else:
+                h5_file[path + str(key)] = value
+    with h5py.File(file_name, "w") as f:
+        dict_to_h5_recursive(f, "/", data_dict)

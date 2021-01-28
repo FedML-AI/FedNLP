@@ -17,7 +17,10 @@ class RawDataLoader(BaseRawDataLoader):
     def data_loader(self):
         if len(self.history) == 0:
             X, Y, history, attributes = self.process_data(self.data_path)
-            self.X, self.Y, self.history, self.attributes = X, Y, history, attributes
+            self.X = {i: d for i, d in enumerate(X)}
+            self.Y = {i: d for i, d in enumerate(Y)}
+            self.history = {i: d for i, d in enumerate(history)}
+            self.attributes = attributes
             self.index_list = [i for i in range(len(self.X))]
             self.attributes["index_list"] = self.index_list
         return {"X": self.X, "Y": self.Y, "history": self.history, "attributes": self.attributes,

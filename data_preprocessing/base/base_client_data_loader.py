@@ -1,4 +1,5 @@
-import pickle
+import h5py
+import ast
 from abc import ABC, abstractmethod
 
 from .utils import SpacyTokenizer
@@ -74,13 +75,13 @@ class BaseClientDataLoader(ABC):
         return self.attributes
 
     def load_data(self):
-        data_dict = pickle.load(open(self.data_path, "rb"))
-        partition_dict = pickle.load(open(self.partition_path, "rb"))
+        data_dict = h5py.File(self.data_path, "r")
+        partition_dict = h5py.File(self.partition_path, "r")
 
         def generate_client_data(data_dict, index_list):
             data = dict()
             for field in self.data_fields:
-                data[field] = [data_dict[field][idx] for idx in index_list]
+                data[field] = [data_dict[field][str(idx)][()] for idx in index_list]
             return data
 
         if self.client_idx is None:
@@ -92,13 +93,11 @@ class BaseClientDataLoader(ABC):
             self.train_data = generate_client_data(data_dict, train_index_list)
             self.test_data = generate_client_data(data_dict, test_index_list)
         else:
-            train_index_list = partition_dict[self.partition_method]["partition_data"][self.client_idx]["train"]
-            test_index_list = partition_dict[self.partition_method]["partition_data"][self.client_idx]["test"]
+            client_idx = str(self.client_idx)
+            train_index_list = partition_dict[self.partition_method]["partition_data"][client_idx]["train"][()]
+            test_index_list = partition_dict[self.partition_method]["partition_data"][client_idx]["test"][()]
             self.train_data = generate_client_data(data_dict, train_index_list)
             self.test_data = generate_client_data(data_dict, test_index_list)
 
-        self.attributes = data_dict["attributes"]
-        if "target_vocab" in data_dict:
-            self.attributes["target_vocab"] = data_dict["target_vocab"]
-        self.attributes["n_clients"] = partition_dict[self.partition_method]["n_clients"]
-        
+        self.attributes = ast.literal_eval(data_dict["attributes"][()])
+        self.attributes["n_clients"] = partition_dict[self.partition_method]["n_clients"][()]

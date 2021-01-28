@@ -13,7 +13,8 @@ class RawDataLoader(BaseRawDataLoader):
     def data_loader(self):
         if len(self.X) == 0 or len(self.Y) == 0:
             X, Y = self.process_data(self.data_path)
-            self.X, self.Y = X, Y
+            self.X = {i: d for i, d in enumerate(X)}
+            self.Y = {i: d for i, d in enumerate(Y)}
             index_list = [i for i in range(len(self.X))]
             self.attributes = {"index_list": index_list}
         return {"X": self.X, "Y": self.Y, "task_type": self.task_type, "attributes": self.attributes}

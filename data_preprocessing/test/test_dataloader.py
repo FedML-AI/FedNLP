@@ -1,7 +1,6 @@
 import argparse
 import logging
 import time
-import pickle
 import os
 import sys
 
@@ -20,6 +19,7 @@ import data_preprocessing.wikiner.data_loader
 import data_preprocessing.WMT.data_loader
 
 from data_preprocessing.base.partition import uniform_partition
+from data_preprocessing.base.utils import generate_h5_from_dict
 
 def add_args(parser):
     """
@@ -30,7 +30,7 @@ def add_args(parser):
     parser.add_argument('--dataset', type=str, default='20news', metavar='N',
                         help='dataset used for training')
 
-    parser.add_argument('--data_dir', type=str, default='../../data/text_classification/20Newsgroups/20news-18828',
+    parser.add_argument('--data_dir', type=str, default='../../data/text_classification/20Newsgroups',
                         help='data directory')
 
     parser.add_argument('--partition_method', type=str, default='uniform', metavar='N',
@@ -185,10 +185,10 @@ if __name__ == "__main__":
     end = time.time()
     logger.info("Finish testing partition method, it takes %f sec" % (end - start))
 
-    data_path = args.dataset + "_data_loader.pkl"
-    partition_path = args.dataset + "_partition.pkl"
-    pickle.dump(results, open(data_path, "wb"))
-    pickle.dump(partition_dict, open(partition_path, "wb"))
+    data_path = args.dataset + "_data.h5"
+    partition_path = args.dataset + "_partition.h5"
+    generate_h5_from_dict(data_path, results)
+    generate_h5_from_dict(partition_path, partition_dict)
 
     logger.info("Start testing ClientDataLoader")
     start = time.time()

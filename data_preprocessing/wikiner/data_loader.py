@@ -20,12 +20,13 @@ class RawDataLoader(BaseRawDataLoader):
             X.extend(temp[0])
             Y.extend(temp[1])
             all_deps.extend(temp[2])
-            self.X, self.Y, self.all_deps = X, Y, all_deps
+            self.X = {i: d for i, d in enumerate(X)}
+            self.Y = {i: d for i, d in enumerate(Y)}
+            self.all_deps = {i: d for i, d in enumerate(all_deps)}
             index_list = [i for i in range(len(self.X))]
-            self.attributes = {"index_list": index_list}
             self.target_vocab = build_vocab(Y)
-
-        return {"X": self.X, "Y": self.Y, "all_deps": self.all_deps, "target_vocab": self.target_vocab,
+            self.attributes = {"index_list": index_list, "target_vocab": self.target_vocab}
+        return {"X": self.X, "Y": self.Y, "all_deps": self.all_deps,
                 "task_type": self.task_type, "attributes": self.attributes}
 
     def process_data(self, file_path):

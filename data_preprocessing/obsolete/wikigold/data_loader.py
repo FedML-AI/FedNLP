@@ -83,7 +83,7 @@ class DataLoader(BaseDataLoader):
 def test_performance():
     import time
     from pympler import asizeof
-    train_file_path = "../../../../data/fednlp/sequence_tagging/wikigold/wikigold/CONLL-format/data/wikigold.conll.txt"
+    train_file_path = "../../../../data/fednlp/sequence_tagging/wikiner/wikiner/CONLL-format/data/wikiner.conll.txt"
     # load all data
     start = time.time()
     data_loader = DataLoader(train_file_path, uniform_partition, padding=True)

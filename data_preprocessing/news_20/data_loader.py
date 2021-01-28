@@ -35,14 +35,15 @@ class RawDataLoader(BaseRawDataLoader):
                             file_path = os.path.join(root2, file_name)
                             X.extend(self.process_data(file_path))
                             Y.append(dir)
-            self.X, self.Y = X, Y
+            self.X = {i: d for i, d in enumerate(X)}
+            self.Y = {i: d for i, d in enumerate(Y)}
             train_index_list = [i for i in range(train_size)]
             test_index_list = [i for i in range(train_size, len(X))]
             index_list = train_index_list + test_index_list
             self.target_vocab = {key: i for i, key in enumerate(set(Y))}
             self.attributes = {"index_list": index_list, "train_index_list": train_index_list,
-                               "test_index_list": test_index_list}
-        return {"X": self.X, "Y": self.Y, "target_vocab": self.target_vocab, "task_type": self.task_type,
+                               "test_index_list": test_index_list, "target_vocab": self.target_vocab}
+        return {"X": self.X, "Y": self.Y, "task_type": self.task_type,
                 "attributes": self.attributes}
 
     # remove header

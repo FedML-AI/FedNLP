@@ -30,7 +30,10 @@ class RawDataLoader(BaseRawDataLoader):
             train_index_list = [i for i in range(train_size)]
             test_index_list = [i for i in range(train_size, len(context_X))]
             index_list = train_index_list + test_index_list
-            self.context_X, self.question_X, self.Y, self.question_ids = context_X, question_X, Y, question_ids
+            self.context_X = {i: d for i, d in enumerate(context_X)}
+            self.question_X = {i: d for i, d in enumerate(question_X)}
+            self.question_ids = {i: d for i, d in enumerate(question_ids)}
+            self.Y = {i: d for i, d in enumerate(Y)}
             self.attributes["train_index_list"] = train_index_list
             self.attributes["test_index_list"] = test_index_list
             self.attributes["index_list"] = index_list
