@@ -11,8 +11,8 @@ Note that we always assume users will run the following scripts at root director
 python -m experiments.centralized.bilstm_exps.main_text_classification \
   --model bilstm \
   --dataset 20news \
-  --data_file data/data_loaders/20news_data_loader.pkl \
-  --partition_file data/partition/20news_partition.pkl \
+  --data_file data/data_loaders/20news_data.h5 \
+  --partition_file data/partition/20news_partition.h5 \
   --partition_method uniform \
   --hidden_size 300  \
   --num_layers 1 \
@@ -37,8 +37,8 @@ python -m experiments.centralized.bilstm_exps.main_text_classification \
 python -m experiments.centralized.bilstm_exps.main_text_classification \
   --model bilstm \
   --dataset agnews \
-  --data_file data/data_loaders/agnews_data_loader.pkl \
-  --partition_file data/partition/agnews_partition.pkl \
+  --data_file data/data_loaders/agnews_data.h5 \
+  --partition_file data/partition/agnews_partition.h5 \
   --partition_method uniform \
   --hidden_size 300  \
   --num_layers 1 \
@@ -63,8 +63,8 @@ python -m experiments.centralized.bilstm_exps.main_text_classification \
 python -m experiments.centralized.bilstm_exps.main_text_classification \
   --model bilstm \
   --dataset semeval_2010_task8 \
-  --data_file data/data_loaders/semeval_2010_task8_data_loader.pkl \
-  --partition_file data/partition/semeval_2010_task8_partition.pkl \
+  --data_file data/data_loaders/semeval_2010_task8_data.h5 \
+  --partition_file data/partition/semeval_2010_task8_partition.h5 \
   --partition_method uniform \
   --hidden_size 300  \
   --num_layers 1 \
@@ -89,8 +89,8 @@ python -m experiments.centralized.bilstm_exps.main_text_classification \
 python -m experiments.centralized.bilstm_exps.main_text_classification \
   --model bilstm \
   --dataset sentiment140 \
-  --data_file data/data_loaders/sentiment_140_data_loader.pkl \
-  --partition_file data/partition/sentiment_140_partition.pkl \
+  --data_file data/data_loaders/sentiment_140_data.h5 \
+  --partition_file data/partition/sentiment_140_partition.h5 \
   --partition_method uniform \
   --hidden_size 300  \
   --num_layers 1 \
@@ -115,8 +115,8 @@ python -m experiments.centralized.bilstm_exps.main_text_classification \
 python -m experiments.centralized.bilstm_exps.main_text_classification \
   --model bilstm \
   --dataset sst_2 \
-  --data_file data/data_loaders/sst_2_data_loader.pkl \
-  --partition_file data/partition/sst_2_partition.pkl \
+  --data_file data/data_loaders/sst_2_data.h5 \
+  --partition_file data/partition/sst_2_partition.h5 \
   --partition_method uniform \
   --hidden_size 300  \
   --num_layers 1 \
@@ -142,8 +142,8 @@ python -m experiments.centralized.bilstm_exps.main_text_classification \
 python -m experiments.centralized.bilstm_exps.main_text_classification_lower_bound \
   --model bilstm \
   --dataset 20news \
-  --data_file data/data_loaders_lower_bound/20news_data_loader.pkl \
-  --partition_file data/partition_lower_bound/20news_partition.pkl \
+  --data_file data/data_loaders_lower_bound/20news_data.h5 \
+  --partition_file data/partition_lower_bound/20news_partition.h5 \
   --partition_method uniform \
   --hidden_size 300  \
   --num_layers 1 \
@@ -168,8 +168,8 @@ python -m experiments.centralized.bilstm_exps.main_text_classification_lower_bou
 python -m experiments.centralized.bilstm_exps.main_text_classification_lower_bound \
   --model bilstm \
   --dataset agnews \
-  --data_file data/data_loaders_lower_bound/agnews_data_loader.pkl \
-  --partition_file data/partition_lower_bound/agnews_partition.pkl \
+  --data_file data/data_loaders_lower_bound/agnews_data.h5 \
+  --partition_file data/partition_lower_bound/agnews_partition.h5 \
   --partition_method uniform \
   --hidden_size 300  \
   --num_layers 1 \
@@ -194,8 +194,8 @@ python -m experiments.centralized.bilstm_exps.main_text_classification_lower_bou
 python -m experiments.centralized.bilstm_exps.main_text_classification_lower_bound \
   --model bilstm \
   --dataset semeval_2010_task8 \
-  --data_file data/data_loaders_lower_bound/semeval_2010_task8_data_loader.pkl \
-  --partition_file data/partition_lower_bound/semeval_2010_task8_partition.pkl \
+  --data_file data/data_loaders_lower_bound/semeval_2010_task8_data.h5 \
+  --partition_file data/partition_lower_bound/semeval_2010_task8_partition.h5 \
   --partition_method uniform \
   --hidden_size 300  \
   --num_layers 1 \
@@ -220,8 +220,8 @@ python -m experiments.centralized.bilstm_exps.main_text_classification_lower_bou
 python -m experiments.centralized.bilstm_exps.main_text_classification_lower_bound \
   --model bilstm \
   --dataset sentiment140 \
-  --data_file data/data_loaders_lower_bound/sentiment_140_data_loader.pkl \
-  --partition_file data/partition_lower_bound/sentiment_140_partition.pkl \
+  --data_file data/data_loaders_lower_bound/sentiment_140_data.h5 \
+  --partition_file data/partition_lower_bound/sentiment_140_partition.h5 \
   --partition_method uniform \
   --hidden_size 300  \
   --num_layers 1 \
@@ -246,8 +246,8 @@ python -m experiments.centralized.bilstm_exps.main_text_classification_lower_bou
 python -m experiments.centralized.bilstm_exps.main_text_classification_lower_bound \
   --model bilstm \
   --dataset sst_2 \
-  --data_file data/data_loaders_lower_bound/sst_2_data_loader.pkl \
-  --partition_file data/partition_lower_bound/sst_2_partition.pkl \
+  --data_file data/data_loaders_lower_bound/sst_2_data.h5 \
+  --partition_file data/partition_lower_bound/sst_2_partition.h5 \
   --partition_method uniform \
   --hidden_size 300  \
   --num_layers 1 \

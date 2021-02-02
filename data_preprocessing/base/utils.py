@@ -252,6 +252,10 @@ def generate_h5_from_dict(file_name, data_dict):
                 else:
                     dict_to_h5_recursive(h5_file, path + str(key) + "/", value)
             else:
-                h5_file[path + str(key)] = value
-    with h5py.File(file_name, "w") as f:
-        dict_to_h5_recursive(f, "/", data_dict)
+                if isinstance(value, list) and (len(value) > 0 and isinstance(value[0], str)):
+                    h5_file[path + str(key)] = np.array(value, dtype="S")
+                else:
+                    h5_file[path + str(key)] = value
+    f = h5py.File(file_name, "w")
+    dict_to_h5_recursive(f, "/", data_dict)
+    f.close()

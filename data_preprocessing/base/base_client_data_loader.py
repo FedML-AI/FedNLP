@@ -101,3 +101,6 @@ class BaseClientDataLoader(ABC):
 
         self.attributes = ast.literal_eval(data_dict["attributes"][()])
         self.attributes["n_clients"] = partition_dict[self.partition_method]["n_clients"][()]
+
+        data_dict.close()
+        partition_dict.close()

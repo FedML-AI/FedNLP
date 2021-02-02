@@ -36,13 +36,13 @@ class RawDataLoader(BaseRawDataLoader):
         Y = []
         single_x = []
         single_y = []
-        with open(file_path, 'r') as f:
+        with open(file_path, 'r', encoding="utf8") as f:
             for line in f:
                 line = line.strip()
                 if line:
                     token, label = line.split("\t")
-                    single_x.append(token)
-                    single_y.append(label)
+                    single_x.append(token.encode("utf8"))
+                    single_y.append(label.encode("utf8"))
                 else:
                     if len(single_x) != 0:
                         X.append(single_x.copy())

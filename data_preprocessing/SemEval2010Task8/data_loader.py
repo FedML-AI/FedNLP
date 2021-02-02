@@ -10,8 +10,8 @@ class RawDataLoader(BaseRawDataLoader):
         super().__init__(data_path)
         self.task_type = "text_classification"
         self.target_vocab = None
-        self.train_file_name = "SemEval2010_task8_training/TRAIN_FILE.txt"
-        self.test_file_name = "SemEval2010_task8_testing_keys/TEST_FILE_FULL.txt"
+        self.train_file_name = "SemEval2010_task8_training/TRAIN_FILE.TXT"
+        self.test_file_name = "SemEval2010_task8_testing_keys/TEST_FILE_FULL.TXT"
 
     def data_loader(self):
         if len(self.X) == 0 or len(self.Y) == 0 or self.target_vocab is None:
@@ -34,6 +34,7 @@ class RawDataLoader(BaseRawDataLoader):
     def process_data(self, file_path):
         X = []
         Y = []
+        print(file_path)
         with open(file_path, "r", encoding='utf-8') as f:
             data = f.readlines()
             for i in range(len(data)):
