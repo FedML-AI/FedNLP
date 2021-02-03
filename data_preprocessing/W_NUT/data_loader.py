@@ -19,7 +19,7 @@ class RawDataLoader(BaseRawDataLoader):
             train_size = len(X)
             temp = self.process_data(os.path.join(self.data_path, self.test_file_name))
             X.extend(temp[0])
-            Y.extend(temp[0])
+            Y.extend(temp[1])
             self.X = {i: d for i, d in enumerate(X)}
             self.Y = {i: d for i, d in enumerate(Y)}
             train_index_list = [i for i in range(train_size)]
