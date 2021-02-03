@@ -1,6 +1,6 @@
 python -m text_classification_raw_data \
     --dataset "sentiment140" \
-    --data_file "../../../data/text_classification/Sentiment140/sentiment_140_data_loader.pkl" \
+    --data_file "../../../data/data_files/sentiment_140_data.h5" \
     --model_type distilbert \
     --model_name distilbert-base-uncased \
     --do_lower_case True \

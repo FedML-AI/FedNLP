@@ -27,8 +27,8 @@ python -m experiments.distributed.bilstm_exps.main_fedopt \
     --gpu_num_per_server $GPU_NUM_PER_SERVER \
     --gpu_server_num $SERVER_NUM \
     --dataset 20news \
-    --data_file data/data_loaders/20news_data_loader.pkl \
-    --partition_file data/partition/20news_partition.pkl \
+    --data_file data/data_files/20news_data.h5 \
+    --partition_file data/partition_files/20news_partition.h5 \
     --embedding_file data/pretrained/glove.6B.300d.txt \
     --client_num_in_total $CLIENT_NUM \
     --client_num_per_round $WORKER_NUM \

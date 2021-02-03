@@ -30,11 +30,11 @@ def add_args(parser):
     parser.add_argument('--dataset', type=str, default='20news', metavar='DS',
                         help='dataset used for training')
 
-    parser.add_argument('--data_file', type=str, default='data/data_loaders/20news_data_loader.pkl',
-                        metavar="DF", help='data pickle file')
+    parser.add_argument('--data_file', type=str, default='data/data_files/20news_data.h5',
+                        metavar="DF", help='data h5 file')
 
-    parser.add_argument('--partition_file', type=str, default='data/partition/20news_partition.pkl',
-                        metavar="PF", help='partition pickle file')
+    parser.add_argument('--partition_file', type=str, default='data/partition_files/20news_data.h5',
+                        metavar="PF", help='partition h5 file')
 
     parser.add_argument('--partition_method', type=str, default='uniform', metavar='PM',
                         help='how to partition the dataset')

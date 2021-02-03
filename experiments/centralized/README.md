@@ -14,8 +14,8 @@ do
   export CUDA_VISIBLE_DEVICES=0 \
   python -m experiments.centralized.transformer_exps.text_classification \
       --dataset ${DATA_NAME} \
-      --data_file data/data_loaders/${DATA_NAME}_data_loader.pkl \
-      --partition_file data/partition/${DATA_NAME}_partition.pkl \
+      --data_file data/data_files/${DATA_NAME}_data.h5 \
+      --partition_file data/partition_files/${DATA_NAME}_partition.h5 \
       --partition_method uniform \
       --model_type distilbert \
       --model_name distilbert-base-uncased \
@@ -36,8 +36,8 @@ done
 export CUDA_VISIBLE_DEVICES=0 \
 python -m experiments.centralized.transformer_exps.question_answering \
     --dataset squad_1.1 \
-    --data_file data/data_loaders/squad_1.1_data_loader.pkl \
-    --partition_file data/partition/squad_1.1_partition.pkl \
+    --data_file data/data_files/squad_1.1_data.h5 \
+    --partition_file data/partition_files/squad_1.1_partition.h5 \
     --partition_method uniform \
     --model_type distilbert \
     --model_name distilbert-base-uncased \
@@ -56,8 +56,8 @@ python -m experiments.centralized.transformer_exps.question_answering \
 ```bash
 CUDA_VISIBLE_DEVICES=0 python -m experiments.centralized.transformer_exps.named_entity_recognition \
     --dataset wikigold \
-    --data_file data/data_loaders/wikigold_data_loader.pkl \
-    --partition_file data/partition/wikigold_partition.pkl \
+    --data_file data/data_files/wikigold_data.h5 \
+    --partition_file data/partition_files/wikigold_partition.h5 \
     --partition_method uniform \
     --model_type distilbert \
     --model_name distilbert-base-uncased \

@@ -4,8 +4,8 @@ Example usage:
 (under the root folder)
 CUDA_VISIBLE_DEVICES=2 python -m experiments.centralized.transformer_exps.named_entity_recognition \
     --dataset wikigold \
-    --data_file data/data_loaders/wikigold_data_loader.pkl \
-    --partition_file data/partition/wikigold_partition.pkl \
+    --data_file data/data_files/wikigold_data.h5 \
+    --partition_file data/partition_file/wikigold_partition.h5 \
     --partition_method uniform \
     --model_type distilbert \
     --model_name distilbert-base-uncased \

@@ -38,10 +38,10 @@ def add_args(parser):
     parser.add_argument('--dataset', type=str, default='sentiment140', metavar='N',
                         help='dataset used for training')
 
-    parser.add_argument('--data_file', type=str, default='data/data_loaders/sentiment_140_data_loader.pkl',
+    parser.add_argument('--data_file', type=str, default='data/data_files/sentiment_140_data.h5',
                         metavar="DF", help='data pickle file')
 
-    parser.add_argument('--partition_file', type=str, default='data/partition/sentiment_140_partition.pkl',
+    parser.add_argument('--partition_file', type=str, default='data/partition_files/sentiment_140_partition.h5',
                         metavar="PF", help='partition pickle file')
 
     parser.add_argument('--partition_method', type=str, default='uniform', metavar='N',

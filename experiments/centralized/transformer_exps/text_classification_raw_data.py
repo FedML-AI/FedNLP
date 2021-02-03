@@ -4,7 +4,7 @@ Example usage:
 (under the root folder)
 python -m experiments.centralized.transformer_exps.text_classification_raw_data \
     --dataset sentiment_140 \
-    --data_file data/data_loaders/sentiment_140_data_loader.pkl \
+    --data_file data/data_files/sentiment_140_data.h5 \
     --model_type distilbert \
     --model_name distilbert-base-uncased \
     --do_lower_case True \

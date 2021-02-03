@@ -4,8 +4,8 @@ Example usage:
 (under the root folder)
   python -m experiments.centralized.transformer_exps.question_answering \
     --dataset squad_1.1 \
-    --data_file data/data_loaders/squad_1.1_data_loader.pkl \
-    --partition_file data/partition/squad_1.1_partition.pkl \
+    --data_file data/data_files/squad_1.1_data.h5 \
+    --partition_file data/partition_files/squad_1.1_partition.h5 \
     --partition_method uniform \
     --model_type distilbert \
     --model_name distilbert-base-uncased \
