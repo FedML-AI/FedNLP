@@ -20,7 +20,7 @@ python -m data_preprocessing.advanced_partition.kmeans_ex  \
 ## LDA
 we first kmeans to classify data in to 5 clusters and then apply LDA to distribute data in to different number of groups as defined in client number
 
-we already have 5 clusters data for datasets excluding "20news agnews sentiment140 sst2 semeval_2010_task8" because they have their own natural classification. In the each of the rest partition h5 files, you can access the data by the keyword "kmeans_5". If you would like to create different numbers of clusters you can use the kmeans code we provide above
+we already have 5 clusters data for datasets excluding "**20news** **agnews** **sentiment140** **sst2** **semeval_2010_task8**" because they have their own natural classification. In the each of the rest partition h5 files, you can access the clustering data by the keyword "**kmeans_5**" and you can also find which data belongs to which cluster under the keyword **kmeans_5/cluster_assignment** . If you would like to create different numbers of clusters you can use the kmeans code we provide above
 ### usage
 
 ```sh
