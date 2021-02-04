@@ -1,21 +1,29 @@
 # Advanced Partition Method
-We provide two non-iid partition methods. You can dowoload the already partitioned data from amazon s3 link or follow the instruction below to partition your own dataset.
+We provide two non-iid partition methods. You can dowoload the our datasets and the partitioned data 
+```sh
+wget --no-check-certificate --no-proxy https://fednlp.s3-us-west-1.amazonaws.com/data_and_partition_files.zip
+unzip data_loaders_and_partition.zip
+```
+or follow the instruction below to partition your own dataset.
 
 ## BERT-based Clustering 
 We first use sentence transformer to compute the embedding of the data and then run kmeans to gets K clusters based on client numbers.
 ### usage 
+```sh
 python -m data_preprocessing.advanced_partition.kmeans_ex  \
 --client_number 100 \
 --data_file 'data/data_files/20news_data.h5' \
 --partition_file 'data/partition_files/20news_partition.h5' \
 --embedding_file data/embedding_files/20news_embedding.h5  \
 --task_type text_classification
+```
 ## LDA
 we first kmeans to classify data in to 5 clusters and then apply LDA to distribute data in to different number of groups as defined in client number
 
 we already have 5 clusters data for datasets excluding "20news agnews sentiment140 sst2 semeval_2010_task8" because they have their own natural classification. In the each of the rest partition h5 files, you can access the data by the keyword "kmeans_5". If you would like to create different numbers of clusters you can use the kmeans code we provide above
 ### usage
 
+```sh
 python -m data_preprocessing.advanced_partition.lda_ex  \
 --client_number 100 \
 --data_file 'data/data_files/20news_data.h5' \
@@ -23,7 +31,7 @@ python -m data_preprocessing.advanced_partition.lda_ex  \
 --task_type text_classification \
 --min_size 10 \
 --alpha 1.0
-
+```
 ## datasets stats
 every data is round to 0.01
 ### 20news 
