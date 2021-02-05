@@ -68,7 +68,7 @@ def test_raw_data_loader(args, dataset_name):
         data_loader = data_preprocessing.W_NUT.data_loader.RawDataLoader(args.data_dir)
     elif dataset_name == "wikiner":
         data_loader = data_preprocessing.wikiner.data_loader.RawDataLoader(args.data_dir)
-    elif dataset_name == "wmt":
+    elif dataset_name.startswith("wmt"):
         data_loader = data_preprocessing.WMT.data_loader.RawDataLoader(args.data_dir.split(","))
     else:
         raise Exception("No such dataset!!")
@@ -149,7 +149,7 @@ def test_client_data_loader(args, dataset_name, data_path, partition_path):
                                                                  partition_method=args.partition_method)
         client_data_loader = data_preprocessing.wikiner.data_loader.ClientDataLoader(data_path, partition_path, client_idx=0,
                                                                  partition_method=args.partition_method)
-    elif dataset_name == "wmt":
+    elif dataset_name.startswith("wmt"):
         data_file_paths = args.data_dir.split(",")
         language_pair = (data_file_paths[0].split(".")[-1], data_file_paths[1].split(".")[-1])
         server_data_loader = data_preprocessing.WMT.data_loader.ClientDataLoader(data_path, partition_path, language_pair, client_idx=None,

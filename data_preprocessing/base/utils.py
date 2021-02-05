@@ -10,6 +10,7 @@ from data_preprocessing.base.globals import *
 
 import gensim
 import h5py
+import json
 import numpy as np
 
 
@@ -248,14 +249,19 @@ def generate_h5_from_dict(file_name, data_dict):
         for key, value in dic.items():
             if isinstance(value, dict):
                 if key == "attributes":
-                    h5_file[path + str(key)] = str(value)
+                    h5_file[path + str(key)] = json.dumps(value)
                 else:
                     dict_to_h5_recursive(h5_file, path + str(key) + "/", value)
             else:
                 if isinstance(value, list) and (len(value) > 0 and isinstance(value[0], str)):
-                    h5_file[path + str(key)] = np.array(value, dtype="S")
+                    h5_file[path + str(key)] = np.array([v.encode('utf8') for v in value], dtype="S")
                 else:
                     h5_file[path + str(key)] = value
     f = h5py.File(file_name, "w")
     dict_to_h5_recursive(f, "/", data_dict)
     f.close()
+
+def decode_data_from_h5(data):
+    if isinstance(data, bytes):
+        return data.decode("utf8")
+    return data

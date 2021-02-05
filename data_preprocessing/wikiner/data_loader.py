@@ -44,9 +44,9 @@ class RawDataLoader(BaseRawDataLoader):
                         tokens = line.split(" ")
                         for token in tokens:
                             word, dep, label = token.split("|")
-                            single_x.append(word.encode("utf8"))
-                            single_y.append(label.encode("utf8"))
-                            single_dep.append(dep.encode("utf8"))
+                            single_x.append(word)
+                            single_y.append(label)
+                            single_dep.append(dep)
                         X.append(single_x)
                         Y.append(single_y)
                         all_deps.append(single_dep)

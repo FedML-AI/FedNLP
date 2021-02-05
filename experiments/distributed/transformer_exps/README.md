@@ -20,7 +20,7 @@ HOST_FILE=experiments/distributed/transformer_exps/mpi_host_file
 hostname > $HOST_FILE
 
 mpirun -np $PROCESS_NUM -hostfile $HOST_FILE \
-python -m experiments.distributed.transformer_exps.text_classification_fedavg \
+python -m experiments.distributed.transformer_exps.main_text_classification \
     --gpu_mapping_file "experiments/distributed/transformer_exps/gpu_mapping.yaml" \
     --gpu_mapping_key mapping_ink-ron \
     --client_num_in_total $CLIENT_NUM \
@@ -66,7 +66,7 @@ HOST_FILE=experiments/distributed/transformer_exps/mpi_host_file
 hostname > $HOST_FILE
 
 mpirun -np $PROCESS_NUM -hostfile $HOST_FILE \
-python -m experiments.distributed.transformer_exps.question_answering_fedavg \
+python -m experiments.distributed.transformer_exps.main_question_answering \
     --gpu_mapping_file "experiments/distributed/transformer_exps/gpu_mapping.yaml" \
     --gpu_mapping_key mapping_ink-ron \
     --client_num_in_total $CLIENT_NUM \
@@ -133,4 +133,34 @@ python -m experiments.distributed.transformer_exps.sequence_tagging_fedavg \
     --output_dir "/tmp/wikigold_fedavg/" \
     --fp16 
     # 2> ${LOG_FILE} &
+```
+
+
+
+```
+nohup mpirun -np $PROCESS_NUM -hostfile $HOST_FILE \
+python -m experiments.distributed.transformer_exps.main_text_classification \
+    --gpu_mapping_file "experiments/distributed/transformer_exps/gpu_mapping.yaml" \
+    --gpu_mapping_key mapping_ink-ron \
+    --client_num_in_total $CLIENT_NUM \
+    --client_num_per_round $WORKER_NUM \
+    --comm_round $ROUND \
+    --ci $CI \
+    --dataset 20news \
+    --data_file "data/data_files/20news_data.h5" \
+    --partition_file "data/partition_files/20news_partition.h5" \
+    --partition_method uniform \
+    --model_type distilbert \
+    --model_name distilbert-base-uncased \
+    --do_lower_case True \
+    --train_batch_size 8 \
+    --eval_batch_size 8 \
+    --max_seq_length 128 \
+    --learning_rate 1e-5 \
+    --server_lr 1e-5 \
+    --server_optimizer admn \
+    --epochs 1 \
+    --output_dir "/tmp/20news_fedavg/" \
+    --fed_alg fedavg \
+    --fp16 > ${LOG_FILE} 2>&1 &
 ```

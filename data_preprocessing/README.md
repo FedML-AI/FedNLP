@@ -56,5 +56,11 @@ sh run_fednlp_dataloader.sh w_nut ../../data/sequence_tagging/W-NUT2017 uniform 
 sh run_fednlp_dataloader.sh wikiner ../../data/sequence_tagging/wikiner uniform 32 100
 
 ## WMT
-sh run_fednlp_dataloader.sh wmt ../../data/seq2seq/WMT/training-parallel-nc-v13/news-commentary-v13.zh-en.zh,../../data/seq2seq/WMT/training-parallel-nc-v13/news-commentary-v13.zh-en.en uniform 32 100
+sh run_fednlp_dataloader.sh wmt_zh-en ../../data/seq2seq/WMT/training-parallel-nc-v13/news-commentary-v13.zh-en.zh,../../data/seq2seq/WMT/training-parallel-nc-v13/news-commentary-v13.zh-en.en uniform 32 100
+
+sh run_fednlp_dataloader.sh wmt_cs-en ../../data/seq2seq/WMT/training-parallel-nc-v13/news-commentary-v13.cs-en.cs,../../data/seq2seq/WMT/training-parallel-nc-v13/news-commentary-v13.cs-en.en uniform 32 100
+
+sh run_fednlp_dataloader.sh wmt_ru-en ../../data/seq2seq/WMT/training-parallel-nc-v13/news-commentary-v13.ru-en.ru,../../data/seq2seq/WMT/training-parallel-nc-v13/news-commentary-v13.ru-en.en uniform 32 100
+
+sh run_fednlp_dataloader.sh wmt_de-en ../../data/seq2seq/WMT/training-parallel-nc-v13/news-commentary-v13.de-en.de,../../data/seq2seq/WMT/training-parallel-nc-v13/news-commentary-v13.de-en.en uniform 32 100
 ```

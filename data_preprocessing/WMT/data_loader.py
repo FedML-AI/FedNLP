@@ -57,36 +57,36 @@ class ClientDataLoader(BaseClientDataLoader):
         __tokenize_data(self.test_data)
 
 
-if __name__ == "__main__":
-    data_file_paths = ["../../../../data/fednlp/seq2seq/WMT/training-parallel-nc-v13/news-commentary-v13.cs-en.cs",
-                       "../../../../data/fednlp/seq2seq/WMT/training-parallel-nc-v13/news-commentary-v13.cs-en.en"]
-    data_loader = RawDataLoader(data_file_paths)
-    results = data_loader.data_loader()
-    uniform_partition_dict = uniform_partition(results["attributes"]["index_list"])
-    pickle.dump(results, open("wmt_cs_en_data_loader.pkl", "wb"))
-    pickle.dump({"uniform_partition": uniform_partition_dict}, open("wmt_cs_en_partition.pkl", "wb"))
+# if __name__ == "__main__":
+#     data_file_paths = ["../../../../data/fednlp/seq2seq/WMT/training-parallel-nc-v13/news-commentary-v13.cs-en.cs",
+#                        "../../../../data/fednlp/seq2seq/WMT/training-parallel-nc-v13/news-commentary-v13.cs-en.en"]
+#     data_loader = RawDataLoader(data_file_paths)
+#     results = data_loader.data_loader()
+#     uniform_partition_dict = uniform_partition(results["attributes"]["index_list"])
+#     pickle.dump(results, open("wmt_cs_en_data_loader.pkl", "wb"))
+#     pickle.dump({"uniform_partition": uniform_partition_dict}, open("wmt_cs_en_partition.pkl", "wb"))
 
-    data_file_paths = ["../../../../data/fednlp/seq2seq/WMT/training-parallel-nc-v13/news-commentary-v13.de-en.de",
-                       "../../../../data/fednlp/seq2seq/WMT/training-parallel-nc-v13/news-commentary-v13.de-en.en"]
-    data_loader = RawDataLoader(data_file_paths)
-    results = data_loader.data_loader()
-    uniform_partition_dict = uniform_partition(results["attributes"]["index_list"])
-    pickle.dump(results, open("wmt_de_en_data_loader.pkl", "wb"))
-    pickle.dump({"uniform_partition": uniform_partition_dict}, open("wmt_de_en_partition.pkl", "wb"))
+#     data_file_paths = ["../../../../data/fednlp/seq2seq/WMT/training-parallel-nc-v13/news-commentary-v13.de-en.de",
+#                        "../../../../data/fednlp/seq2seq/WMT/training-parallel-nc-v13/news-commentary-v13.de-en.en"]
+#     data_loader = RawDataLoader(data_file_paths)
+#     results = data_loader.data_loader()
+#     uniform_partition_dict = uniform_partition(results["attributes"]["index_list"])
+#     pickle.dump(results, open("wmt_de_en_data_loader.pkl", "wb"))
+#     pickle.dump({"uniform_partition": uniform_partition_dict}, open("wmt_de_en_partition.pkl", "wb"))
 
-    data_file_paths = ["../../../../data/fednlp/seq2seq/WMT/training-parallel-nc-v13/news-commentary-v13.ru-en.ru",
-                       "../../../../data/fednlp/seq2seq/WMT/training-parallel-nc-v13/news-commentary-v13.ru-en.en"]
-    data_loader = RawDataLoader(data_file_paths)
-    results = data_loader.data_loader()
-    uniform_partition_dict = uniform_partition(results["attributes"]["index_list"])
-    pickle.dump(results, open("wmt_ru_en_data_loader.pkl", "wb"))
-    pickle.dump({"uniform_partition": uniform_partition_dict}, open("wmt_ru_en_partition.pkl", "wb"))
+#     data_file_paths = ["../../../../data/fednlp/seq2seq/WMT/training-parallel-nc-v13/news-commentary-v13.ru-en.ru",
+#                        "../../../../data/fednlp/seq2seq/WMT/training-parallel-nc-v13/news-commentary-v13.ru-en.en"]
+#     data_loader = RawDataLoader(data_file_paths)
+#     results = data_loader.data_loader()
+#     uniform_partition_dict = uniform_partition(results["attributes"]["index_list"])
+#     pickle.dump(results, open("wmt_ru_en_data_loader.pkl", "wb"))
+#     pickle.dump({"uniform_partition": uniform_partition_dict}, open("wmt_ru_en_partition.pkl", "wb"))
 
-    data_file_paths = ["../../../../data/fednlp/seq2seq/WMT/training-parallel-nc-v13/news-commentary-v13.zh-en.zh",
-                       "../../../../data/fednlp/seq2seq/WMT/training-parallel-nc-v13/news-commentary-v13.zh-en.en"]
-    data_loader = RawDataLoader(data_file_paths)
-    results = data_loader.data_loader()
-    uniform_partition_dict = uniform_partition(results["attributes"]["index_list"])
-    pickle.dump(results, open("wmt_zh_en_data_loader.pkl", "wb"))
-    pickle.dump({"uniform_partition": uniform_partition_dict}, open("wmt_zh_en_partition.pkl", "wb"))
-    print("done")
+#     data_file_paths = ["../../../../data/fednlp/seq2seq/WMT/training-parallel-nc-v13/news-commentary-v13.zh-en.zh",
+#                        "../../../../data/fednlp/seq2seq/WMT/training-parallel-nc-v13/news-commentary-v13.zh-en.en"]
+#     data_loader = RawDataLoader(data_file_paths)
+#     results = data_loader.data_loader()
+#     uniform_partition_dict = uniform_partition(results["attributes"]["index_list"])
+#     pickle.dump(results, open("wmt_zh_en_data_loader.pkl", "wb"))
+#     pickle.dump({"uniform_partition": uniform_partition_dict}, open("wmt_zh_en_partition.pkl", "wb"))
+#     print("done")

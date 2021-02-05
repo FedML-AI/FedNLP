@@ -1,8 +1,8 @@
 import h5py
-import ast
+import json
 from abc import ABC, abstractmethod
 
-from .utils import SpacyTokenizer
+from .utils import *
 
 
 class BaseClientDataLoader(ABC):
@@ -81,26 +81,26 @@ class BaseClientDataLoader(ABC):
         def generate_client_data(data_dict, index_list):
             data = dict()
             for field in self.data_fields:
-                data[field] = [data_dict[field][str(idx)][()] for idx in index_list]
+                data[field] = [decode_data_from_h5(data_dict[field][str(idx)][()]) for idx in index_list]
             return data
 
         if self.client_idx is None:
             train_index_list = []
             test_index_list = []
             for client_idx in partition_dict[self.partition_method]["partition_data"].keys():
-                train_index_list.extend(partition_dict[self.partition_method]["partition_data"][client_idx]["train"])
-                test_index_list.extend(partition_dict[self.partition_method]["partition_data"][client_idx]["test"])
+                train_index_list.extend(decode_data_from_h5(partition_dict[self.partition_method]["partition_data"][client_idx]["train"][()]))
+                test_index_list.extend(decode_data_from_h5(partition_dict[self.partition_method]["partition_data"][client_idx]["test"][()]))
             self.train_data = generate_client_data(data_dict, train_index_list)
             self.test_data = generate_client_data(data_dict, test_index_list)
         else:
             client_idx = str(self.client_idx)
-            train_index_list = partition_dict[self.partition_method]["partition_data"][client_idx]["train"][()]
-            test_index_list = partition_dict[self.partition_method]["partition_data"][client_idx]["test"][()]
+            train_index_list = decode_data_from_h5(partition_dict[self.partition_method]["partition_data"][client_idx]["train"][()])
+            test_index_list = decode_data_from_h5(partition_dict[self.partition_method]["partition_data"][client_idx]["test"][()])
             self.train_data = generate_client_data(data_dict, train_index_list)
             self.test_data = generate_client_data(data_dict, test_index_list)
 
-        self.attributes = ast.literal_eval(data_dict["attributes"][()])
-        self.attributes["n_clients"] = partition_dict[self.partition_method]["n_clients"][()]
+        self.attributes = json.loads(data_dict["attributes"][()])
+        self.attributes["n_clients"] = decode_data_from_h5(partition_dict[self.partition_method]["n_clients"][()])
 
         data_dict.close()
         partition_dict.close()

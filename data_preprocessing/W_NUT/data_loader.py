@@ -41,8 +41,8 @@ class RawDataLoader(BaseRawDataLoader):
                 line = line.strip()
                 if line:
                     token, label = line.split("\t")
-                    single_x.append(token.encode("utf8"))
-                    single_y.append(label.encode("utf8"))
+                    single_x.append(token)
+                    single_y.append(label)
                 else:
                     if len(single_x) != 0:
                         X.append(single_x.copy())
