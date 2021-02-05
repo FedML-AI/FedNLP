@@ -1,13 +1,13 @@
-import pickle
+import h5py
 import argparse
 from sentence_transformers import SentenceTransformer   
 from sklearn.cluster import KMeans
 from sklearn.model_selection import train_test_split
 
-def Embedding_Kmeans(corpus, N_clients):
+def get_embedding_Kmeans(corpus, N_clients, bsz=16):
     embedder = SentenceTransformer('distilbert-base-nli-stsb-mean-tokens', device = 'cuda:0') # server only
 
-    corpus_embeddings = embedder.encode(corpus, show_progress_bar=True, batch_size=8) #smaller batch size for gpu
+    corpus_embeddings = embedder.encode(corpus, show_progress_bar=True, batch_size=bsz) #smaller batch size for gpu
 
     embedding_data = {}
     embedding_data['data'] = corpus_embeddings
@@ -28,39 +28,53 @@ def main():
 
     parser.add_argument('--client_number', type=int, default='100', metavar='CN',
                         help='client number for lda partition')
+    parser.add_argument('--bsz', type=int, default='16', metavar='CN',
+                        help='batch size for sentenceBERT')
 
-    parser.add_argument('--data_file', type=str, default='data/data_loaders/squad_1.1_data_loader.pkl',
+    parser.add_argument('--data_file', type=str, default='data/data_files/wikiner_data.h5',
                         metavar="DF", help='data pickle file path')
 
-    parser.add_argument('--partition_file', type=str, default='data/partition/squad_1.1_partition.pkl',
+    parser.add_argument('--partition_file', type=str, default='data/partition_files/wikiner_partition.h5',
                         metavar="PF", help='partition pickle file path')
 
-    parser.add_argument('--embedding_file', type=str, default='data/embedding/squad_1.1_embedding.pkl',
+    parser.add_argument('--embedding_file', type=str, default='data/embedding_files/wikiner_embedding.h5',
                         metavar="EF", help='embedding pickle file path')
     
-    parser.add_argument('--task_type', type=str, metavar="TT", help='task type')
+    parser.add_argument('--task_type', type=str, metavar="TT", default="text_classfication", help='task type')
+    # add a stroe_true for --overwrite 
     
     args = parser.parse_args()
 
     N_Clients = args.client_number
-    data = ""
-    
+    # print(111)
+    # exit()
 
-    with open(args.data_file, 'rb') as f:
-        data = pickle.load(f)
+    f = h5py.File(args.data_file,"r")
+    corpus = []
+    if args.task_type == 'name_entity_recognition': # specifically wnut and wikiner datesets
+        for i in f['X'].keys():
+            sentence = f['X'][i][()]
+            sentence = [i.decode('UTF-8') for i in sentence]
+            corpus.append(" ".join(sentence))
 
+    elif args.task_type == 'reading_comprehension': # specifically Squad1.1 dataset
+        for i in f['context_X'].keys():
+            sentence = f['context_X'][i][()]
+            corpus.append(sentence)
+            
+    else:
+        for i in f['X'].keys():
+            sentence = f['X'][i][()]
+            print(sentence)
+            corpus.append(sentence)
+    f.close()
 
-    corpus = data['context_X']
+    cluster_assignment, embedding_data = get_embedding_Kmeans(corpus, N_Clients, args.bsz)
 
-    if args.task_type == "sequence_tagging":
-        corpus = [" ".join(sentence) for sentence in corpus]
-
-
-    cluster_assignment, embedding_data = Embedding_Kmeans(corpus, N_Clients)
-
-
-    with open(args.embedding_file,'wb') as f:
-        pickle.dump(embedding_data, f, pickle.HIGHEST_PROTOCOL)
+    # TODO: add a file existence checker
+    f = h5py.File(args.embedding_file,"w")
+    f['/embedding_data'] = embedding_data
+    f.close()
 
     partition_pkl = {}
     for index, idx in enumerate(cluster_assignment):
@@ -72,21 +86,16 @@ def main():
     print(partition_pkl[0])
 
     partition = ""
-    with open(args.partition_file,'rb') as f:
-        partition = pickle.load(f)
+    partition = h5py.File(args.partition_file,"w")
 
-    partition['kmeans'] = {}
-    partition['kmeans']['n_clients'] = N_Clients
-    partition['kmeans']['partition_data'] = {}
-
+    partition['/kmeans/n_clients'] = args.client_number
     for i in sorted(partition_pkl.keys()):
-        partition['kmeans']['partition_data'][i] = {}
         train, test = train_test_split(partition_pkl[i], test_size=0.4, train_size = 0.6, random_state=42)
-        partition['kmeans']['partition_data'][i]['train'] = train
-        partition['kmeans']['partition_data'][i]['test'] = test
+        train_path = '/kmeans/partition_data/'+str(i)+'/train/'
+        test_path = '/kmeans/partition_data/'+str(i)+'/test/'
+        partition[train_path] = train
+        partition[test_path] = test
+    partition.close()
 
 
-    with open(args.partition_file,'wb') as f:
-        pickle.dump(partition, f, pickle.HIGHEST_PROTOCOL)
-
-
+main()

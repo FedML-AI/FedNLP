@@ -1,4 +1,4 @@
-import pickle
+import h5py
 import argparse
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -45,67 +45,65 @@ def main():
     parser.add_argument('--client_number', type=int, default='100', metavar='CN',
                         help='client number for lda partition')
 
-    parser.add_argument('--data_file', type=str, default='data/data_loaders/20news_data_loader.pkl',
+    parser.add_argument('--data_file', type=str, default='data/data_files/20news_data.h5',
                         metavar="DF", help='data pickle file path')
 
-    parser.add_argument('--partition_file', type=str, default='data/partition/20news_partition.pkl',
+    parser.add_argument('--partition_file', type=str, default='data/partition_files/20news_partition.h5',
                         metavar="PF", help='partition pickle file path')
     
     parser.add_argument('--task_type', type=str, metavar="TT", help='task type')
 
     parser.add_argument('--min_size', type=int, metavar="MS", help='minimal size of each client sample')
+    parser.add_argument('--kmeans_num', type=int, metavar="KN", help='number of k-means cluster')
 
     parser.add_argument('--alpha', type=float, metavar="A", help='alpha value for LDA')
     
     args = parser.parse_args()
 
-    data = ""
-    with open(args.data_file,'rb') as f:
-        data = pickle.load(f)
+
+    data = h5py.File(args.data_file,"r")
+    N = len(data['Y'])
+    data.close()
 
     client_num = args.client_number
-    labels = list(set(data['Y']))
-    label_list = np.array(data['Y'])
-
-    N = len(data['Y'])
     alpha = args.alpha # need adjustment for each dataset
 
     partition_pkl = [[] for _ in range(client_num)]
     min_size = 0
 
-    if args.task_type == 'classification':
-        for i in labels:
-            idx_k = np.where(label_list == i)[0]
-            while min_size < args.min_size:
-                partition_pkl = [[] for _ in range(client_num)]
-                partition_pkl, min_size = partition_class_samples_with_dirichlet_distribution(N, alpha, client_num,
-                                                                                                partition_pkl, idx_k)
-    else:
-        # aasume all data have the same label so no need to update seperately 
-        idx_k = np.array(data['attributes']['index_list'])
-        while min_size < args.min_size:
-                partition_pkl = [[] for _ in range(client_num)]
-                partition_pkl, min_size = partition_class_samples_with_dirichlet_distribution(N, alpha, client_num,
-                                                                                                partition_pkl, idx_k)
+    partition = h5py.File(args.partition_file,"r")
 
-    partition = ""
-    with open(args.partition_file,'rb') as f:     
-        partition = pickle.load(f)
 
-    partition['lda'] = {}
-    partition['lda']['n_clients'] = client_num
-    partition['lda']['partition_data'] = {}
+
+    while min_size < args.min_size:
+        partition_pkl = [[] for _ in range(client_num)]
+        if args.task_type == 'classification':
+            labels = list(set(data['Y']))
+            label_list = np.array(data['Y'])
+            for i in labels:
+                idx_k = np.where(label_list == i)[0]
+                partition_pkl, min_size = partition_class_samples_with_dirichlet_distribution(N, alpha, client_num,
+                                                                                                    partition_pkl, idx_k)
+        else:
+            # aasume all data have the same label so no need to update seperately 
+            labels = list(set(partition["kmeans_%d"%args.kmeans_num]['client_assignment']))
+            label_list = np.array(partition["kmeans_%d"%args.kmeans_num]['client_assignment'])
+            for i in labels:
+                idx_k = np.where(label_list == i)[0]
+                partition_pkl, min_size = partition_class_samples_with_dirichlet_distribution(N, alpha, client_num,
+                                                                                                        partition_pkl, idx_k)
+    partition.close()
     # add 
-
+    partition = h5py.File(args.partition_file,"w")
+    partition['lda/n_clients'] = client_num
+    partition['lda/alpha'] = alpha
     for i, data in enumerate(partition_pkl):
-        partition['lda']['partition_data'][i] = {}
-        train, test = train_test_split(data, test_size=0.4, train_size = 0.6, random_state=42)
-        partition['lda']['partition_data'][i]['train'] = train
-        partition['lda']['partition_data'][i]['test'] = test
-
-    print(partition['kmeans']['partition_data'])
-    with open(args.partition_file,'wb') as f:
-        pickle.dump(partition, f, pickle.HIGHEST_PROTOCOL) 
+        train, test = train_test_split(partition_pkl[i], test_size=0.4, train_size = 0.6, random_state=42)
+        train_path = '/lda/partition_data/'+str(i)+'/train/'
+        test_path = '/lda/partition_data/'+str(i)+'/test/'
+        partition[train_path] = train
+        partition[test_path] = test
+    partition.close()
 
 if __name__ == "__main__":
     main()
