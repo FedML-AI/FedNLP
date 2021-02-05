@@ -8,19 +8,47 @@ or follow the instruction below to partition your own dataset.
 
 ## BERT-based Clustering 
 We first use sentence transformer to compute the embedding of the data and then run kmeans to gets K clusters based on client numbers.
-### usage 
-```sh
+
+
+```bash
+
 python -m data_preprocessing.advanced_partition.kmeans_ex  \
---client_number 100 \
---data_file 'data/data_files/20news_data.h5' \
---partition_file 'data/partition_files/20news_partition.h5' \
---embedding_file data/embedding_files/20news_embedding.h5  \
---task_type text_classification
+    --client_number 10 \
+    --data_file 'data/data_files/20news_data.h5' \
+    --partition_file 'data/partition_files/20news_partition.h5' \
+    --embedding_file 'data/embedding_files/20news_embedding.h5'  \
+    --task_type name_entity_recognition # 
+
+python -m data_preprocessing.advanced_partition.kmeans_ex  \
+    --client_number 30 \
+    --data_file 'data/data_files/20news_data.h5' \
+    --partition_file 'data/partition_files/20news_partition.h5' \
+    --embedding_file 'data/embedding_files/20news_embedding.h5'  \
+    --task_type reading_comprehension
+
+python -m data_preprocessing.advanced_partition.kmeans_ex  \
+    --client_number 50 \
+    --data_file 'data/data_files/20news_data.h5' \
+    --partition_file 'data/partition_files/20news_partition.h5' \
+    --embedding_file 'data/embedding_files/20news_embedding.h5'  \
+    --task_type seq2seq
 ```
+
+
+
+
+<!-- ```sh
+python -m data_preprocessing.advanced_partition.kmeans_ex  \
+    --client_number 100 \
+    --data_file 'data/data_files/20news_data.h5' \
+    --partition_file 'data/partition_files/20news_partition.h5' \
+    --embedding_file 'data/embedding_files/20news_embedding.h5'  \
+    --task_type text_classification
+``` -->
 ## LDA
 we first kmeans to classify data in to 5 clusters and then apply LDA to distribute data in to different number of groups as defined in client number
 
-we already have 5 clusters data for datasets excluding "**20news** **agnews** **sentiment140** **sst2** **semeval_2010_task8**" because they have their own natural classification. In the each of the rest partition h5 files, you can access the clustering data by the keyword "**kmeans_5**" and you can also find which data belongs to which cluster under the keyword **kmeans_5/cluster_assignment** . If you would like to create different numbers of clusters you can use the kmeans code we provide above
+we already have 5 clusters data for datasets excluding **20news**, **agnews**, **sentiment140**, **sst2** because they have their own natural classification. In the each of the rest partition h5 files, you can access the clustering data by the keyword "**kmeans_5**" and you can also find which data belongs to which cluster under the keyword **kmeans_5/cluster_assignment** . If you would like to create different numbers of clusters you can use the kmeans code we provide above
 ### usage
 
 ```sh

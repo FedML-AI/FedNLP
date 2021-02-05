@@ -4,10 +4,10 @@ from sentence_transformers import SentenceTransformer
 from sklearn.cluster import KMeans
 from sklearn.model_selection import train_test_split
 
-def Embedding_Kmeans(corpus, N_clients):
+def get_embedding_Kmeans(corpus, N_clients, bsz=16):
     embedder = SentenceTransformer('distilbert-base-nli-stsb-mean-tokens', device = 'cuda:0') # server only
 
-    corpus_embeddings = embedder.encode(corpus, show_progress_bar=True, batch_size=8) #smaller batch size for gpu
+    corpus_embeddings = embedder.encode(corpus, show_progress_bar=True, batch_size=bsz) #smaller batch size for gpu
 
     embedding_data = {}
     embedding_data['data'] = corpus_embeddings
@@ -28,6 +28,8 @@ def main():
 
     parser.add_argument('--client_number', type=int, default='100', metavar='CN',
                         help='client number for lda partition')
+    parser.add_argument('--bsz', type=int, default='16', metavar='CN',
+                        help='batch size for sentenceBERT')
 
     parser.add_argument('--data_file', type=str, default='data/data_files/wikiner_data.h5',
                         metavar="DF", help='data pickle file path')
@@ -38,13 +40,14 @@ def main():
     parser.add_argument('--embedding_file', type=str, default='data/embedding_files/wikiner_embedding.h5',
                         metavar="EF", help='embedding pickle file path')
     
-    parser.add_argument('--task_type', type=str, metavar="TT", help='task type')
+    parser.add_argument('--task_type', type=str, metavar="TT", default="text_classfication", help='task type')
+    # add a stroe_true for --overwrite 
     
     args = parser.parse_args()
 
     N_Clients = args.client_number
-    print(111)
-    exit()
+    # print(111)
+    # exit()
 
     f = h5py.File(args.data_file,"r")
     corpus = []
@@ -66,8 +69,9 @@ def main():
             corpus.append(sentence)
     f.close()
 
-    cluster_assignment, embedding_data = Embedding_Kmeans(corpus, N_Clients)
+    cluster_assignment, embedding_data = get_embedding_Kmeans(corpus, N_Clients, args.bsz)
 
+    # TODO: add a file existence checker
     f = h5py.File(args.embedding_file,"w")
     f['/embedding_data'] = embedding_data
     f.close()
