@@ -26,10 +26,13 @@ cd FedML; git submodule init; git submodule update; cd ../;
 ### Option 1: use our bash scripts to download the dataset that you need manually. 
 For example, in the `data/text_classification/20Newsgroups` folder, you can  run `sh download_and_unzip.sh` to get the raw data and then process it following [data_preprocessing/README.md](data_preprocessing/README.md).
 
-### Option 2: download our processed files from Google Drive.
-Dwnload files for each dataset in this [link](https://drive.google.com/folderview?id=1OhZ5NDaVz0VZX5jy8V_I_sfR25R2k_OE).  
-We provide two files for eac dataset: data files are saved in  **data_loaders**, and partition files are in directory **partition**. You need to put the downloaded `data_loaders` and `partition` in the `data` folder here. Simply put, we will have `data/data_loaders/*_data_loader.pkl` and `data/partition/*_partition.pkl` in the end.
-
+### Option 2: download our processed files from Amazon S3.
+Dwnload files for each dataset using this command
+```bash
+wget --no-check-certificate --no-proxy https://fednlp.s3-us-west-1.amazonaws.com/data_and_partition_files.zip
+unzip data_loaders_and_partition.zip
+```
+We provide two files for eac dataset: data files are saved in  **data_loaders**, and partition files are in directory **partition**. You need to put the downloaded `data_files` and `partition_files` in the `data` folder here. Simply put, we will have `data/data_files/*_data.h5` and `data/partition_files/*_partition.h5` in the end.
 
 ## Experiments for Centralized Learning (Sanity Check)
 
@@ -110,7 +113,7 @@ At that time, we can install FedML package with pip or conda, without the need t
 Note that in `FedML/data`, there also exists datasets for research, but these datasets are used for evaluating federated optimizers (e.g., FedAvg) and platforms.
 FedNLP supports more advanced datasets and models.
 
-- `data_preprocessing`: data loaders
+- `data_preprocessing`: data loaders and partition methods 
 
 - `model`: advanced NLP models.
 
