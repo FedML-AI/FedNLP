@@ -33,10 +33,6 @@ wget --no-check-certificate --no-proxy https://fednlp.s3-us-west-1.amazonaws.com
 unzip data_loaders_and_partition.zip
 ```
 We provide two files for eac dataset: data files are saved in  **data_loaders**, and partition files are in directory **partition**. You need to put the downloaded `data_files` and `partition_files` in the `data` folder here. Simply put, we will have `data/data_files/*_data.h5` and `data/partition_files/*_partition.h5` in the end.
-<<<<<<< Updated upstream
-=======
-
->>>>>>> Stashed changes
 
 ## Experiments for Centralized Learning (Sanity Check)
 
