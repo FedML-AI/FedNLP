@@ -7,3 +7,5 @@ seq2seq/
 sequence_tagging/
 span_extraction/
 text_classification/
+data_files/
+partition_files/

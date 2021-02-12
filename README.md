@@ -33,6 +33,10 @@ wget --no-check-certificate --no-proxy https://fednlp.s3-us-west-1.amazonaws.com
 unzip data_loaders_and_partition.zip
 ```
 We provide two files for eac dataset: data files are saved in  **data_loaders**, and partition files are in directory **partition**. You need to put the downloaded `data_files` and `partition_files` in the `data` folder here. Simply put, we will have `data/data_files/*_data.h5` and `data/partition_files/*_partition.h5` in the end.
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
 
 ## Experiments for Centralized Learning (Sanity Check)
 
@@ -113,7 +117,7 @@ At that time, we can install FedML package with pip or conda, without the need t
 Note that in `FedML/data`, there also exists datasets for research, but these datasets are used for evaluating federated optimizers (e.g., FedAvg) and platforms.
 FedNLP supports more advanced datasets and models.
 
-- `data_preprocessing`: data loaders and partition methods 
+- `data_preprocessing`: data loaders, partition methods and utility functions
 
 - `model`: advanced NLP models.
 
@@ -122,7 +126,7 @@ Some tasks can share the same trainer.
 
 - `experiments/distributed`: 
 1. `experiments` is the entry point for training. It contains experiments in different platforms. We start from `distributed`.
-1. Every experiment integrates FOUR building blocks `FedML` (federated optimizers), `data_preprocessing`, `model`, `trainer`.
+2. Every experiment integrates FOUR building blocks `FedML` (federated optimizers), `data_preprocessing`, `model`, `trainer`.
 3. To develop new experiments, please refer the code at `experiments/distributed/text-classification`.
 
 - `experiments/centralized`: 
