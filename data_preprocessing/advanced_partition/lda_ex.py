@@ -54,6 +54,7 @@ def main():
     parser.add_argument('--task_type', type=str, metavar="TT", help='task type')
 
     parser.add_argument('--min_size', type=int, metavar="MS", help='minimal size of each client sample')
+
     parser.add_argument('--kmeans_num', type=int, metavar="KN", help='number of k-means cluster')
 
     parser.add_argument('--alpha', type=float, metavar="A", help='alpha value for LDA')
@@ -61,10 +62,11 @@ def main():
     args = parser.parse_args()
 
 
+    print("start reading data")
     data = h5py.File(args.data_file,"r")
     N = len(data['Y'])
     data.close()
-
+    
     client_num = args.client_number
     alpha = args.alpha # need adjustment for each dataset
 
@@ -74,7 +76,7 @@ def main():
     partition = h5py.File(args.partition_file,"r")
 
 
-
+    print("start dirichlet distribution")
     while min_size < args.min_size:
         partition_pkl = [[] for _ in range(client_num)]
         if args.task_type == 'classification':
@@ -86,15 +88,16 @@ def main():
                                                                                                     partition_pkl, idx_k)
         else:
             # aasume all data have the same label so no need to update seperately 
-            labels = list(set(partition["kmeans_%d"%args.kmeans_num]['client_assignment']))
-            label_list = np.array(partition["kmeans_%d"%args.kmeans_num]['client_assignment'])
+            labels = list(set(partition["kmeans_%d"%args.kmeans_num+'/client_assignment'][()]))
+            label_list = np.array(partition["kmeans_%d"%args.kmeans_num+'/client_assignment'][()])
             for i in labels:
                 idx_k = np.where(label_list == i)[0]
                 partition_pkl, min_size = partition_class_samples_with_dirichlet_distribution(N, alpha, client_num,
                                                                                                         partition_pkl, idx_k)
     partition.close()
     # add 
-    partition = h5py.File(args.partition_file,"w")
+    print("store data in h5 data")
+    partition = h5py.File(args.partition_file,"a")
     partition['lda/n_clients'] = client_num
     partition['lda/alpha'] = alpha
     for i, data in enumerate(partition_pkl):
@@ -105,7 +108,6 @@ def main():
         partition[test_path] = test
     partition.close()
 
-if __name__ == "__main__":
-    main()
+main()
 
 

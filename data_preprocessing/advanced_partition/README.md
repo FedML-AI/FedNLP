@@ -11,32 +11,36 @@ We first use sentence transformer to compute the embedding of the data and then 
 
 
 ```bash
+# overwrite switch stores False the default value is True
 
 python -m data_preprocessing.advanced_partition.kmeans_ex  \
     --client_number 10 \
-    --data_file 'data/data_files/20news_data.h5' \
-    --partition_file 'data/partition_files/20news_partition.h5' \
-    --embedding_file 'data/embedding_files/20news_embedding.h5'  \
-    --task_type name_entity_recognition # 
+    --data_file '/home/bill/fednlp_data/data_files/wikiner_data.h5' \
+    --bsz 16 \
+    --partition_file '/home/bill/fednlp_data/partition_files/wikiner_partition.h5' \
+    --embedding_file '/home/bill/fednlp_data/embedding_files/wikiner_embedding.pkl'  \
+    --task_type name_entity_recognition \
+    --overwrite  
 
 python -m data_preprocessing.advanced_partition.kmeans_ex  \
     --client_number 30 \
-    --data_file 'data/data_files/20news_data.h5' \
-    --partition_file 'data/partition_files/20news_partition.h5' \
-    --embedding_file 'data/embedding_files/20news_embedding.h5'  \
-    --task_type reading_comprehension
+    --data_file '/home/bill/fednlp_data/data_files/squad_1.1_data.h5' \
+    --bsz 16 \
+    --partition_file '/home/bill/fednlp_data/partition_files/squad_1.1_partition.h5' \
+    --embedding_file '/home/bill/fednlp_data/embedding_files/squad_1.1_embedding.pkl'  \
+    --task_type reading_comprehension \
+
 
 python -m data_preprocessing.advanced_partition.kmeans_ex  \
+    python kmeans_ex.py  \
     --client_number 50 \
-    --data_file 'data/data_files/20news_data.h5' \
-    --partition_file 'data/partition_files/20news_partition.h5' \
-    --embedding_file 'data/embedding_files/20news_embedding.h5'  \
-    --task_type seq2seq
+    --data_file '/home/bill/fednlp_data/data_files/cornell_movie_dialogue_data.h5' \
+    --bsz 16 \
+    --partition_file '/home/bill/fednlp_data/partition_files/cornell_movie_dialogue_partition.h5' \
+    --embedding_file '/home/bill/fednlp_data/embedding_files/cornell_movie_dialogue_embedding.pkl'  \
+    --task_type seq2seq \
+
 ```
-
-
-
-
 <!-- ```sh
 python -m data_preprocessing.advanced_partition.kmeans_ex  \
     --client_number 100 \
@@ -48,10 +52,10 @@ python -m data_preprocessing.advanced_partition.kmeans_ex  \
 ## LDA
 we first kmeans to classify data in to 5 clusters and then apply LDA to distribute data in to different number of groups as defined in client number
 
-we already have 5 clusters data for datasets excluding **20news**, **agnews**, **sentiment140**, **sst2** because they have their own natural classification. In the each of the rest partition h5 files, you can access the clustering data by the keyword "**kmeans_5**" and you can also find which data belongs to which cluster under the keyword **kmeans_5/cluster_assignment** . If you would like to create different numbers of clusters you can use the kmeans code we provide above
+we already provide clusters data for datasets excluding **20news**, **agnews**, **sentiment140**, **sst2** because they have their own natural classification. In the each of the rest partition h5 files, you can access the clustering data by the keyword "**kmeans_%client_number**" based on how many client number you assign in the Kmeans partition and you can also find which data belongs to which cluster under the keyword **kmeans_%client_number/cluster_assignment** . If you would like to create different numbers of clusters you can use the kmeans code we provide above
 ### usage
 
-```sh
+```bash
 python -m data_preprocessing.advanced_partition.lda_ex  \
 --client_number 100 \
 --data_file 'data/data_files/20news_data.h5' \
