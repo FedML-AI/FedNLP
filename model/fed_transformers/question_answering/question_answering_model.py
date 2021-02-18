@@ -349,7 +349,7 @@ class QuestionAnsweringModel:
 
         kwargs["client_desc"] = kwargs.get("client_desc", "")
 
-        tb_writer = SummaryWriter(logdir=args.tensorboard_dir)
+        # tb_writer = SummaryWriter(logdir=args.tensorboard_dir)
         train_sampler = RandomSampler(train_dataset)
         train_dataloader = DataLoader(
             train_dataset,
@@ -533,10 +533,10 @@ class QuestionAnsweringModel:
 
                     if args.logging_steps > 0 and global_step % args.logging_steps == 0:
                         # Log metrics
-                        tb_writer.add_scalar("lr", scheduler.get_last_lr()[0], global_step)
-                        tb_writer.add_scalar(
-                            "loss", (tr_loss - logging_loss) / args.logging_steps, global_step,
-                        )
+                        # tb_writer.add_scalar("lr", scheduler.get_last_lr()[0], global_step)
+                        # tb_writer.add_scalar(
+                        #     "loss", (tr_loss - logging_loss) / args.logging_steps, global_step,
+                        # )
                         logging_loss = tr_loss
                         if args.wandb_project or self.is_sweeping:
                             wandb.log(
@@ -559,8 +559,8 @@ class QuestionAnsweringModel:
                     ):
                         # Only evaluate when single GPU otherwise metrics may not average well
                         results, _ = self.eval_model(eval_data, verbose=False, **kwargs)
-                        for key, value in results.items():
-                            tb_writer.add_scalar("eval_{}".format(key), value, global_step)
+                        # for key, value in results.items():
+                        #     tb_writer.add_scalar("eval_{}".format(key), value, global_step)
 
                         output_dir_current = os.path.join(output_dir, "checkpoint-{}".format(global_step))
 

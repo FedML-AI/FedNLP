@@ -7,11 +7,11 @@ pip install paho-mqtt
 
 ```bash
 LOG_FILE="experiments/distributed/transformer_exps/fedavg_transformer_tc.log"
-CLIENT_NUM=10
+CLIENT_NUM=100
 WORKER_NUM=10
 SERVER_NUM=1
 GPU_NUM_PER_SERVER=4
-ROUND=500
+ROUND=250
 CI=0
 
 PROCESS_NUM=`expr $WORKER_NUM + 1`
@@ -39,7 +39,7 @@ python -m experiments.distributed.transformer_exps.main_text_classification \
     --max_seq_length 128 \
     --learning_rate 1e-5 \
     --server_lr 1e-5 \
-    --server_optimizer admn \
+    --server_optimizer adam \
     --epochs 1 \
     --output_dir "/tmp/20news_fedavg/" \
     --fed_alg fedavg \
@@ -53,7 +53,7 @@ python -m experiments.distributed.transformer_exps.main_text_classification \
 
 ```bash
 LOG_FILE="experiments/distributed/transformer_exps/fedavg_transformer_qa.log"
-CLIENT_NUM=10
+CLIENT_NUM=100
 WORKER_NUM=10
 SERVER_NUM=1
 GPU_NUM_PER_SERVER=4
@@ -98,7 +98,7 @@ python -m experiments.distributed.transformer_exps.main_question_answering \
 
 ```bash
 LOG_FILE="experiments/distributed/transformer_exps/fedavg_transformer_qa.log"
-CLIENT_NUM=10
+CLIENT_NUM=100
 WORKER_NUM=10
 SERVER_NUM=1
 GPU_NUM_PER_SERVER=4
@@ -158,9 +158,38 @@ python -m experiments.distributed.transformer_exps.main_text_classification \
     --max_seq_length 128 \
     --learning_rate 1e-5 \
     --server_lr 1e-5 \
-    --server_optimizer admn \
+    --server_optimizer adam \
     --epochs 1 \
-    --output_dir "/tmp/20news_fedavg/" \
+    --output_dir "/tmp/20news_fedopt/" \
+    --fed_alg fedopt \
+    --fp16 > ${LOG_FILE} 2>&1 &
+```
+
+
+```
+nohup mpirun -np $PROCESS_NUM -hostfile $HOST_FILE \
+python -m experiments.distributed.transformer_exps.main_question_answering \
+    --gpu_mapping_file "experiments/distributed/transformer_exps/gpu_mapping.yaml" \
+    --gpu_mapping_key mapping_ink-ron \
+    --client_num_in_total $CLIENT_NUM \
+    --client_num_per_round $WORKER_NUM \
+    --comm_round $ROUND \
+    --ci $CI \
+    --dataset squad_1.1 \
+    --data_file data/data_files/squad_1.1_data.h5 \
+    --partition_file data/partition_files/squad_1.1_partition.h5 \
+    --partition_method uniform \
+    --model_type distilbert \
+    --model_name distilbert-base-uncased \
+    --do_lower_case True \
+    --train_batch_size 8 \
+    --eval_batch_size 8 \
+    --max_seq_length 256 \
+    --learning_rate 1e-5 \
+    --server_lr 1e-5 \
+    --server_optimizer adam \
+    --epochs 1 \
+    --output_dir "/tmp/squad_fedavg/" \
     --fed_alg fedavg \
     --fp16 > ${LOG_FILE} 2>&1 &
 ```
