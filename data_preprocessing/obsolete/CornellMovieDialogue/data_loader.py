@@ -1,238 +1,122 @@
-import os
-import sys
-import random
-sys.path.append('..')
-from base.data_loader import BaseDataLoader
-from base.partition import *
+# import os
+# import random
+
+# from data_preprocessing.base.base_client_data_loader import BaseClientDataLoader
+# from data_preprocessing.base.base_raw_data_loader import BaseRawDataLoader
 
 
-class DataLoader(BaseDataLoader):
-    def __init__(self, data_path, partition, **kwargs):
-        super().__init__(data_path, partition, **kwargs)
-        allowed_keys = {"source_padding", "target_padding", "history_padding", "source_max_sequence_length",
-                        "target_max_sequence_length", "history_max_sequence_length", "vocab_path", "initialize"}
-        self.__dict__.update((key, False) for key in allowed_keys)
-        self.__dict__.update((key, value) for key, value in kwargs.items() if key in allowed_keys)
-        self.history = []
-        self.movie_conversation_file_name = "movie_conversations.txt"
-        self.movie_line_file_name = "movie_lines.txt"
+# class RawDataLoader(BaseRawDataLoader):
+#     def __init__(self, data_path):
+#         super().__init__(data_path)
+#         self.task_type = "dialog_response_generation"
+#         self.history = []
+#         self.attributes = None
+#         self.movie_conversation_file_name = "movie_conversations.txt"
+#         self.movie_line_file_name = "movie_lines.txt"
 
-        if callable(self.partition):
-            X, Y, _ = self.process_data(self.data_path)
-            self.attributes = self.partition(X, Y)
-        else:
-            self.attributes = self.process_attributes(self.data_path)
+#     def data_loader(self):
+#         if len(self.history) == 0:
+#             X, Y, history, attributes = self.process_data(self.data_path)
+#             self.X = {i: d for i, d in enumerate(X)}
+#             self.Y = {i: d for i, d in enumerate(Y)}
+#             self.history = {i: d for i, d in enumerate(history)}
+#             self.attributes = attributes
+#             self.index_list = [i for i in range(len(self.X))]
+#             self.attributes["index_list"] = self.index_list
+#         return {"X": self.X, "Y": self.Y, "history": self.history, "attributes": self.attributes,
+#                 "task_type": self.task_type}
 
-        if self.tokenized:
-            self.source_sequence_length = []
-            self.target_sequence_length = []
-            self.history_sequence_length = []
-            self.vocab = dict()
-            if self.source_padding or self.target_padding:
-                self.vocab[PAD_TOKEN] = len(self.vocab)
+#     def process_data(self, file_path):
+#         line_dict = {}
+#         with open(os.path.join(file_path, self.movie_line_file_name), "r", errors="ignore") as f:
+#             for line in f:
+#                 line = line.strip()
+#                 if line:
+#                     temp = line.split("+++$+++")
+#                     line_dict[temp[0].strip()] = {"utterance": temp[-1].strip(), "character": temp[1]}
 
-            if self.initialize:
-                self.vocab[SOS_TOKEN] = len(self.vocab)
-                self.vocab[EOS_TOKEN] = len(self.vocab)
+#         attributes = dict()
+#         attributes["characters"] = []
+#         attributes["movie"] = []
 
-    def tokenize(self, document):
-        tokens = [str(token) for token in spacy_tokenizer.en_tokenizer(document)]
-        return tokens
+#         conversation = []
+#         X = []
+#         Y = []
+#         history = []
 
-    def process_attributes(self, file_path):
-        attributes = dict()
-        attributes["inputs"] = []
-        movie_idx_dict = dict()
-        with open(os.path.join(file_path, self.movie_conversation_file_name), 'r') as f:
-            for line in f:
-                line = line.strip()
-                if line:
-                    temp = line.split("+++$+++")
-                    conversation_idx = temp[-1].strip()
-                    conversation_idx = eval(conversation_idx)
-                    if temp[2] not in movie_idx_dict:
-                        movie_idx_dict[temp[2]] = len(movie_idx_dict)
-                    for i in range(len(conversation_idx) - 1):
-                        attributes["inputs"].append(movie_idx_dict[temp[2]])
-        attributes["n_clients"] = len(movie_idx_dict)
+#         with open(os.path.join(file_path, self.movie_conversation_file_name), 'r') as f:
+#             for line in f:
+#                 line = line.strip()
+#                 if line:
+#                     temp = line.split("+++$+++")
+#                     conversation_idx = temp[-1].strip()
+#                     conversation_idx = eval(conversation_idx)
+#                     for i in range(len(conversation_idx) - 1):
+#                         X.append(line_dict[conversation_idx[i]]["utterance"])
+#                         Y.append(line_dict[conversation_idx[i + 1]]["utterance"])
+#                         history.append(conversation.copy())
+#                         attributes["movie"].append(temp[2])
+#                         attributes["characters"].append((line_dict[conversation_idx[i]]["character"],
+#                                                          line_dict[conversation_idx[i + 1]]["character"]))
+#                         conversation.append(line_dict[conversation_idx[i]]["utterance"])
+#                     conversation.clear()
+#         return X, Y, history, attributes
 
-        return attributes
+#     # TODO: Unified Partition Interface
+#     @staticmethod
+#     def nature_partition(attributes):
+#         movie_set = set(attributes["movie"])
+#         partition_dict = dict()
+#         partition_dict["n_clients"] = len(movie_set)
+#         partition_dict["partition_data"] = dict()
+#         for i, movie_id in enumerate(movie_set):
+#             for j in range(len(attributes["movie"])):
+#                 if attributes["movie"][j] == movie_id:
+#                     if i not in partition_dict["partition_data"]:
+#                         partition_dict["partition_data"][i] = dict()
+#                         partition_dict["partition_data"][i]["train"] = list()
+#                         partition_dict["partition_data"][i]["test"] = list()
+#                     else:
+#                         partition_dict["partition_data"][i]["train"].append(j)
+#         for client_id in partition_dict["partition_data"].keys():
+#             train_set = partition_dict["partition_data"][client_id]["train"]
+#             random.shuffle(train_set)
+#             train_num = int(len(train_set) * 0.8)
+#             partition_dict["partition_data"][client_id]["train"] = train_set[:train_num]
+#             partition_dict["partition_data"][client_id]["test"] = train_set[train_num:]
+#         return partition_dict
 
-    def tokenize_data(self, X, Y, history):
-        for i in range(len(X)):
-            X[i] = self.tokenize(X[i])
-            Y[i] = self.tokenize(Y[i])
-            history[i] = self.tokenize(history[i])
-            self.source_sequence_length.append(len(X[i]))
-            self.target_sequence_length.append(len(Y[i]))
-            self.history_sequence_length.append(len(history[i]))
 
-    def data_loader(self, client_idx=None):
-        X, Y, history = self.process_data(self.data_path, client_idx=client_idx)
-        if self.tokenized:
-            self.tokenize_data(X, Y, history)
-        self.X, self.Y, self.history = X, Y, history
-        result = dict()
+# class ClientDataLoader(BaseClientDataLoader):
 
-        if self.tokenized:
-            self.build_vocab(self.X, self.vocab)
-            self.build_vocab(self.Y, self.vocab)
-            result["vocab"] = self.vocab
+#     def __init__(self, data_path, partition_path, client_idx=None, partition_method="uniform", tokenize=False):
+#         data_fields = ["X", "Y", "history"]
+#         super().__init__(data_path, partition_path, client_idx, partition_method, tokenize, data_fields)
+#         if self.tokenize:
+#             self.tokenize_data()
 
-            if self.source_padding:
-                if not self.source_max_sequence_length:
-                    self.source_max_sequence_length = max(self.source_sequence_length)
-                    if self.initialize:
-                        self.source_max_sequence_length += 2
-                self.padding_data(self.X, self.source_max_sequence_length, self.initialize)
-                result["source_sequence_length"] = self.source_sequence_length
-                result["source_max_sequence_length"] = self.source_max_sequence_length
-            if self.target_padding:
-                if not self.target_max_sequence_length:
-                    self.target_max_sequence_length = max(self.target_sequence_length)
-                    if self.initialize:
-                        self.target_max_sequence_length += 2
-                self.padding_data(self.Y, self.target_max_sequence_length, self.initialize)
-                result["target_sequence_length"] = self.target_sequence_length
-                result["target_max_sequence_length"] = self.target_max_sequence_length
-            if self.history_padding:
-                if not self.history_max_sequence_length:
-                    self.history_max_sequence_length = max(self.history_sequence_length)
-                    if self.initialize:
-                        self.history_max_sequence_length += 2
-                self.padding_data(self.history, self.history_max_sequence_length, self.initialize)
-                result["history_sequence_length"] = self.history_sequence_length
-                result["history_max_sequence_length"] = self.history_max_sequence_length
+#     def tokenize_data(self):
+#         tokenizer = self.spacy_tokenizer.en_tokenizer
 
-        result["attributes"] = self.attributes
-        result["X"] = self.X
-        result["Y"] = self.Y
-        result["history"] = self.history
-        return result
+#         def __tokenize_data(data):
+#             for i in range(len(data["X"])):
+#                 data["X"][i] = [token.text.strip().lower() for token in tokenizer(data["X"][i].strip()) if token.text.strip()]
+#                 data["Y"][i] = [token.text.strip().lower() for token in tokenizer(data["Y"][i].strip()) if token.text.strip()]
+#                 for j in range(len(data["history"][i])):
+#                     data["history"][i][j] = [token.text.strip().lower() for token in tokenizer(data["history"][i][j].strip()) if
+#                                     token.text.strip()]
 
-    def process_data(self, file_path, client_idx=None):
-        line_dict = {}
-        with open(os.path.join(file_path, self.movie_line_file_name), "r", errors="ignore") as f:
-            for line in f:
-                line = line.strip()
-                if line:
-                    temp = line.split("+++$+++")
-                    line_dict[temp[0].strip()] = {"utterance": temp[-1].strip()}
+#         __tokenize_data(self.train_data)
+#         __tokenize_data(self.test_data)
 
-        conversation = []
-        X = []
-        Y = []
-        history = []
-
-        cnt = 0
-        with open(os.path.join(file_path, self.movie_conversation_file_name), 'r') as f:
-            for line in f:
-                line = line.strip()
-                if line:
-                    temp = line.split("+++$+++")
-                    conversation_idx = temp[-1].strip()
-                    conversation_idx = eval(conversation_idx)
-                    for i in range(len(conversation_idx) - 1):
-                        if client_idx is not None and self.attributes["inputs"][cnt] != client_idx:
-                            cnt += 1
-                            continue
-                        X.append(line_dict[conversation_idx[i]]["utterance"])
-                        Y.append(line_dict[conversation_idx[i + 1]]["utterance"])
-                        history.append(" ".join(conversation))
-                        conversation.append(line_dict[conversation_idx[i]]["utterance"])
-                        cnt += 1
-                    conversation.clear()
-        return X, Y, history
-
-def test_performance():
-    import time
-    from collections import Counter
-    from pympler import asizeof
-    train_file_path = "../../../../data/fednlp/seq2seq/CornellMovieDialogue/cornell movie-dialogs corpus/"
-    print("uniform partition")
-    # load all data
-    start = time.time()
-    data_loader = DataLoader(train_file_path, uniform_partition, tokenized=True, source_padding=True,
-                             target_padding=True, history_padding=True)
-    train_data_loader = data_loader.data_loader()
-    end = time.time()
-    print("all data(tokenized):", end - start)
-    print("size", len(train_data_loader["X"]))
-    print("memory cost", asizeof.asizeof(train_data_loader))
-    # load a part of data
-    start = time.time()
-    data_loader = DataLoader(train_file_path, uniform_partition, tokenized=True, source_padding=True,
-                             target_padding=True, history_padding=True)
-    train_data_loader = data_loader.data_loader(0)
-    end = time.time()
-    print("part of data(tokenized):", end - start)
-    print("size", len(train_data_loader["X"]))
-    print("memory cost", asizeof.asizeof(train_data_loader))
-
-    # load all data
-    start = time.time()
-    data_loader = DataLoader(train_file_path, uniform_partition)
-    train_data_loader = data_loader.data_loader()
-    end = time.time()
-    print("all data:", end - start)
-    print("size", len(train_data_loader["X"]))
-    print("memory cost", asizeof.asizeof(train_data_loader))
-    # load a part of data
-    start = time.time()
-    data_loader = DataLoader(train_file_path, uniform_partition)
-    train_data_loader = data_loader.data_loader(0)
-    end = time.time()
-    print("part of data:", end - start)
-    print("size", len(train_data_loader["X"]))
-    print("memory cost", asizeof.asizeof(train_data_loader))
-
-    print("nature partition")
-    # load all data
-    start = time.time()
-    data_loader = DataLoader(train_file_path, "nature", tokenized=True, source_padding=True,
-                             target_padding=True, history_padding=True)
-    train_data_loader = data_loader.data_loader()
-    end = time.time()
-    print("all data(tokenized):", end - start)
-    print("size", len(train_data_loader["X"]))
-    print("memory cost", asizeof.asizeof(train_data_loader))
-    # load a part of data
-    attributes = train_data_loader["attributes"]
-    total_time = 0
-    total_cost = 0
-    for client_idx in range(attributes["n_clients"]):
-        start = time.time()
-        data_loader = DataLoader(train_file_path, "nature", tokenized=True, source_padding=True,
-                                 target_padding=True, history_padding=True)
-
-        train_data_loader = data_loader.data_loader(0)
-        end = time.time()
-        total_time += end - start
-        total_cost += asizeof.asizeof(train_data_loader)
-    print("part of data(tokenized):", total_time / attributes["n_clients"])
-    print("memory cost", total_cost / attributes["n_clients"])
-    # load all data
-    start = time.time()
-    data_loader = DataLoader(train_file_path, uniform_partition)
-    train_data_loader = data_loader.data_loader()
-    end = time.time()
-    print("all data:", end - start)
-    print("size", len(train_data_loader["X"]))
-    print("memory cost", asizeof.asizeof(train_data_loader))
-    # load a part of data
-    attributes = train_data_loader["attributes"]
-    total_time = 0
-    total_cost = 0
-    for client_idx in range(attributes["n_clients"]):
-        start = time.time()
-        data_loader = DataLoader(train_file_path, "nature", tokenized=True, source_padding=True,
-                                 target_padding=True, history_padding=True)
-
-        train_data_loader = data_loader.data_loader(0)
-        end = time.time()
-        total_time += end - start
-        total_cost += asizeof.asizeof(train_data_loader)
-    print("part of data:", total_time / attributes["n_clients"])
-    print("memory cost", total_cost / attributes["n_clients"])
-    print("distribution")
-    print(Counter(attributes["inputs"]))
+# # if __name__ == "__main__":
+# #     data_file_path = "../../../../data/fednlp/seq2seq/CornellMovieDialogue/cornell_movie_dialogs_corpus/"
+# #     data_loader = RawDataLoader(data_file_path)
+# #     results = data_loader.data_loader()
+# #     nature_partition_dict = RawDataLoader.nature_partition(results["attributes"])
+# #     uniform_partition_dict = uniform_partition(results["attributes"]["index_list"])
+# #
+# #     pickle.dump(train_data_loader, open("cornell_movie_dialogue_data_loader.pkl", "wb"))
+# #     pickle.dump({"uniform": uniform_partition_dict, "nature": nature_partition_dict},
+# #                 open("cornell_movie_dialogue_partition.pkl", "wb"))
+# #     print("done")
