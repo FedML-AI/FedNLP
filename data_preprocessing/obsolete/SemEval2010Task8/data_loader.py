@@ -1,128 +1,83 @@
 # import os
-# import math
-# import random
-# import sys
-# import csv
-# import time
-#
-#
-# sys.path.append('..')
-#
-# from base.data_loader import BaseDataLoader
-# from base.globals import *
-# from base.partition import *
-#
-# if download with script in data folder
-# data_dir shoule be '../../../../data//fednlp/bilstm_exps/SemEval2010Task8/SemEval2010_task8_all_data'
-#
-# class DataLoader(BaseDataLoader):
-#     def __init__(self, data_path, partition, **kwargs):
-#         super().__init__(data_path,partition, **kwargs)
-#         allowed_keys = {"source_padding", "target_padding", "tokenized", "source_max_sequence_length",
-#                         "target_max_sequence_length", "vocab_path", "initialize"}
-#         self.__dict__.update((key, False) for key in allowed_keys)
-#         self.__dict__.update((key, value) for key, value in kwargs.items() if key in allowed_keys)
-#         self.source_sequence_length = []
-#         self.target_sequence_length = []
-#         self.title = []
-#         self.attributes = dict()
-#         self.attributes['inputs'] = []
-#         self.attr_label = dict()
-#         self.label_vocab = dict()
-#
-#
-#
-#         if self.tokenized:
-#             self.vocab = dict()
-#             if self.initialize:
-#                 self.vocab[SOS_TOKEN] = len(self.vocab)
-#                 self.vocab[EOS_TOKEN] = len(self.vocab)
-#         if self.source_padding or self.target_padding:
-#             self.vocab[PAD_TOKEN] = len(self.vocab)
-#             self.label_vocab[PAD_TOKEN] = len(self.vocab)
-#
-#
-#     def tokenize(self,document,switch):
-#         # Create a blank Tokenizer with just the English vocab
-#         tokens = [str(token) for token in spacy_tokenizer.en_tokenizer(document)]
-#         if switch == 'data':
-#             for i in list(tokens):
-#                 if i not in self.vocab:
-#                     self.vocab[i] = len(self.vocab)
-#         else:
-#             for i in list(tokens):
-#                 if i not in self.label_vocab:
-#                     self.label_vocab[i] = len(self.label_vocab)
-#         return tokens
-#
-#     def process_attributes(self):
-#         length = len(set(self.attributes['inputs']))
-#         self.attributes['n_clients'] = length
-#         return self.attributes
-#
-#     def process_data(self,client_idx=None):
-#         with open(self.data_path, "r", encoding='utf-8') as f:
-#             cnt = 0
-#             data  = f.readlines()
-#             max_source_length = -1
-#             max_target_length = -1
+# import re
+
+# from data_preprocessing.base.base_client_data_loader import BaseClientDataLoader
+# from data_preprocessing.base.base_raw_data_loader import BaseRawDataLoader
+
+
+# class RawDataLoader(BaseRawDataLoader):
+#     def __init__(self, data_path):
+#         super().__init__(data_path)
+#         self.task_type = "text_classification"
+#         self.target_vocab = None
+#         self.train_file_name = "SemEval2010_task8_training/TRAIN_FILE.TXT"
+#         self.test_file_name = "SemEval2010_task8_testing_keys/TEST_FILE_FULL.TXT"
+
+#     def data_loader(self):
+#         if len(self.X) == 0 or len(self.Y) == 0 or self.target_vocab is None:
+#             X, Y = self.process_data(os.path.join(self.data_path, self.train_file_name))
+#             train_size = len(X)
+#             temp = self.process_data(os.path.join(self.data_path, self.test_file_name))
+#             X.extend(temp[0])
+#             Y.extend(temp[1])
+#             self.X = {i: d for i, d in enumerate(X)}
+#             self.Y = {i: d for i, d in enumerate(Y)}
+#             self.target_vocab = {key: i for i, key in enumerate(set(Y))}
+#             train_index_list = [i for i in range(train_size)]
+#             test_index_list = [i for i in range(train_size, len(self.X))]
+#             index_list = train_index_list + test_index_list
+#             self.attributes = {"train_index_list": train_index_list, "test_index_list": test_index_list,
+#                                "index_list": index_list, "target_vocab": self.target_vocab}
+#         return {"X": self.X, "Y": self.Y, "task_type": self.task_type,
+#                 "attributes": self.attributes}
+
+#     def process_data(self, file_path):
+#         X = []
+#         Y = []
+#         print(file_path)
+#         with open(file_path, "r", encoding='utf-8') as f:
+#             data = f.readlines()
 #             for i in range(len(data)):
-#                 if client_idx is not None and client_idx != self.attributes["inputs"][cnt]:
-#                     cnt+=1
-#                     continue
 #                 if len(data[i]) > 1 and data[i][0].isdigit():
-#                     clean_data = data[i].split('\t')[1].strip().replace('"',"")
-#                     if self.tokenized:
-#                         tokens = self.tokenize(clean_data,'data')
-#                         self.X.append(tokens)
-#                     else:
-#                         tokens = clean_data
-#                         self.X.append([tokens])
-#                     self.source_sequence_length.append(len(tokens))
-#                     max_source_length = max(max_source_length,len(tokens))
-#
-#                 elif len(data[i-1]) > 1 and data[i-1][0].isdigit():
+#                     clean_data = data[i].split('\t')[1][1:-1].strip()
+#                     X.append(clean_data)
+
+#                 elif len(data[i - 1]) > 1 and data[i - 1][0].isdigit():
 #                     label = data[i].rstrip("\n")
-#                     if label not in self.attr_label:
-#                         self.attr_label[label] = len(self.attr_label)
-#                     self.attributes['inputs'].append(self.attr_label[label])
-#                     tokens = self.tokenize(label,'label')
-#                     self.target_sequence_length.append(len(tokens))
-#                     self.Y.append(tokens)
-#                     max_target_length = max(max_target_length,len(tokens))
-#
-#
-#             return max_source_length, max_target_length
-#
-#
-#     def data_loader(self,client_idx=None):
-#         result = dict()
-#         if client_idx is not None:
-#             max_source_length , max_target_length = self.process_data(client_idx)
-#         else:
-#             max_source_length , max_target_length = self.process_data()
-#         if self.source_padding:
-#             self.padding_data(self.X, max_source_length,self.initialize)
-#         if self.target_padding:
-#             self.padding_data(self.Y, max_target_length,self.initialize)
-#
-#         if callable(self.partition):
-#             self.attributes = self.partition(self.X, self.Y)
-#         else:
-#             self.attributes = self.process_attributes()
-#
-#         if self.tokenized:
-#                 result['vocab'] = self.vocab
-#
-#         result['X'] = self.X
-#         result['Y'] = self.Y
-#         result['label_vocab'] = self.label_vocab
-#         result['attributes'] = self.attributes
-#         result['source_sequence_length'] = self.source_sequence_length
-#         result['target_sequence_length'] = self.target_sequence_length
-#         result['source_max_sequence_length'] = max_source_length
-#         result['target_max_sequence_length'] = max_target_length
-#
-#         return result
-#
-#
+#                     Y.append(label)
+#         return X, Y
+
+
+# class ClientDataLoader(BaseClientDataLoader):
+
+#     def __init__(self, data_path, partition_path, client_idx=None, partition_method="uniform", tokenize=False):
+#         data_fields = ["X", "Y"]
+#         super().__init__(data_path, partition_path, client_idx, partition_method, tokenize, data_fields)
+#         if self.tokenize:
+#             self.clean_and_tokenize_data()
+
+#     def clean_and_tokenize_data(self):
+#         tokenizer = self.spacy_tokenizer.en_tokenizer
+
+#         def __clean_and_tokenize_data(data):
+#             for i in range(len(data["X"])):
+#                 sentence = data["X"][i]
+#                 e1 = re.findall(r'<e1>(.*)</e1>', sentence)[0]
+#                 e2 = re.findall(r'<e2>(.*)</e2>', sentence)[0]
+#                 sentence = sentence.replace('<e1>' + e1 + '</e1>', ' <e1> ' + e1 + ' </e1> ', 1)
+#                 sentence = sentence.replace('<e2>' + e2 + '</e2>', ' <e2> ' + e2 + ' </e2> ', 1)
+#                 sentence = [token.text.strip() for token in tokenizer(sentence) if token.text.strip()]
+#                 sentence = ' '.join(sentence)
+#                 sentence = sentence.replace('< e1 >', '<e1>')
+#                 sentence = sentence.replace('< e2 >', '<e2>')
+#                 sentence = sentence.replace('< /e1 >', '</e1>')
+#                 sentence = sentence.replace('< /e2 >', '</e2>')
+#                 sentence = sentence.split()
+#                 data["X"][i] = sentence
+
+#         __clean_and_tokenize_data(self.train_data)
+#         __clean_and_tokenize_data(self.test_data)
+
+
+
+

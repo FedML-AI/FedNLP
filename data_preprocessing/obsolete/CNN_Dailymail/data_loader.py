@@ -1,167 +1,77 @@
-import struct
-from tensorflow.core.example import example_pb2
-import sys
-sys.path.append('..')
-from base.data_loader import BaseDataLoader
-from base.partition import *
+# import os
 
-class DataLoader(BaseDataLoader):
-    def __init__(self, data_path, partition, **kwargs):
-        super().__init__(data_path, partition, **kwargs)
-        allowed_keys = {"source_padding", "target_padding", "source_max_sequence_length", "target_max_sequence_length",
-                        "source_vocab_path", "target_vocab_path", "initialize"}
-        self.__dict__.update((key, False) for key in allowed_keys)
-        self.__dict__.update((key, value) for key, value in kwargs.items() if key in allowed_keys)
-
-        X, Y = self.process_data(self.data_path)
-        self.attributes = self.partition(X, Y)
-
-        if self.tokenized:
-            self.source_sequence_length = []
-            self.target_sequence_length = []
-            self.source_vocab = dict()
-            self.target_vocab = dict()
-            if self.source_padding:
-                self.source_vocab[PAD_TOKEN] = len(self.source_vocab)
-            if self.target_padding:
-                self.target_vocab[PAD_TOKEN] = len(self.target_vocab)
-            if self.initialize:
-                self.source_vocab[SOS_TOKEN] = len(self.source_vocab)
-                self.source_vocab[EOS_TOKEN] = len(self.source_vocab)
-                self.target_vocab[SOS_TOKEN] = len(self.target_vocab)
-                self.target_vocab[EOS_TOKEN] = len(self.target_vocab)
-
-    def tokenize_data(self, X, Y):
-        for i in range(len(X)):
-            X[i] = self.tokenize(X[i])
-            Y[i] = self.tokenize(Y[i])
-            self.source_sequence_length.append(len(X[i]))
-            self.target_sequence_length.append(len(Y[i]))
-
-    def data_loader(self, client_idx=None):
-        if client_idx is not None:
-            X, Y = self.process_data(self.data_path, client_idx=client_idx)
-        else:
-            X, Y = self.process_data(self.data_path)
-        if self.tokenized:
-            self.tokenize_data(X, Y)
-        self.X, self.Y = X, Y
-        result = dict()
-
-        if self.tokenized:
-            if self.source_vocab_path:
-                self.process_vocab(self.source_vocab_path, self.source_vocab)
-            else:
-                self.build_vocab(self.X, self.source_vocab)
-            result["source_vocab"] = self.source_vocab
-
-            if self.target_vocab_path:
-                self.process_vocab(self.target_vocab_path, self.target_vocab)
-            else:
-                self.build_vocab(self.Y, self.target_vocab)
-            result["target_vocab"] = self.target_vocab
-
-            if self.source_padding:
-                if not self.source_max_sequence_length:
-                    self.source_max_sequence_length = max(self.source_sequence_length)
-                    if self.initialize:
-                        self.source_max_sequence_length += 2
-                self.padding_data(self.X, self.source_max_sequence_length, self.initialize)
-                result["source_sequence_length"] = self.source_sequence_length
-                result["source_max_sequence_length"] = self.source_max_sequence_length
-            if self.target_padding:
-                if not self.target_max_sequence_length:
-                    self.target_max_sequence_length = max(self.target_sequence_length)
-                    if self.initialize:
-                        self.target_max_sequence_length += 2
-                self.padding_data(self.Y, self.target_max_sequence_length, self.initialize)
-                result["target_sequence_length"] = self.target_sequence_length
-                result["target_max_sequence_length"] = self.target_max_sequence_length
-        result["attributes"] = self.attributes
-        result["X"] = self.X
-        result["Y"] = self.Y
-        return result
-
-    @staticmethod
-    def tokenize(document):
-        tokens = []
-        for token in document.split(" "):
-            token = token.strip()
-            if token:
-                tokens.append(token)
-        return tokens
-
-    @staticmethod
-    def process_vocab(vocab_path, vocab):
-        with open(vocab_path, "r") as f:
-            for line in f:
-                line = line.strip()
-                token, index = line.split(" ")
-                if token not in vocab:
-                    vocab[token] = len(vocab)
-
-    def process_data(self, file_path, client_idx=None):
-        file = open(file_path, "rb")
-        X = []
-        Y = []
-        cnt = 0
-        while True:
-            len_bytes = file.read(8)
-            if not len_bytes:
-                break
-            str_len = struct.unpack('q', len_bytes)[0]
-            example_str = struct.unpack('%ds' % str_len, file.read(str_len))[0]
-            if client_idx is not None and self.attributes["inputs"][cnt] != client_idx:
-                cnt += 1
-                continue
-            example = example_pb2.Example.FromString(example_str)
-            article_text = example.features.feature['article'].bytes_list.value[0].decode()
-            abstract_text = example.features.feature['abstract'].bytes_list.value[0].decode()
-            abstract_text = abstract_text.replace("<s>", "").replace("</s>", "")
-
-            X.append(article_text)
-            Y.append(abstract_text)
-            cnt += 1
-        return X, Y
+# from data_preprocessing.base.base_client_data_loader import BaseClientDataLoader
+# from data_preprocessing.base.base_raw_data_loader import BaseRawDataLoader
 
 
-def test_performance():
-    import time
-    from pympler import asizeof
-    train_file_path = "../../../../data/fednlp/seq2seq/CNN_Dailymail/finished_files/train.bin"
-    # load all data
-    start = time.time()
-    data_loader = DataLoader(train_file_path, uniform_partition, tokenized=True, source_padding=True,
-                             target_padding=True)
-    train_data_loader = data_loader.data_loader()
-    end = time.time()
-    print("all data(tokenized):", end - start)
-    print("size", len(train_data_loader["X"]))
-    print("memory cost", asizeof.asizeof(train_data_loader))
-    # load a part of data
-    start = time.time()
-    data_loader = DataLoader(train_file_path, uniform_partition, tokenized=True, source_padding=True,
-                             target_padding=True)
-    train_data_loader = data_loader.data_loader(0)
-    end = time.time()
-    print("part of data(tokenized):", end - start)
-    print("size", len(train_data_loader["X"]))
-    print("memory cost", asizeof.asizeof(train_data_loader))
+# class RawDataLoader(BaseRawDataLoader):
+#     def __init__(self, data_path):
+#         super().__init__(data_path)
+#         self.task_type = "summarization"
+#         self.cnn_path = "cnn/stories"
+#         self.dailymail_path = "dailymail/stories"
 
-    # load all data
-    start = time.time()
-    data_loader = DataLoader(train_file_path, uniform_partition)
-    train_data_loader = data_loader.data_loader()
-    end = time.time()
-    print("all data:", end - start)
-    print("size", len(train_data_loader["X"]))
-    print("memory cost", asizeof.asizeof(train_data_loader))
-    # load a part of data
-    start = time.time()
-    data_loader = DataLoader(train_file_path, uniform_partition)
-    train_data_loader = data_loader.data_loader(0)
-    end = time.time()
-    print("part of data:", end - start)
-    print("size", len(train_data_loader["X"]))
-    print("memory cost", asizeof.asizeof(train_data_loader))
+#     def data_loader(self):
+#         if len(self.X) == 0 or len(self.Y) == 0:
+#             X = None
+#             Y = None
+#             for root, dirs, files in os.walk(os.path.join(self.data_path, self.cnn_path)):
+#                 for file_name in files:
+#                     file_path = os.path.join(root, file_name)
+#                     if X is None or Y is None:
+#                         X, Y = self.process_data(file_path)
+#                     else:
+#                         temp = self.process_data(file_path)
+#                         X.extend(temp[0])
+#                         Y.extend(temp[1])
+#             for root, dirs, files in os.walk(os.path.join(self.data_path, self.dailymail_path)):
+#                 for file_name in files:
+#                     file_path = os.path.join(root, file_name)
+#                     temp = self.process_data(file_path)
+#                     X.extend(temp[0])
+#                     Y.extend(temp[1])
+#             self.X = {i: d for i, d in enumerate(X)}
+#             self.Y = {i: d for i, d in enumerate(Y)}
+#             index_list = [i for i in range(len(self.X))]
+#             self.attributes = {"index_list": index_list}
+#         return {"X": self.X, "Y": self.Y, "task_type": self.task_type, "attributes": self.attributes}
 
+#     def process_data(self, file_path):
+#         X = []
+#         Y = []
+#         article_lines = []
+#         abstract_lines = []
+#         next_is_highlight = False
+#         with open(file_path, "r") as f:
+#             for line in f:
+#                 line = line.strip()
+#                 if line:
+#                     if line.startswith("@highlight"):
+#                         next_is_highlight = True
+#                     elif next_is_highlight:
+#                         abstract_lines.append(line)
+#                     else:
+#                         article_lines.append(line)
+#         X.append(" ".join(article_lines))
+#         Y.append(' '.join(["%s %s %s" % ("<s>", sent, "</s>") for sent in abstract_lines]))
+#         return X, Y
+
+
+# class ClientDataLoader(BaseClientDataLoader):
+
+#     def __init__(self, data_path, partition_path, client_idx=None, partition_method="uniform", tokenize=False):
+#         data_fields = ["X", "Y"]
+#         super().__init__(data_path, partition_path, client_idx, partition_method, tokenize, data_fields)
+#         if self.tokenize:
+#             self.tokenize_data()
+
+#     def tokenize_data(self):
+#         tokenizer = self.spacy_tokenizer.en_tokenizer
+
+#         def __tokenize_data(data):
+#             for i in range(len(data["X"])):
+#                 data["X"][i] = [token.text.strip().lower() for token in tokenizer(data["X"][i].strip()) if token.text.strip()]
+#                 data["Y"][i] = [token.text.strip().lower() for token in tokenizer(data["Y"][i].strip()) if token.text.strip()]
+
+#         __tokenize_data(self.train_data)
+#         __tokenize_data(self.test_data)
