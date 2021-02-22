@@ -18,8 +18,8 @@ args = parser.parse_args()
 
 f = h5py.File(args.partition_file,"r")
 
-lda_samples = []
-lda_total = 0
+partition_samples = []
+partition_total = 0
 partition_name = ""
 client_number = 0
 
@@ -34,8 +34,8 @@ partition_data_path = "/"+partition_name+"/partition_data/"
 for i in f[partition_data_path].keys():
     train_path = partition_data_path+str(i)+'/train/'
     test_path = partition_data_path+str(i)+'/test/'
-    lda_samples.append(len(f[train_path][()]) + len(f[test_path][()]))
-    lda_total = lda_total + len(f[train_path][()]) + len(f[test_path][()])
+    partition_samples.append(len(f[train_path][()]) + len(f[test_path][()]))
+    partition_total = partition_total + len(f[train_path][()]) + len(f[test_path][()])
 
 
 
@@ -47,14 +47,14 @@ print("users")
 print(client_number)
 
 print("sample total")
-print(lda_total)
+print(partition_total)
 
 print("sample mean")
-mean  = lda_total / client_number
+mean  = partition_total / client_number
 print(mean)
 
 print("std")
-std = statistics.stdev(lda_samples)
+std = statistics.stdev(partition_samples)
 print(std)
 
 print("std/mean")
