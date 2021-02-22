@@ -13,6 +13,8 @@ parser.add_argument('--partition_file', type=str, default='data/partition_files/
                         metavar="DF", help='data file path')
 parser.add_argument('--task_name', type=str, metavar="TN", help="task name")
 
+parser.add_argument('--figure_path', type=str, metavar="TN", help="the place to store generated figures")
+
 
 args = parser.parse_args()
 
@@ -60,9 +62,8 @@ print(std)
 print("std/mean")
 print(std/mean)
 
-data_dir = "./partition_figure"
-
-plt.hist(lda_samples) 
+data_dir = args.figure_path
+plt.hist(partition_samples) 
 fig_name = args.task_name + " %s_hist_nolabel.png" % args.partition_name
 fig_dir = os.path.join(data_dir, fig_name)
 plt.savefig(fig_dir)

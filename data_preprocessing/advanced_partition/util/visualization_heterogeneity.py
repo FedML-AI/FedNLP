@@ -12,6 +12,7 @@ parser.add_argument('--partition_file', type=str, default='data/partition_files/
                         metavar="DF", help='data file path')
 parser.add_argument('--task_name', type=str, metavar="TN", help="task name")
 
+parser.add_argument('--figure_path', type=str, metavar="TN", help="the place to store generated figures")
 
 args = parser.parse_args()
 
@@ -41,7 +42,7 @@ for i in clients:
     cluster_sample = [client_assignment[i] for i in client_sample]
     cluster_figure = [cluster_sample.count(i) for i in cluster_list]
 
-    data_dir = "./partition_figure"
+    data_dir = args.figure_path
     fig = plt.figure()
     ax = fig.gca()
     ax.bar(cluster_lists,cluster_figure)

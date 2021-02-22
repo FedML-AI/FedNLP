@@ -10,7 +10,8 @@ therefore we assume all the data in the same client in kmeans_partition has the 
 python -m data_preprocessing.advanced_partition.util.visualization_heterogeneity \
 --partition_name lda \
 --partition_file data/partition_files/wikiner_partition.h5 \
---task_name wikiner
+--task_name wikiner \
+--figure_path ./partition_figure
 ```
 
 
@@ -18,6 +19,6 @@ python -m data_preprocessing.advanced_partition.util.visualization_heterogeneity
 python -m data_preprocessing.advanced_partition.util.visualization_stats \
 --partition_name kmeans \
 --partition_file data/partition_files/wikiner_partition.h5 \
---task_name wikiner
-
+--task_name wikiner \
+--figure_path ./partition_figure
 ```
