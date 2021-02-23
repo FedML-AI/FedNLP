@@ -12,33 +12,34 @@ We first use sentence transformer to compute the embedding of the data and then 
 
 ```bash
 # overwrite switch stores False the default value is True
+DATA_DIR=~/fednlp_data/
 
 python -m data_preprocessing.advanced_partition.kmeans  \
     --client_number 10 \
-    --data_file '/home/bill/fednlp_data/data_files/wikiner_data.h5' \
+    --data_file '${DATA_DIR}/data_files/wikiner_data.h5' \
     --bsz 16 \
-    --partition_file '/home/bill/fednlp_data/partition_files/wikiner_partition.h5' \
-    --embedding_file '/home/bill/fednlp_data/embedding_files/wikiner_embedding.pkl'  \
+    --partition_file '${DATA_DIR}/partition_files/wikiner_partition.h5' \
+    --embedding_file '${DATA_DIR}/embedding_files/wikiner_embedding.pkl'  \
     --task_type name_entity_recognition \
     --overwrite  
 
 python -m data_preprocessing.advanced_partition.kmeans  \
     --client_number 30 \
-    --data_file '/home/bill/fednlp_data/data_files/squad_1.1_data.h5' \
+    --data_file '${DATA_DIR}/data_files/squad_1.1_data.h5' \
     --bsz 16 \
-    --partition_file '/home/bill/fednlp_data/partition_files/squad_1.1_partition.h5' \
-    --embedding_file '/home/bill/fednlp_data/embedding_files/squad_1.1_embedding.pkl'  \
-    --task_type reading_comprehension \
+    --partition_file '${DATA_DIR}/partition_files/squad_1.1_partition.h5' \
+    --embedding_file '${DATA_DIR}/embedding_files/squad_1.1_embedding.pkl'  \
+    --task_type reading_comprehension
 
 
 python -m data_preprocessing.advanced_partition.kmeans  \
     python kmeans_ex.py  \
     --client_number 50 \
-    --data_file '/home/bill/fednlp_data/data_files/cornell_movie_dialogue_data.h5' \
+    --data_file '${DATA_DIR}/data_files/cornell_movie_dialogue_data.h5' \
     --bsz 16 \
-    --partition_file '/home/bill/fednlp_data/partition_files/cornell_movie_dialogue_partition.h5' \
-    --embedding_file '/home/bill/fednlp_data/embedding_files/cornell_movie_dialogue_embedding.pkl'  \
-    --task_type seq2seq \
+    --partition_file '${DATA_DIR}/partition_files/cornell_movie_dialogue_partition.h5' \
+    --embedding_file '${DATA_DIR}/embedding_files/cornell_movie_dialogue_embedding.pkl'  \
+    --task_type seq2seq
 
 ```
 <!-- ```sh
@@ -52,54 +53,50 @@ python -m data_preprocessing.advanced_partition.kmeans_ex  \
 ## LDA
 we first kmeans to classify data in to {10,30,50} clusters and then apply LDA to distribute data in to different number of groups as defined in client number
 
-we already provide clusters data for datasets excluding **20news**, **agnews**, **sentiment140**, **sst2** because they have their own natural classification. In the each of the rest partition h5 files, you can access the clustering data by the keyword "**kmeans_%client_number**" based on how many client number you assign in the Kmeans partition and you can also find which data belongs to which cluster under the keyword **kmeans_%client_number/cluster_assignment** . If you would like to create different numbers of clusters you can use the kmeans code we provide above
-### usage
+
+We already provide clusters data for datasets excluding **20news**, **agnews**, **sentiment140**, **sst2** because they have their own natural classification. In the each of the rest partition h5 files, you can access the clustering data by the keyword "**kmeans_%client_number**" based on how many client number you assign in the Kmeans partition and you can also find which data belongs to which cluster under the keyword **kmeans_%client_number/cluster_assignment** . If you would like to create different numbers of clusters you can use the kmeans code we provide above.
+
+### Usage
 
 ```bash
+DATA_DIR=~/fednlp_data/
 python -m data_preprocessing.advanced_partition.lda  \
 --client_number 100 \
---data_file 'data/data_files/20news_data.h5' \
---partition_file 'data/partition_files/20news_partition.h5' \
+--data_file '${DATA_DIR}/data_files/20news_data.h5' \
+--partition_file '${DATA_DIR}/partition_files/20news_partition.h5' \
 --task_type text_classification \
 --kmeans_num 0 \
 --min_size 10 \
 --alpha 1.0
-```
 
-
-```bash
 python -m data_preprocessing.advanced_partition.lda  \
 --client_number 100 \
---data_file 'data/data_files/wikiner_data.h5' \
---partition_file 'data/partition_files/wikiner_partition.h5' \
+--data_file '${DATA_DIR}/data_files/wikiner_data.h5' \
+--partition_file '${DATA_DIR}/partition_files/wikiner_partition.h5' \
 --task_type name_entity_recognition \
 --kmeans_num 10 \
 --min_size 10 \
 --alpha 1.0
-```
 
-```bash
 python -m data_preprocessing.advanced_partition.lda  \
 --client_number 100 \
---data_file 'data/data_files/squad_1.1_data.h5' \
---partition_file 'data/partition_files/squad_1,1_partition.h5' \
+--data_file '${DATA_DIR}/data_files/squad_1.1_data.h5' \
+--partition_file '${DATA_DIR}/partition_files/squad_1,1_partition.h5' \
 --task_type reading_comprehension \
 --kmeans_num 30 \
 --min_size 10 \
 --alpha 1.0
-```
 
-```bash
 python -m data_preprocessing.advanced_partition.lda  \
 --client_number 100 \
---data_file 'data/data_files/cornell_movie_dialogue_data.h5' \
---partition_file 'data/partition_files/cornell_movie_dialogue_partition.h5' \
+--data_file '${DATA_DIR}/data_files/cornell_movie_dialogue_data.h5' \
+--partition_file '${DATA_DIR}/partition_files/cornell_movie_dialogue_partition.h5' \
 --task_type seq_to_seq \
 --kmeans_num 50 \
 --min_size 10 \
 --alpha 1.0
 ```
-## datasets stats
+## Datasets stats
 every data is round to 0.01
 **cornell_movie_dialogue** **squad_1.1** **wnut** **wikiner** datasets are presented with 2 general data ditribution graph from LDA and Kmeans partiton. The rest of the datasets are presented with LDA data distribution because we use their natural labels to construct LDA  instead of using kmeans to create labels 
 
@@ -115,7 +112,9 @@ All of the datasets are presented with 4 randomly chosen clients data distrabuti
 |std/mean|0.13|
 |class_num|20|
 
+### 20news general data distibution
 ![image](partition_figure/20news_lda_hist.png)
+### 20news client data heterogeneity
 ![image](partition_figure/20news_client_1_lda_actual_geterigeneous_data_distribution.png)
 ![image](partition_figure/20news_client_2_lda_actual_geterigeneous_data_distribution.png)
 ![image](partition_figure/20news_client_3_lda_actual_geterigeneous_data_distribution.png)
@@ -130,9 +129,15 @@ All of the datasets are presented with 4 randomly chosen clients data distrabuti
 |sample_mean|1276|
 |sample_std|520.64|
 |std/mean|0.41|
-|class_num|4|
+|class_num|4|4|
 
-![image]()
+### agnews general data distribution
+![image](partition_figure/agnews_lda_hist.png)
+### agnews client data heterogeneity
+![image](partition_figure/agnews_client_1_lda_actual_geterigeneous_data_distribution.png)
+![image](partition_figure/agnews_client_2_lda_actual_geterigeneous_data_distribution.png)
+![image](partition_figure/agnews_client_3_lda_actual_geterigeneous_data_distribution.png)
+![image](partition_figure/agnews_client_4_lda_actual_geterigeneous_data_distribution.png)
 
 ### sst2
 |data|LDA|
@@ -143,6 +148,15 @@ All of the datasets are presented with 4 randomly chosen clients data distrabuti
 |sample_std|49.67|
 |std/mean|0.57|
 |class_num|2|
+
+### sst2 general data distribution
+![image](partition_figure/sst2_lda_hist.png)
+###  sst2  client data heterogeneity
+![image](partition_figure/sst2_client_1_lda_actual_geterigeneous_data_distribution.png)
+![image](partition_figure/sst2_client_2_lda_actual_geterigeneous_data_distribution.png)
+![image](partition_figure/sst2_client_3_lda_actual_geterigeneous_data_distribution.png)
+![image](partition_figure/sst2_client_4_lda_actual_geterigeneous_data_distribution.png)
+
 ### sentiment 140
 |data|LDA|
 |-----| -----| 
@@ -152,6 +166,14 @@ All of the datasets are presented with 4 randomly chosen clients data distrabuti
 |sample_std|9535.35|
 |std/mean|0.60|
 |class_num|2|
+
+### sentiment140 general data distrubution
+![image](partition_figure/sentiment_140_lda_hist.png)
+### sentiment140 client data heterogeneity
+![image](partition_figure/sentiment140_client_1_lda_actual_geterigeneous_data_distribution.png)
+![image](partition_figure/sentiment140_client_2_lda_actual_geterigeneous_data_distribution.png)
+![image](partition_figure/sentiment140_client_3_lda_actual_geterigeneous_data_distribution.png)
+![image](partition_figure/sentiment140_client_4_lda_actual_geterigeneous_data_distribution.png)
 
 ### cornell_movie_dialogue 
 |data|LDA|Kmeans|
@@ -163,6 +185,15 @@ All of the datasets are presented with 4 randomly chosen clients data distrabuti
 |std/mean|0.07|0.40|
 |class_num|50|50|
 
+### cornell movie dialogue general data distribution
+![image](partition_figure/cornell_movie_dialogue_kmeans_hist.png)
+![image](partition_figure/cornell_movie_dialogue_lda_hist.png)
+### cornel movie dialogue  client data heterogeneity
+![image](partition_figure/cornell_movie_dialogue_client_1_lda_actual_geterigeneous_data_distribution.png)
+![image](partition_figure/cornell_movie_dialogue_client_2_lda_actual_geterigeneous_data_distribution.png)
+![image](partition_figure/cornell_movie_dialogue_client_3_lda_actual_geterigeneous_data_distribution.png)
+![image](partition_figure/cornell_movie_dialogue_client_4_lda_actual_geterigeneous_data_distribution.png)
+
 ### squad_1.1
 |data|LDA|Kmeans|
 |-----| -----| ---|
@@ -172,6 +203,18 @@ All of the datasets are presented with 4 randomly chosen clients data distrabuti
 |sample_std|143.40|1776.99|
 |std/mean|0.118|0.44|
 |class_num|30|30|
+
+### squad 1.1 general data distribution
+![image](partition_figure/squad_1.1_kmeans_hist.png)
+![image](partition_figure/squad_1.1_lda_hist.png)
+
+
+### squad 1.1  client data heterogeneity
+![image](partition_figure/squad_1.1_client_1_lda_actual_geterigeneous_data_distribution.png)
+![image](partition_figure/squad_1.1_client_2_lda_actual_geterigeneous_data_distribution.png)
+![image](partition_figure/squad_1.1_client_3_lda_actual_geterigeneous_data_distribution.png)
+![image](partition_figure/squad_1.1_client_4_lda_actual_geterigeneous_data_distribution.png)
+
 ### w_nut
 |data|LDA|Kmeans|
 |-----| -----| ---|
@@ -181,6 +224,17 @@ All of the datasets are presented with 4 randomly chosen clients data distrabuti
 |sample_std|10.87|119.38|
 |std/mean|0.23|0.26|
 |class_num|10|10|
+
+### w_nut general data distribution
+![image](partition_figure/w_nut_kmeans_hist.png)
+![image](partition_figure/w_nut_lda_hist.png)
+
+### w_nut  client data heterogeneity
+![image](partition_figure/w_nut_client_1_lda_actual_geterigeneous_data_distribution.png)
+![image](partition_figure/w_nut_client_2_lda_actual_geterigeneous_data_distribution.png)
+![image](partition_figure/w_nut_client_3_lda_actual_geterigeneous_data_distribution.png)
+![image](partition_figure/w_nut_client_4_lda_actual_geterigeneous_data_distribution.png)
+
 ### wikiner
 |data|LDA|Kmeans|
 |-----| -----| ---|
@@ -190,3 +244,13 @@ All of the datasets are presented with 4 randomly chosen clients data distrabuti
 |sample_std|645.72|3050.49|
 |std/mean|0.22|0.11|
 |class_num|10|10|
+
+### wikiner general data distribution
+![image](partition_figure/wikiner_kmeans_hist.png)
+![image](partition_figure/wikiner_lda_hist.png)
+
+### wikiner  client data heterogeneity
+![image](partition_figure/wikiner_client_1_lda_actual_geterigeneous_data_distribution.png)
+![image](partition_figure/wikiner_client_2_lda_actual_geterigeneous_data_distribution.png)
+![image](partition_figure/wikiner_client_3_lda_actual_geterigeneous_data_distribution.png)
+![image](partition_figure/wikiner_client_4_lda_actual_geterigeneous_data_distribution.png)

@@ -64,13 +64,10 @@ print(std/mean)
 
 data_dir = args.figure_path
 plt.hist(partition_samples) 
-fig_name = args.task_name + " %s_hist_nolabel.png" % args.partition_name
-fig_dir = os.path.join(data_dir, fig_name)
-plt.savefig(fig_dir)
-plt.title(args.task_name)
+plt.title(args.task_name + " " + args.partition_name)
 plt.xlabel('number of samples')
 plt.ylabel("number of clients")
-fig_name = args.task_name + " %s_hist.png" % args.partition_name
+fig_name = args.task_name + "_%s_hist.png" % args.partition_name
 fig_dir = os.path.join(data_dir, fig_name)
 plt.savefig(fig_dir)
 
