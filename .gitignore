@@ -33,7 +33,6 @@ wandb
 *.dat
 cifar-10-batches-py
 *.tar.gz
-*.png
 *.zip
 *.json
 
