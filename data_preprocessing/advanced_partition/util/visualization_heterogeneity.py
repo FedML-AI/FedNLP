@@ -51,7 +51,6 @@ clients = [1,2,3,4]
 f = h5py.File(args.partition_file,"r")
 
 for i in clients:
-
     client_sample = []
     cluster_sample = []
     client_sample.extend(f[partition_data_path+str(i)+'/train/'][()])
@@ -66,7 +65,7 @@ for i in clients:
     ax.bar(y_pos,cluster_figure,width=0.5, align='center')
     plt.xticks(y_pos,class_list)
     ax.plot(cluster_figure,linewidth=2.0,color='r')
-    fig_name = args.task_name + "_client_" + str(i) + "_%s_actual geterigeneous data distribution.png" % args.partition_name
+    fig_name = args.task_name + "_client_" + str(i) + "_%s_actual_geterigeneous_data_distribution.png" % args.partition_name
     fig_dir = os.path.join(data_dir, fig_name)
     plt.title(args.task_name + "_client_" + str(i) +  "_data_distribution")
     plt.xlabel('class idx')
