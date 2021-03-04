@@ -2,50 +2,41 @@ import os
 import re
 
 from data_preprocessing.base.base_client_data_loader import BaseClientDataLoader
-from data_preprocessing.base.base_raw_data_loader import BaseRawDataLoader
+from data_preprocessing.base.base_raw_data_loader import TextClassificationRawDataLoader
 
 
-class RawDataLoader(BaseRawDataLoader):
+class RawDataLoader(TextClassificationRawDataLoader):
     def __init__(self, data_path):
         super().__init__(data_path)
-        self.task_type = "text_classification"
-        self.target_vocab = None
         self.train_file_name = "SemEval2010_task8_training/TRAIN_FILE.TXT"
         self.test_file_name = "SemEval2010_task8_testing_keys/TEST_FILE_FULL.TXT"
 
     def data_loader(self):
-        if len(self.X) == 0 or len(self.Y) == 0 or self.target_vocab is None:
-            X, Y = self.process_data(os.path.join(self.data_path, self.train_file_name))
-            train_size = len(X)
-            temp = self.process_data(os.path.join(self.data_path, self.test_file_name))
-            X.extend(temp[0])
-            Y.extend(temp[1])
-            self.X = {i: d for i, d in enumerate(X)}
-            self.Y = {i: d for i, d in enumerate(Y)}
-            self.target_vocab = {key: i for i, key in enumerate(set(Y))}
-            train_index_list = [i for i in range(train_size)]
-            test_index_list = [i for i in range(train_size, len(self.X))]
-            index_list = train_index_list + test_index_list
-            self.attributes = {"train_index_list": train_index_list, "test_index_list": test_index_list,
-                               "index_list": index_list, "target_vocab": self.target_vocab}
-        return {"X": self.X, "Y": self.Y, "task_type": self.task_type,
-                "attributes": self.attributes}
+        if len(self.X) == 0 or len(self.Y) == 0 or self.attributes["label_vocab"] is None:
+            train_size = self.process_data_file(os.path.join(self.data_path, self.train_file_name))
+            test_size = self.process_data_file(os.path.join(self.data_path, self.test_file_name))
+            self.target_vocab = {key: i for i, key in enumerate(set(self.Y.values()))}
+            self.attributes["train_index_list"] = [i for i in range(train_size)]
+            self.attributes["test_index_list"] = [i for i in range(train_size, train_size + test_size)]
+            self.attributes["index_list"] = self.attributes["train_index_list"] + self.attributes["test_index_list"]
 
-    def process_data(self, file_path):
-        X = []
-        Y = []
-        print(file_path)
+    def process_data_file(self, file_path):
+        cnt = 0
         with open(file_path, "r", encoding='utf-8') as f:
             data = f.readlines()
+            clean_data = None
             for i in range(len(data)):
                 if len(data[i]) > 1 and data[i][0].isdigit():
                     clean_data = data[i].split('\t')[1][1:-1].strip()
-                    X.append(clean_data)
 
                 elif len(data[i - 1]) > 1 and data[i - 1][0].isdigit():
                     label = data[i].rstrip("\n")
-                    Y.append(label)
-        return X, Y
+                    assert len(self.X) == len(self.Y)
+                    idx = len(self.X)
+                    self.X[idx] = clean_data
+                    self.Y[idx] = label
+                    cnt += 1
+        return cnt
 
 
 class ClientDataLoader(BaseClientDataLoader):

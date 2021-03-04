@@ -1,44 +1,33 @@
 import os
 
 from data_preprocessing.base.base_client_data_loader import BaseClientDataLoader
-from data_preprocessing.base.base_raw_data_loader import BaseRawDataLoader
+from data_preprocessing.base.base_raw_data_loader import Seq2SeqRawDataLoader
 
 
-class RawDataLoader(BaseRawDataLoader):
+class RawDataLoader(Seq2SeqRawDataLoader):
     def __init__(self, data_path):
         super().__init__(data_path)
-        self.task_type = "summarization"
         self.cnn_path = "cnn/stories"
         self.dailymail_path = "dailymail/stories"
 
-    def data_loader(self):
+    def load_data(self):
         if len(self.X) == 0 or len(self.Y) == 0:
-            X = None
-            Y = None
+            total_size = 0
             for root, dirs, files in os.walk(os.path.join(self.data_path, self.cnn_path)):
                 for file_name in files:
                     file_path = os.path.join(root, file_name)
-                    if X is None or Y is None:
-                        X, Y = self.process_data(file_path)
-                    else:
-                        temp = self.process_data(file_path)
-                        X.extend(temp[0])
-                        Y.extend(temp[1])
+                    processed_size = self.process_data_file(file_path)
+                    total_size += processed_size
             for root, dirs, files in os.walk(os.path.join(self.data_path, self.dailymail_path)):
                 for file_name in files:
                     file_path = os.path.join(root, file_name)
-                    temp = self.process_data(file_path)
-                    X.extend(temp[0])
-                    Y.extend(temp[1])
-            self.X = {i: d for i, d in enumerate(X)}
-            self.Y = {i: d for i, d in enumerate(Y)}
-            index_list = [i for i in range(len(self.X))]
-            self.attributes = {"index_list": index_list}
-        return {"X": self.X, "Y": self.Y, "task_type": self.task_type, "attributes": self.attributes}
+                    processed_size = self.process_data_file(file_path)
+                    total_size += processed_size
+            index_list = [i for i in range(total_size)]
+            self.attributes["index_list"] = index_list
 
-    def process_data(self, file_path):
-        X = []
-        Y = []
+    def process_data_file(self, file_path):
+        cnt = 0
         article_lines = []
         abstract_lines = []
         next_is_highlight = False
@@ -52,9 +41,12 @@ class RawDataLoader(BaseRawDataLoader):
                         abstract_lines.append(line)
                     else:
                         article_lines.append(line)
-        X.append(" ".join(article_lines))
-        Y.append(' '.join(["%s %s %s" % ("<s>", sent, "</s>") for sent in abstract_lines]))
-        return X, Y
+        assert len(self.X) == len(self.Y)
+        idx = len(self.X)
+        self.X[idx] = " ".join(article_lines)
+        self.Y[idx] = " ".join(["%s %s %s" % ("<s>", sent, "</s>") for sent in abstract_lines])
+        cnt += 1
+        return cnt
 
 
 class ClientDataLoader(BaseClientDataLoader):

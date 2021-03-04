@@ -4,49 +4,39 @@ import re
 import string
 
 from data_preprocessing.base.base_client_data_loader import BaseClientDataLoader
-from data_preprocessing.base.base_raw_data_loader import BaseRawDataLoader
+from data_preprocessing.base.base_raw_data_loader import TextClassificationRawDataLoader
 
 
-class RawDataLoader(BaseRawDataLoader):
+class RawDataLoader(TextClassificationRawDataLoader):
     def __init__(self, data_path):
         super().__init__(data_path)
-        self.task_type = "text_classification"
-        self.target_vocab = None
         self.test_file_name = "testdata.manual.2009.06.14.csv"
         self.train_file_name = "training.1600000.processed.noemoticon.csv"
 
-    def data_loader(self):
-        if len(self.X) == 0 or len(self.Y) == 0 or self.target_vocab is None:
-            X, Y = self.process_data(os.path.join(self.data_path, self.train_file_name))
-            train_size = len(X)
-            temp = self.process_data(os.path.join(self.data_path, self.test_file_name))
-            X.extend(temp[0])
-            Y.extend(temp[1])
-            self.X = {i: d for i, d in enumerate(X)}
-            self.Y = {i: d for i, d in enumerate(Y)}
-            train_index_list = [i for i in range(train_size)]
-            test_index_list = [i for i in range(train_size, len(self.X))]
-            index_list = train_index_list + test_index_list
-            self.target_vocab = {key: i for i, key in enumerate(set(Y))}
-            self.attributes = {"index_list": index_list, "train_index_list": train_index_list,
-                               "test_index_list": test_index_list, "target_vocab": self.target_vocab}
+    def load_data(self):
+        if len(self.X) == 0 or len(self.Y) == 0 or self.attributes["label_vocab"] is None:
+            train_size = self.process_data_file(os.path.join(self.data_path, self.train_file_name))
+            test_size = self.process_data_file(os.path.join(self.data_path, self.test_file_name))
+            self.attributes["train_index_list"] = [i for i in range(train_size)]
+            self.attributes["test_index_list"] = [i for i in range(train_size, train_size+test_size)]
+            self.attributes["index_list"] = self.attributes["train_index_list"] + self.attributes["test_index_list"] 
+            self.attributes["label_vocab"] = {label: i for i, label in enumerate(set(self.Y.values()))}
 
-        return {"X": self.X, "Y": self.Y, "task_type": self.task_type,
-                "attributes": self.attributes}
-
-    def process_data(self, file_path):
-        X = []
-        Y = []
+    def process_data_file(self, file_path):
+        cnt = 0
         with open(file_path, "r", newline='', encoding='utf-8', errors='ignore') as csvfile:
             data = csv.reader(csvfile, delimiter=',')
             for line in data:
-                X.append(line[5])
+                assert len(self.X) == len(self.Y)
+                idx = len(self.X)
+                self.X[idx] = line[5]
                 if line[0] == "0":
-                    Y.append(line[0])
+                    self.Y[idx] = line[0]
                 else:
-                    Y.append("1")
+                    self.Y[idx] = "1"
+                cnt += 1
 
-        return X, Y
+        return cnt
 
 
 class ClientDataLoader(BaseClientDataLoader):

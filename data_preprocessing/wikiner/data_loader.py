@@ -1,38 +1,28 @@
 from data_preprocessing.base.base_client_data_loader import BaseClientDataLoader
-from data_preprocessing.base.base_raw_data_loader import BaseRawDataLoader
-from data_preprocessing.base.utils import *
+from data_preprocessing.base.base_raw_data_loader import SeqTaggingRawDataLoader
+from functools import reduce
 import os
+import h5py
+import json
+import numpy as np
 
 
-class RawDataLoader(BaseRawDataLoader):
+class RawDataLoader(SeqTaggingRawDataLoader):
     def __init__(self, data_path):
         super().__init__(data_path)
-        self.task_type = "sequence_tagging"
         self.wp2_data_path = "aij-wikiner-en-wp2"
         self.wp3_data_path = "aij-wikiner-en-wp3"
-        self.target_vocab = None
-        self.all_deps = None
+        self.all_deps = dict()
 
-    def data_loader(self):
-        if len(self.X) == 0 or len(self.Y) == 0 or len(self.target_vocab) == 0:
-            X, Y, all_deps = self.process_data(os.path.join(self.data_path, self.wp2_data_path))
-            temp = self.process_data(os.path.join(self.data_path, self.wp3_data_path))
-            X.extend(temp[0])
-            Y.extend(temp[1])
-            all_deps.extend(temp[2])
-            self.X = {i: d for i, d in enumerate(X)}
-            self.Y = {i: d for i, d in enumerate(Y)}
-            self.all_deps = {i: d for i, d in enumerate(all_deps)}
-            index_list = [i for i in range(len(self.X))]
-            self.target_vocab = build_vocab(Y)
-            self.attributes = {"index_list": index_list, "target_vocab": self.target_vocab}
-        return {"X": self.X, "Y": self.Y, "all_deps": self.all_deps,
-                "task_type": self.task_type, "attributes": self.attributes}
+    def load_data(self):
+        if len(self.X) == 0 or len(self.Y) == 0 or self.attributes["label_vocab"] is None:
+            total_size = self.process_data_file(os.path.join(self.data_path, self.wp2_data_path))
+            total_size += self.process_data_file(os.path.join(self.data_path, self.wp3_data_path))
+            self.attributes["index_list"] = [i for i in range(total_size)]
+            self.attributes["label_vocab"] = {label: i for i, label in enumerate(reduce(lambda a,b: a+b, self.Y.values()))}
 
-    def process_data(self, file_path):
-        X = []
-        Y = []
-        all_deps = []
+    def process_data_file(self, file_path):
+        cnt = 0
         with open(file_path, "r") as f:
             for i, line in enumerate(f):
                 if i != 0:
@@ -47,10 +37,23 @@ class RawDataLoader(BaseRawDataLoader):
                             single_x.append(word)
                             single_y.append(label)
                             single_dep.append(dep)
-                        X.append(single_x)
-                        Y.append(single_y)
-                        all_deps.append(single_dep)
-        return X, Y, all_deps
+                        assert len(self.X) == len(self.Y) == len(self.all_deps)
+                        idx = len(self.X)
+                        self.X[idx] = single_x
+                        self.Y[idx] = single_y
+                        self.all_deps[idx] = single_dep
+                        cnt += 1
+        return cnt
+    
+    def generate_h5_file(self, file_path):
+        f = h5py.File(file_path, "w")
+        f["attributes"] = json.dumps(self.attributes)
+        utf8_type = h5py.string_dtype('utf-8', None)
+        for key in self.X.keys():
+            f["X/" + str(key)] = np.array(self.X[key], dtype=utf8_type)
+            f["Y/" + str(key)] = np.array(self.Y[key], dtype=utf8_type)
+            f["all_deps/" + str(key)] = np.array(self.all_deps[key], dtype=utf8_type)
+        f.close()
 
 
 class ClientDataLoader(BaseClientDataLoader):

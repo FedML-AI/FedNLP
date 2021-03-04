@@ -1,32 +1,26 @@
 import os
 import random
+import h5py
+import numpy as np
+import json
 
 from data_preprocessing.base.base_client_data_loader import BaseClientDataLoader
-from data_preprocessing.base.base_raw_data_loader import BaseRawDataLoader
+from data_preprocessing.base.base_raw_data_loader import Seq2SeqRawDataLoader
 
 
-class RawDataLoader(BaseRawDataLoader):
+class RawDataLoader(Seq2SeqRawDataLoader):
     def __init__(self, data_path):
         super().__init__(data_path)
-        self.task_type = "dialog_response_generation"
-        self.history = []
-        self.attributes = None
+        self.history = dict()
         self.movie_conversation_file_name = "movie_conversations.txt"
         self.movie_line_file_name = "movie_lines.txt"
 
-    def data_loader(self):
-        if len(self.history) == 0:
-            X, Y, history, attributes = self.process_data(self.data_path)
-            self.X = {i: d for i, d in enumerate(X)}
-            self.Y = {i: d for i, d in enumerate(Y)}
-            self.history = {i: d for i, d in enumerate(history)}
-            self.attributes = attributes
-            self.index_list = [i for i in range(len(self.X))]
-            self.attributes["index_list"] = self.index_list
-        return {"X": self.X, "Y": self.Y, "history": self.history, "attributes": self.attributes,
-                "task_type": self.task_type}
+    def load_data(self):
+        if len(self.X) == 0 or len(self.Y) == 0 or len(self.history) == 0:
+            total_size = self.process_data_file(self.data_path)
+            self.attributes["index_list"] = [i for i in range(total_size)]
 
-    def process_data(self, file_path):
+    def process_data_file(self, file_path):
         line_dict = {}
         with open(os.path.join(file_path, self.movie_line_file_name), "r", errors="ignore") as f:
             for line in f:
@@ -35,14 +29,11 @@ class RawDataLoader(BaseRawDataLoader):
                     temp = line.split("+++$+++")
                     line_dict[temp[0].strip()] = {"utterance": temp[-1].strip(), "character": temp[1]}
 
-        attributes = dict()
-        attributes["characters"] = []
-        attributes["movie"] = []
+        self.attributes["characters"] = dict()
+        self.attributes["movie"] = dict()
 
         conversation = []
-        X = []
-        Y = []
-        history = []
+        cnt = 0
 
         with open(os.path.join(file_path, self.movie_conversation_file_name), 'r') as f:
             for line in f:
@@ -52,39 +43,28 @@ class RawDataLoader(BaseRawDataLoader):
                     conversation_idx = temp[-1].strip()
                     conversation_idx = eval(conversation_idx)
                     for i in range(len(conversation_idx) - 1):
-                        X.append(line_dict[conversation_idx[i]]["utterance"])
-                        Y.append(line_dict[conversation_idx[i + 1]]["utterance"])
-                        history.append(conversation.copy())
-                        attributes["movie"].append(temp[2])
-                        attributes["characters"].append((line_dict[conversation_idx[i]]["character"],
-                                                         line_dict[conversation_idx[i + 1]]["character"]))
+                        assert len(self.X) == len(self.Y) == len(self.history)
+                        idx = len(self.X)
+                        self.X[idx] = line_dict[conversation_idx[i]]["utterance"]
+                        self.Y[idx] = line_dict[conversation_idx[i + 1]]["utterance"]
+                        self.history[idx] = conversation.copy()
+                        self.attributes["movie"][idx] = temp[2]
+                        self.attributes["characters"][idx] = (line_dict[conversation_idx[i]]["character"],
+                                                         line_dict[conversation_idx[i + 1]]["character"])
                         conversation.append(line_dict[conversation_idx[i]]["utterance"])
+                        cnt += 1
                     conversation.clear()
-        return X, Y, history, attributes
+        return cnt
 
-    # TODO: Unified Partition Interface
-    @staticmethod
-    def nature_partition(attributes):
-        movie_set = set(attributes["movie"])
-        partition_dict = dict()
-        partition_dict["n_clients"] = len(movie_set)
-        partition_dict["partition_data"] = dict()
-        for i, movie_id in enumerate(movie_set):
-            for j in range(len(attributes["movie"])):
-                if attributes["movie"][j] == movie_id:
-                    if i not in partition_dict["partition_data"]:
-                        partition_dict["partition_data"][i] = dict()
-                        partition_dict["partition_data"][i]["train"] = list()
-                        partition_dict["partition_data"][i]["test"] = list()
-                    else:
-                        partition_dict["partition_data"][i]["train"].append(j)
-        for client_id in partition_dict["partition_data"].keys():
-            train_set = partition_dict["partition_data"][client_id]["train"]
-            random.shuffle(train_set)
-            train_num = int(len(train_set) * 0.8)
-            partition_dict["partition_data"][client_id]["train"] = train_set[:train_num]
-            partition_dict["partition_data"][client_id]["test"] = train_set[train_num:]
-        return partition_dict
+    def generate_h5_file(self, file_path):
+        f = h5py.File(file_path, "w")
+        f["attributes"] = json.dumps(self.attributes)
+        utf8_type = h5py.string_dtype('utf-8', None)
+        for key in self.X.keys():
+            f["X/" + str(key)] = self.X[key]
+            f["Y/" + str(key)] = self.Y[key]
+            f["history/" + str(key)] = np.array(self.history[key], dtype=utf8_type)
+        f.close()
 
 
 class ClientDataLoader(BaseClientDataLoader):
