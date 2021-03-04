@@ -9,31 +9,38 @@ therefore we assume all the data in the same client in kmeans_partition has the 
 
 
 
+
 ``` bash
+DATA_DIR=~/fednlp_data/
+
 python -m data_preprocessing.advanced_partition.util.visualization_heterogeneity \
 --partition_name lda \
---partition_file data/partition_files/20news_partition.h5 \
---data_file data/data_files/20news_data.h5 \
+--partition_file '${DATA_DIR}/partition_files/20news_partition.h5' \
+--data_file '${DATA_DIR}/data_files/20news_data.h5' \
 --task_name 20news \
---figure_path ./partition_figure \
---task_type text_classification
-```
+--figure_path 'data_preprocessing/advanced_partition/heatmap_figure' \
+--task_type text_classification 
 
-```bash
 python -m data_preprocessing.advanced_partition.util.visualization_heterogeneity \
 --partition_name lda \
---partition_file data/partition_files/wikiner_partition.h5 \
---data_file data/data_files/wikiner_data.h5 \
+--partition_file '${DATA_DIR}/partition_files/wikiner_partition.h5' \
+--data_file '${DATA_DIR}/data_files/wikiner_data.h5' \
 --task_name wikiner \
---figure_path ./partition_figure \
+--figure_path 'data_preprocessing/advanced_partition/heatmap_figure' \
 --task_type name_entity_recognition
-```
 
-
-```bash
 python -m data_preprocessing.advanced_partition.util.visualization_stats \
 --partition_name kmeans \
---partition_file data/partition_files/wikiner_partition.h5 \
+--partition_file '${DATA_DIR}/partition_files/wikiner_partition.h5' \
 --task_name wikiner \
---figure_path ./partition_figure
+--figure_path 'data_preprocessing/advanced_partition/heatmap_figure'
+
+python -m data_preprocessing.advanced_partition.util.visualization_heatmap \
+--partition_name lda \
+--client_num 100 \ 
+--partition_file '${DATA_DIR}/partition_files/wikiner_partition.h5' \
+--data_file '${DATA_DIR}/data_files/wikiner_data.h5' \
+--task_name wikiner \
+--figure_path 'data_preprocessing/advanced_partition/heatmap_figure' \
+--task_type name_entity_recognition
 ```
