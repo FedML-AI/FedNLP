@@ -11,7 +11,7 @@ class RawDataLoader(TextClassificationRawDataLoader):
         self.train_file_name = "SemEval2010_task8_training/TRAIN_FILE.TXT"
         self.test_file_name = "SemEval2010_task8_testing_keys/TEST_FILE_FULL.TXT"
 
-    def data_loader(self):
+    def load_data(self):
         if len(self.X) == 0 or len(self.Y) == 0 or self.attributes["label_vocab"] is None:
             train_size = self.process_data_file(os.path.join(self.data_path, self.train_file_name))
             test_size = self.process_data_file(os.path.join(self.data_path, self.test_file_name))

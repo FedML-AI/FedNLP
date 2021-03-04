@@ -1,6 +1,5 @@
 from data_preprocessing.base.base_client_data_loader import BaseClientDataLoader
 from data_preprocessing.base.base_raw_data_loader import SeqTaggingRawDataLoader
-from functools import reduce
 import os
 import h5py
 import json
@@ -19,7 +18,11 @@ class RawDataLoader(SeqTaggingRawDataLoader):
             total_size = self.process_data_file(os.path.join(self.data_path, self.wp2_data_path))
             total_size += self.process_data_file(os.path.join(self.data_path, self.wp3_data_path))
             self.attributes["index_list"] = [i for i in range(total_size)]
-            self.attributes["label_vocab"] = {label: i for i, label in enumerate(reduce(lambda a,b: a+b, self.Y.values()))}
+            self.attributes["label_vocab"] = dict()
+            for labels in self.Y.values():
+                for label in labels:
+                    if label not in self.attributes["label_vocab"]:
+                        self.attributes["label_vocab"][label] = len(self.attributes["label_vocab"])
 
     def process_data_file(self, file_path):
         cnt = 0

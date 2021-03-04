@@ -50,7 +50,7 @@ def test_raw_data_loader(args, dataset_name):
         data_loader = data_preprocessing.CornellMovieDialogue.data_loader.RawDataLoader(args.data_dir)
     elif dataset_name == "semeval_2010_task8":
         data_loader = data_preprocessing.SemEval2010Task8.data_loader.RawDataLoader(args.data_dir)
-    elif dataset_name == "sentiment_140":
+    elif dataset_name == "sentiment140":
         data_loader = data_preprocessing.Sentiment140.data_loader.RawDataLoader(args.data_dir)
     elif dataset_name == "squad_1.1":
         data_loader = data_preprocessing.SQuAD_1_1.data_loader.RawDataLoader(args.data_dir)

@@ -1,5 +1,4 @@
 import os
-from functools import reduce
 
 from data_preprocessing.base.base_client_data_loader import BaseClientDataLoader
 from data_preprocessing.base.base_raw_data_loader import SeqTaggingRawDataLoader
@@ -18,7 +17,11 @@ class RawDataLoader(SeqTaggingRawDataLoader):
             self.attributes["train_index_list"] = [i for i in range(train_size)]
             self.attributes["test_index_list"] = [i for i in range(train_size, train_size + test_size)]
             self.attributes["index_list"] = self.attributes["train_index_list"] + self.attributes["test_index_list"]
-            self.attributes["label_vocab"] = {label: i for i, label in enumerate(reduce(lambda a,b: a+b, self.Y.values()))}
+            self.attributes["label_vocab"] = dict()
+            for labels in self.Y.values():
+                for label in labels:
+                    if label not in self.attributes["label_vocab"]:
+                        self.attributes["label_vocab"][label] = len(self.attributes["label_vocab"])
 
     def process_data_file(self, file_path):
         single_x = []

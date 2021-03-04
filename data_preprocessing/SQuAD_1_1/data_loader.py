@@ -17,7 +17,7 @@ class RawDataLoader(SpanExtractionRawDataLoader):
         self.question_ids = dict()
 
     def load_data(self):
-        if len(self.document_X) == 0 or len(self.question_X) == 0 or len(self.Y) == 0:
+        if len(self.context_X) == 0 or len(self.question_X) == 0 or len(self.Y) == 0:
             self.attributes["doc_index"] = dict()
             train_size = self.process_data_file(os.path.join(self.data_path, self.train_file_name))
             test_size = self.process_data_file(os.path.join(self.data_path, self.test_file_name))
@@ -54,7 +54,7 @@ class RawDataLoader(SpanExtractionRawDataLoader):
             f["context_X/" + str(key)] = self.context_X[key]
             f["question_X/" + str(key)] = self.question_X[key]
             f["Y/" + str(key)] = self.Y[key]
-            f["question_ids/" + str[key]] = self.question_ids[key]
+            f["question_ids/" + str(key)] = self.question_ids[key]
         f.close()
 
 class ClientDataLoader(BaseClientDataLoader):

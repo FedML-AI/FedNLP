@@ -2,9 +2,10 @@ from abc import ABC, abstractmethod
 
 
 class BasePreprocessor(ABC):
-    def __init__(self, tokenizer):
-        self.tokenizer = tokenizer
+    @abstractmethod
+    def __init__(self, **kwargs):
+        self.__dict__.update(kwargs)
 
     @abstractmethod
-    def transform(self, X, y=None):
+    def transform(self, *args):
         pass
