@@ -1,46 +1,75 @@
-from base_data_manager import BaseDataManager
+from data_manager.base_data_manager import BaseDataManager
+from torch.utils.data import DataLoader
+import h5py
+import json
+import logging
 
 
 class TextClassificationDataManager(BaseDataManager):
     """Data manager for text classification"""
-    def __init__(self, args, model_args, perprocessor, client_idx=None):
-        super.__init__(args, model_args, perprocessor, client_idx)
-        self.num_labels = -1
-        self.label_vocab = None
-        self.train_dataset, self.test_dataset, self.test_examples = self.load_data(
-            data_file_path=model_args.data_file_path, 
-            partition_file_path=model_args.partition_file_path, 
-            client_idx=client_idx)
+    def __init__(self, args, model_args, process_id, num_workers, preprocessor):
+        super(TextClassificationDataManager, self).__init__(args, model_args, process_id, num_workers)
+        self.attributes = self.load_attributes(args.data_file_path)
+        self.preprocessor = preprocessor
+
+        self.load_next_round_data()
+        self.train_loader, self.test_loader = self.get_data_loader()
+
     
-    def load_data(self, data_file_path, partition_file_path, client_idx=None):
-        pass
+    def load_data(self, client_idx=None):
+        logging.info("start loading data")
+        data_file = h5py.File(self.args.data_file_path, "r", swmr=True)
+        partition_file = h5py.File(self.args.partition_file_path, "r", swmr=True)
+
+        partition_method = self.args.partition_method
+
+        if client_idx is None:
+            train_index_list = []
+            test_index_list = []
+            for client_idx in partition_file[partition_method]["partition_data"].keys():
+                train_index_list.extend(partition_file[partition_method]["partition_data"][client_idx]["train"][()])
+                test_index_list.extend(partition_file[partition_method]["partition_data"][client_idx]["test"][()])
+        else:
+            train_index_list = partition_file[partition_method]["partition_data"][client_idx]["train"][()]
+            test_index_list = partition_file[partition_method]["partition_data"][client_idx]["test"][()]
+        
+        train_X = [data_file["X"][str(idx)][()].decode("utf8") for idx in train_index_list]
+        train_y = [data_file["Y"][str(idx)][()].decode("utf8") for idx in train_index_list]
+        test_X = [data_file["X"][str(idx)][()].decode("utf8") for idx in test_index_list]
+        test_y = [data_file["Y"][str(idx)][()].decode("utf8") for idx in test_index_list]
+
+        data_file.close()
+        partition_file.close()
+
+        train_examples, train_dataset = self.preprocessor.transform(train_X, train_y, train_index_list)
+
+        test_examples, test_dataset = self.preprocessor.transform(test_X, test_y, test_index_list, evaluate=True)
+
+        return train_examples, test_examples, train_dataset, test_dataset
+    
+    @staticmethod
+    def load_attributes(data_path):
+        data_file = h5py.File(data_path, "r", swmr=True)
+        attributes = json.loads(data_file["attributes"][()])
+        data_file.close()
+        return attributes
 
     def get_data_loader(self):
-        pass
+        if self.train_loader is not None:
+            del self.train_loader
 
+        self.train_loader = DataLoader(self.train_dataset,
+                                       batch_size=self.train_batch_size,
+                                       num_workers=0,
+                                       pin_memory=True,
+                                       drop_last=False)
 
-class TextClassificationInputExample(object):
-    """A single training/test example for simple sequence classification."""
-
-    def __init__(self, guid, text_a, text_b=None, label=None, x0=None, y0=None, x1=None, y1=None):
-        """
-        Constructs a InputExample.
-
-        Args:
-            guid: Unique id for the example.
-            text_a: string. The untokenized text of the first sequence. For single
-            sequence tasks, only this sequence must be specified.
-            text_b: (Optional) string. The untokenized text of the second sequence.
-            Only must be specified for sequence pair tasks.
-            label: (Optional) string. The label of the example. This should be
-            specified for train and dev examples, but not for test examples.
-        """
-
-        self.guid = guid
-        self.text_a = text_a
-        self.text_b = text_b
-        self.label = label
-        if x0 is None:
-            self.bboxes = None
-        else:
-            self.bboxes = [[a, b, c, d] for a, b, c, d in zip(x0, y0, x1, y1)]
+        # TEST
+        if self.test_loader is not None:
+            del self.test_loader
+        self.test_loader = DataLoader(self.test_dataset,
+                                      batch_size=self.eval_batch_size,
+                                      num_workers=0,
+                                      pin_memory=True,
+                                      drop_last=False)
+        return self.train_loader, self.test_loader
