@@ -27,10 +27,10 @@ class TrivialPreprocessor(BasePreprocessor):
             transformed_y.append(self.label_vocab[y[i]])
         return transformed_X, transformed_y
 
-class BertPreprocessor(BasePreprocessor):
-    # Used for models such as BERT, RoBERTa, etc.
+class TLMPreprocessor(BasePreprocessor):
+    # Used for Transformer language models (TLMs) such as BERT, RoBERTa, etc.
     def __init__(self, **kwargs):
-        super(BertPreprocessor, self).__init__(**kwargs)
+        super(TLMPreprocessor, self).__init__(**kwargs)
         self.text_cleaner = customized_cleaner_dict.get(self.args.dataset, None)
     
     def transform(self, X, y, index_list=None, evaluate=False):

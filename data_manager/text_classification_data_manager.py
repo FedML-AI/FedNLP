@@ -15,10 +15,11 @@ class TextClassificationDataManager(BaseDataManager):
         self.attributes = self.load_attributes(args.data_file_path)
         self.preprocessor = preprocessor
 
-        self.load_next_round_data()
-        self.train_loader, self.test_loader = self.get_data_loader()
+        # TODO: maybe add this back, currently as the external usage
+        # self.load_next_round_data()
+        # self.train_loader, self.test_loader = self.get_data_loader()
 
-    
+    # TODO: seperate to 2 functions: load_all_data / load_client_data
     def load_data(self, client_idx=None):
         logging.info("start loading data")
         data_file = h5py.File(self.args.data_file_path, "r", swmr=True)

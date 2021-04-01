@@ -20,8 +20,8 @@ from model.transformer.model_args import ClassificationArgs
 from transformers import BertTokenizer, BertConfig
 from model.fed_transformers.classification.transformer_models.bert_model import BertForSequenceClassification
 
-from data_preprocessing.AGNews.preprocessor import BertPreprocessor
-
+from data_preprocessing.text_classification_preprocessor import TLMPreprocessor
+from training.tc_transformer_trainer import TextClassificationTrainer
 
 def add_args(parser):
     """
@@ -29,16 +29,17 @@ def add_args(parser):
     return a parser added with args required by fit
     """
     # # PipeTransformer related
-    # parser.add_argument("--run_id", type=int, default=0)
+    parser.add_argument("--run_id", type=int, default=0)
 
-    # parser.add_argument("--is_debug_mode", default=0, type=int,
-    #                     help="is_debug_mode")
+    parser.add_argument("--is_debug_mode", default=0, type=int,
+                        help="is_debug_mode")
 
     # Infrastructure related
-    parser.add_argument('--device_id', type=int, default=8, metavar='N',
+    parser.add_argument('--device_id', type=int, default=8, metavar='N',    # TODO: why 8?
                         help='device id')
 
     # Data related
+    # TODO: list all dataset names: 
     parser.add_argument('--dataset', type=str, default='agnews', metavar='N',
                         help='dataset used for training')
 
@@ -104,26 +105,6 @@ def create_model(args, num_labels):
     # logging.info(self.model)
     return config, model, tokenizer
 
-def create_preprocessor(args, **kwargs):
-    # create model, tokenizer, and model config (HuggingFace style)
-    PREPROCESSOR_CLASSES = {
-        "agnews": {"bert": BertPreprocessor},
-    }
-    preprocessor = PREPROCESSOR_CLASSES[args.dataset][args.model_type](args=args, **kwargs)
-
-    return preprocessor
-
-
-def post_complete_message(tc_args):
-    pipe_path = "/tmp/fednlp_tc"
-    if not os.path.exists(pipe_path):
-        os.mkfifo(pipe_path)
-    pipe_fd = os.open(pipe_path, os.O_WRONLY)
-
-    with os.fdopen(pipe_fd, 'w') as pipe:
-        pipe.write("training is finished! \n%s" % (str(tc_args)))
-
-
 def set_seed(seed):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
@@ -176,19 +157,46 @@ if __name__ == "__main__":
                               "partition_method": args.partition_method,
                               "dataset": args.dataset,
                               "output_dir": args.output_dir,
-                              "is_debug_mode": args.is_debug_mode,
-                              #"global_rank": args.global_rank
+                              "is_debug_mode": args.is_debug_mode
                               })
 
     num_labels = len(attributes["label_vocab"])
     model_config, model, tokenizer = create_model(tc_args, num_labels)
 
     # preprocessor
-    preprocessor = create_preprocessor(tc_args, label_vocab=attributes["label_vocab"], tokenizer=tokenizer)
+    preprocessor = TLMPreprocessor(args=tc_args, label_vocab=attributes["label_vocab"], tokenizer=tokenizer)
 
     # data manager
     process_id = 0
     num_workers = 1
     tc_data_manager = TextClassificationDataManager(tc_args, args, process_id, num_workers, preprocessor)
+    tc_data_manager.load_next_round_data()  # The centralized version.
     train_dl, test_dl = tc_data_manager.get_data_loader()
-    _, test_examples, _, _ = tc_data_manager.get_dataset()
+    test_examples = tc_data_manager.test_examples
+
+    # Create a ClassificationModel and start train
+    trainer = TextClassificationTrainer(tc_args, device, model, train_dl, test_dl, test_examples)
+    trainer.train_model()
+
+
+''' Example Usage:
+
+export CUDA_VISIBLE_DEVICES=0
+DATA_NAME=agnews
+python -m experiments.centralized.transformer_exps.main_tc \
+    --dataset ${DATA_NAME} \
+    --data_file ~/fednlp_data/data_files/${DATA_NAME}_data.h5 \
+    --partition_file ~/fednlp_data/partition_files/${DATA_NAME}_partition.h5 \
+    --partition_method uniform \
+    --model_type bert \
+    --model_name bert-base-uncased \
+    --do_lower_case True \
+    --train_batch_size 32 \
+    --eval_batch_size 32 \
+    --max_seq_length 256 \
+    --learning_rate 1e-5 \
+    --num_train_epochs 5 \
+    --output_dir /tmp/${DATA_NAME}_fed/ \
+    --n_gpu 1 --fp16
+
+'''
