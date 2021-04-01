@@ -1,4 +1,4 @@
-from data_preprocessing.base.base_client_data_loader import BaseClientDataLoader
+
 from data_preprocessing.base.base_raw_data_loader import SeqTaggingRawDataLoader
 import os
 import h5py
