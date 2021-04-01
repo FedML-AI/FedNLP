@@ -28,11 +28,11 @@ def add_args(parser):
     parser : argparse.ArgumentParser
     return a parser added with args required by fit
     """
-    # PipeTransformer related
-    parser.add_argument("--run_id", type=int, default=0)
+    # # PipeTransformer related
+    # parser.add_argument("--run_id", type=int, default=0)
 
-    parser.add_argument("--is_debug_mode", default=0, type=int,
-                        help="is_debug_mode")
+    # parser.add_argument("--is_debug_mode", default=0, type=int,
+    #                     help="is_debug_mode")
 
     # Infrastructure related
     parser.add_argument('--device_id', type=int, default=8, metavar='N',

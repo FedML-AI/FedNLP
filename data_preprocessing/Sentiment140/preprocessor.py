@@ -17,6 +17,7 @@ class Preprocessor(BasePreprocessor):
         return transformed_X, transformed_y
     
     def clean_sentence(self, sentence):
+        # return sentence  # TODO: if you would like to skip this.
         sentence = re.sub(r'\&\w*;', '', sentence)
         sentence = re.sub('@[^\s]+','',sentence)
         sentence = re.sub(r'\$\w*', '', sentence)

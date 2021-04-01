@@ -8,6 +8,9 @@ import logging
 class TextClassificationDataManager(BaseDataManager):
     """Data manager for text classification"""
     def __init__(self, args, model_args, process_id, num_workers, preprocessor):
+        # TODO: ref to a defination of the "args" and "model_args"
+        #           --- what will they must contain? (e.g., data_file_path)
+
         super(TextClassificationDataManager, self).__init__(args, model_args, process_id, num_workers)
         self.attributes = self.load_attributes(args.data_file_path)
         self.preprocessor = preprocessor
@@ -24,12 +27,14 @@ class TextClassificationDataManager(BaseDataManager):
         partition_method = self.args.partition_method
 
         if client_idx is None:
+            # Load all data from the file.
             train_index_list = []
             test_index_list = []
             for client_idx in partition_file[partition_method]["partition_data"].keys():
                 train_index_list.extend(partition_file[partition_method]["partition_data"][client_idx]["train"][()])
                 test_index_list.extend(partition_file[partition_method]["partition_data"][client_idx]["test"][()])
         else:
+            # Load the data with the specfic client_index.
             train_index_list = partition_file[partition_method]["partition_data"][client_idx]["train"][()]
             test_index_list = partition_file[partition_method]["partition_data"][client_idx]["test"][()]
         
@@ -73,3 +78,6 @@ class TextClassificationDataManager(BaseDataManager):
                                       pin_memory=True,
                                       drop_last=False)
         return self.train_loader, self.test_loader
+
+
+

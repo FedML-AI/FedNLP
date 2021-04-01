@@ -1,8 +1,8 @@
 from data_manager.base_data_manager import BaseDataManager
 
 
-class TextClassificationDataManager(BaseDataManager):
-    """Data manager for text classification"""
+class SequenceTaggingDataManager(BaseDataManager):
+    """Data manager for sequence tagging tasks."""
     def __init__(self, args, model_args, perprocessor, client_idx=None):
         super.__init__(args, model_args, perprocessor, client_idx)
         self.num_labels = -1

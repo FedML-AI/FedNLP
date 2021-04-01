@@ -11,7 +11,9 @@ class BaseDataManager(ABC):
         self.process_id = process_id
         self.num_workers = num_workers
 
-        self.train_dataset = None
+
+        # TODO: add type comments for the below vars.
+        self.train_dataset = None   
         self.test_dataset = None
         self.train_examples = None
         self.test_examples = None
@@ -39,6 +41,7 @@ class BaseDataManager(ABC):
         pass
 
     def load_next_round_data(self):
+        # TODO: add comments for the logic.
         if self.client_index is None:
             if self.train_dataset is None:
                 self.train_examples, self.test_examples, self.train_dataset, self.test_dataset = self.load_data(self.client_index)
@@ -47,6 +50,7 @@ class BaseDataManager(ABC):
         self.client_index_pointer = self.client_index_pointer + 1 if self.client_index_pointer + 1 < len(self.client_index) else 0
 
     def sample_client_index(self, process_id, num_workers):
+        # TODO: add comments for the logic.
         if process_id == 0:
             return None
         else:
