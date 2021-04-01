@@ -156,5 +156,22 @@ def cleaner_sentiment140(text):
     text = text.lstrip(' ') 
     return text
 
+def cleaner_news20(text):
+    text = re.sub(r"[^A-Za-z0-9(),!?\'\`]", " ", text)
+    text = re.sub(r"\'s", " \'s", text)
+    text = re.sub(r"\'ve", " \'ve", text)
+    text = re.sub(r"n\'t", " n\'t", text)
+    text = re.sub(r"\'re", " \'re", text)
+    text = re.sub(r"\'d", " \'d", text)
+    text = re.sub(r"\'ll", " \'ll", text)
+    text = re.sub(r",", " , ", text)
+    text = re.sub(r"!", " ! ", text)
+    text = re.sub(r"\(", " \( ", text)
+    text = re.sub(r"\)", " \) ", text)
+    text = re.sub(r"\?", " \? ", text)
+    text = re.sub(r"\s{2,}", " ", text)
+    return text.strip().lower()
+
 # Mapping the dataset to their specific cleaner
 customized_cleaner_dict["sentiment140"] = cleaner_sentiment140
+customized_cleaner_dict["news_20"] = cleaner_news20
