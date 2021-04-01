@@ -71,19 +71,12 @@ for i in range(client_numbers):
         heat_map_data[i][j] = distance.jensenshannon(client_data_distribution[i],client_data_distribution[j])
 #reorder index based on the sum of distance in each client
 client_data_distribution_reorder_index = [np.where(np.all(heat_map_data == i,axis = 1))[0][0] for i in sorted(heat_map_data, key=lambda client: sum(client), reverse=True)]
-print([sum(i) for i in sorted(heat_map_data, key=lambda client: sum(client), reverse=True)])
 client_data_distribution_reorder = []
 client_sum_order = sorted([sum(i) for i in heat_map_data], reverse=True)
 #reorder the matrix based on the reorder index
 for index, value in enumerate(heat_map_data):
     heat_map_data[index] = value[client_data_distribution_reorder_index]
 heat_map_data = heat_map_data[client_data_distribution_reorder_index]
-
-print('sanity check')
-print(sum(heat_map_data[0]))
-print(sum(heat_map_data[10]))
-print(sum(heat_map_data[20]))
-print(sum(heat_map_data[99]))
 
 
 data_dir = args.figure_path
