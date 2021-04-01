@@ -43,4 +43,13 @@ python -m data_preprocessing.advanced_partition.util.visualization_heatmap \
 --task_name wikiner \
 --figure_path 'data_preprocessing/advanced_partition/heatmap_figure' \
 --task_type name_entity_recognition
+
+python -m data_preprocessing.advanced_partition.util.visualization_heatmap \
+--partition_name lda \
+--client_num 100 \
+--partition_file 'data/partition_files/agnews_partition.h5'\
+--data_file 'data/data_files/agnews_data.h5'\
+--task_name agnews\
+--figure_path 'data_preprocessing/advanced_partition/heatmap_figure' \
+--task_type text_classification 
 ```

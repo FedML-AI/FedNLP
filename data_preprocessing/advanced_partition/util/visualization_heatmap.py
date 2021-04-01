@@ -41,42 +41,50 @@ else:
             client_assignment = f[i+"/client_assignment/"][()]
             break
     f.close()
-print(set(client_assignment))
 partition_data_path = "/"+args.partition_name+"/partition_data/"
 
 client_numbers = args.client_number
 client_index = list(range(client_numbers))
 print(client_index)
 client_data_distribution = []
+cluster_num = len(set(client_assignment))
+
 
 f = h5py.File(args.partition_file,"r")
+
 for i in client_index:
     temp = []
     single_client_data = []
-    temp.extend(f[partition_data_path+str(i)+'/train/'][()])
-    temp.extend(f[partition_data_path+str(i)+'/test/'][()])
+    probability_array = np.zeros(cluster_num)
+    temp.extend(f[partition_data_path+str(i)+'/train'][()])
+    temp.extend(f[partition_data_path+str(i)+'/test'][()])
     single_client_data = np.array([client_assignment[i] for i in temp])
-    client_data_distribution.append(single_client_data)
+    unique, counts = np.unique(single_client_data, return_counts=True)
+    for key, value in dict(zip(unique, counts)).items():
+        probability_array[key] = value
+    client_data_distribution.append(probability_array)
 f.close()
 heat_map_data = np.zeros((client_numbers,client_numbers))
 
 for i in range(client_numbers):
     for j in range(client_numbers):
-        offset = abs(len(client_data_distribution[i]) - len(client_data_distribution[j]))
-        if len(client_data_distribution[i]) < len(client_data_distribution[j]):
-            client_data_distribution[i] = np.pad(client_data_distribution[i],(0,offset))
-        if len(client_data_distribution[i]) > len(client_data_distribution[j]):
-            client_data_distribution[j] = np.pad(client_data_distribution[j],(0,offset))
         heat_map_data[i][j] = distance.jensenshannon(client_data_distribution[i],client_data_distribution[j])
-
 #reorder index based on the sum of distance in each client
-client_data_distribution_reorder_index = [np.where(heat_map_data == i)[0][0] for i in sorted(heat_map_data, key=lambda client: sum(client), reverse=True)]
+client_data_distribution_reorder_index = [np.where(np.all(heat_map_data == i,axis = 1))[0][0] for i in sorted(heat_map_data, key=lambda client: sum(client), reverse=True)]
+print([sum(i) for i in sorted(heat_map_data, key=lambda client: sum(client), reverse=True)])
 client_data_distribution_reorder = []
 client_sum_order = sorted([sum(i) for i in heat_map_data], reverse=True)
 #reorder the matrix based on the reorder index
 for index, value in enumerate(heat_map_data):
     heat_map_data[index] = value[client_data_distribution_reorder_index]
 heat_map_data = heat_map_data[client_data_distribution_reorder_index]
+
+print('sanity check')
+print(sum(heat_map_data[0]))
+print(sum(heat_map_data[10]))
+print(sum(heat_map_data[20]))
+print(sum(heat_map_data[99]))
+
 
 data_dir = args.figure_path
 fig_name = args.task_name + "_%s_clients_heatmap.png" % args.partition_name
@@ -88,7 +96,10 @@ plt.title(args.task_name + "_%s_clients_heatmap" % args.partition_name)
 plt.savefig(fig_dir)
 
 plt.figure(figsize=(20,15))
-sns.distplot(client_sum_order)
+fig = sns.distplot(client_sum_order)
+plt.xlim(0,None)
+plt.xlabel('distance')
+plt.xticks(fig.get_xticks(), fig.get_xticks() / 100)
 fig_name = args.task_name + "_%s_clients_sum_distplot.png" % args.partition_name
 fig_dir = os.path.join(data_dir, fig_name)
 plt.title(args.task_name + "_%s_clients_sum_distplot" % args.partition_name)
