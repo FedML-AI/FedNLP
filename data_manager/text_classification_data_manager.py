@@ -78,3 +78,6 @@ class TextClassificationDataManager(BaseDataManager):
                                       pin_memory=True,
                                       drop_last=False)
         return self.train_loader, self.test_loader
+
+
+
