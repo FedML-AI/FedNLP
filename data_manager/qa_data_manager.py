@@ -1,8 +1,8 @@
 from data_manager.base_data_manager import BaseDataManager
 
 
-class SpanExtractionDataManager(BaseDataManager):
-    """Data manager for span extraction"""
+class QuestionAnsweringDataManager(BaseDataManager):
+    """Data manager for reading comprehension (span-based QA)."""
     def __init__(self, args, model_args, perprocessor, client_idx=None):
         super.__init__(args, model_args, perprocessor, client_idx)
 
