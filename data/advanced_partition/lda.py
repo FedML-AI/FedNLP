@@ -71,12 +71,12 @@ def main():
     partition_pkl = [[] for _ in range(client_num)]
     min_size = 0
 
-
+    
 
     print("start dirichlet distribution")
     while min_size < args.min_size:
         partition_pkl = [[] for _ in range(client_num)]
-        if args.task_type == 'classification':
+        if args.task_type == 'text_classification':
             data = h5py.File(args.data_file,"r")
             N = len(data['Y'])
             labels = list(set([data['Y'][i][()] for i in data['Y'].keys()]))
@@ -88,6 +88,9 @@ def main():
                                                                                                     partition_pkl, idx_k)
         else:
             # aasume all data have the same label so no need to update seperately 
+            data = h5py.File(args.data_file,"r")
+            N = len(data['Y'])
+            data.close()
             partition = h5py.File(args.partition_file,"r")
             labels = list(set(partition["kmeans_%d"%args.kmeans_num+'/client_assignment'][()]))
             label_list = np.array(partition["kmeans_%d"%args.kmeans_num+'/client_assignment'][()])
@@ -99,6 +102,9 @@ def main():
     # add 
     print("store data in h5 data")
     partition = h5py.File(args.partition_file,"a")
+    if('/lda' in partition):
+        del partition['/lda']
+
     partition['lda/n_clients'] = client_num
     partition['lda/alpha'] = alpha
     for i, data in enumerate(partition_pkl):
