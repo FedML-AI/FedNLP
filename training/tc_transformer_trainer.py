@@ -59,13 +59,14 @@ class TextClassificationTrainer:
             for batch_idx, batch in enumerate(self.train_dl):
 
                 batch = tuple(t for t in batch)
-                # inputs = {"input_ids": batch[0], "attention_mask": batch[1], "labels": batch[3]}
+                # dataset = TensorDataset(all_guid, all_input_ids, all_input_mask, all_segment_ids, all_label_ids)
                 x = batch[1].to(self.device)
                 labels = batch[4].to(self.device)
 
+                # (loss), logits, (hidden_states), (attentions)
                 logits = self.model(x)
                 loss_fct = CrossEntropyLoss()
-                loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
+                loss = loss_fct(logits[0].view(-1, self.num_labels), labels.view(-1))
 
                 # model outputs are always tuple in pytorch-transformers (see doc)
                 # loss = outputs[0]
@@ -114,8 +115,8 @@ class TextClassificationTrainer:
         for i, batch in enumerate(self.test_dl):
             with torch.no_grad():
                 batch = tuple(t for t in batch)
-
                 sample_index_list = batch[0].to(self.device).cpu().numpy()
+
                 if i == len(self.test_dl) - 1:
                     logging.info(batch)
                 x = batch[1].to(self.device)
@@ -124,7 +125,7 @@ class TextClassificationTrainer:
                 logits = self.model(x)
 
                 loss_fct = CrossEntropyLoss()
-                loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
+                loss = loss_fct(logits[0].view(-1, self.num_labels), labels.view(-1))
                 eval_loss += loss.item()
                 # logging.info("test. batch index = %d, loss = %s" % (i, str(eval_loss)))
 
