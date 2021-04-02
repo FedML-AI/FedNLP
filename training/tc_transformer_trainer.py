@@ -157,10 +157,11 @@ class TextClassificationTrainer:
         if result["acc"] > self.best_accuracy:
             self.best_accuracy = result["acc"]
         logging.info("best_accuracy = %f" % self.best_accuracy)
-        if self.args.global_rank == 0:
-            wandb.log({"Evaluation Accuracy (best)": self.best_accuracy, "step": global_step})
-            wandb.log({"Evaluation Accuracy": result["acc"], "step": global_step})
-            wandb.log({"Evaluation Loss": result["eval_loss"], "step": global_step})
+
+        # TODO: only do when wandb is enabled
+        # wandb.log({"Evaluation Accuracy (best)": self.best_accuracy, "step": global_step})
+        # wandb.log({"Evaluation Accuracy": result["acc"], "step": global_step})
+        # wandb.log({"Evaluation Loss": result["eval_loss"], "step": global_step})
 
         self.results.update(result)
         logging.info(self.results)
