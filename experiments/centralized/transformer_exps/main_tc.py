@@ -6,22 +6,26 @@ import sys
 
 import numpy as np
 import torch
-
 # this is a temporal import, we will refactor FedML as a package installation
 import wandb
+
 wandb.init(mode="disabled")
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "")))
 sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "../../")))
 
-from data_manager.text_classification_data_manager import TextClassificationDataManager
-from model.transformer.model_args import ClassificationArgs
+sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "../../../")))
 
-from transformers import BertTokenizer, BertConfig
-from model.fed_transformers.classification.transformer_models.bert_model import BertForSequenceClassification
 
 from data_preprocessing.text_classification_preprocessor import TLMPreprocessor
+from data_manager.text_classification_data_manager import TextClassificationDataManager
+
+from model.transformer.model_args import ClassificationArgs
+from model.transformer.bert_model import BertForSequenceClassification
+from transformers import BertTokenizer, BertConfig
+
 from training.tc_transformer_trainer import TextClassificationTrainer
+
 
 def add_args(parser):
     """
@@ -35,7 +39,7 @@ def add_args(parser):
                         help="is_debug_mode")
 
     # Infrastructure related
-    parser.add_argument('--device_id', type=int, default=8, metavar='N',    # TODO: why 8?
+    parser.add_argument('--device_id', type=int, default=8, metavar='N',  # TODO: why 8?
                         help='device id')
 
     # Data related
@@ -46,9 +50,10 @@ def add_args(parser):
     parser.add_argument('--data_file_path', type=str, default='/home/bill/fednlp_data/data_files/agnews_data.h5',
                         help='data h5 file path')
 
-    parser.add_argument('--partition_file_path', type=str, default='/home/bill/fednlp_data/partition_files/agnews_partition.h5',
+    parser.add_argument('--partition_file_path', type=str,
+                        default='/home/bill/fednlp_data/partition_files/agnews_partition.h5',
                         help='partition h5 file path')
-    
+
     parser.add_argument('--partition_method', type=str, default='uniform',
                         help='partition method')
 
@@ -93,6 +98,7 @@ def add_args(parser):
 
     return args
 
+
 def create_model(args, num_labels):
     # create model, tokenizer, and model config (HuggingFace style)
     MODEL_CLASSES = {
@@ -104,6 +110,7 @@ def create_model(args, num_labels):
     tokenizer = tokenizer_class.from_pretrained(model_name, do_lower_case=args.do_lower_case)
     # logging.info(self.model)
     return config, model, tokenizer
+
 
 def set_seed(seed):
     torch.backends.cudnn.deterministic = True
@@ -177,7 +184,6 @@ if __name__ == "__main__":
     # Create a ClassificationModel and start train
     trainer = TextClassificationTrainer(tc_args, device, model, train_dl, test_dl, test_examples)
     trainer.train_model()
-
 
 ''' Example Usage:
 

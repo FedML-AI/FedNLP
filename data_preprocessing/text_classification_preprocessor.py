@@ -1,38 +1,45 @@
-from data_preprocessing.base.base_preprocessor import BasePreprocessor
-from data_preprocessing.base.base_example import TextClassificationInputExample
-from model.fed_transformers.classification.classification_utils import *
-from torch.utils.data import DataLoader, TensorDataset
-import torch
 import logging
+import os
+import re
+import string
+
 import pandas as pd
-import re, string
+import torch
+from torch.utils.data import TensorDataset
+
+from data_preprocessing.base.base_example import TextClassificationInputExample
+from data_preprocessing.base.base_preprocessor import BasePreprocessor
+from data_preprocessing.utils.classification_utils import convert_examples_to_features
 
 customized_cleaner_dict = {}
+
 
 class TrivialPreprocessor(BasePreprocessor):
     # Used for models such as LSTM, CNN, etc.
     def __init__(self, **kwargs):
         super(TrivialPreprocessor, self).__init__(kwargs)
         self.text_cleaner = customized_cleaner_dict.get(self.args.dataset, None)
-    
+
     def transform(self, X, y):
         transformed_X = list()
         transformed_y = list()
         for i, single_x in enumerate(X):
             if self.text_cleaner:
-                single_x = self.text_cleaner(single_x)    
+                single_x = self.text_cleaner(single_x)
             x_tokens = [token.text.strip().lower() for token in self.tokenizer(single_x.strip()) if token.text.strip()]
-            x_token_ids = [self.word_vocab[token] if token in self.word_vocab else self.word_vocab["<UNK>"] for token in x_tokens]
+            x_token_ids = [self.word_vocab[token] if token in self.word_vocab else self.word_vocab["<UNK>"] for token in
+                           x_tokens]
             transformed_X.append(x_token_ids)
             transformed_y.append(self.label_vocab[y[i]])
         return transformed_X, transformed_y
+
 
 class TLMPreprocessor(BasePreprocessor):
     # Used for Transformer language models (TLMs) such as BERT, RoBERTa, etc.
     def __init__(self, **kwargs):
         super(TLMPreprocessor, self).__init__(**kwargs)
         self.text_cleaner = customized_cleaner_dict.get(self.args.dataset, None)
-    
+
     def transform(self, X, y, index_list=None, evaluate=False):
         if index_list is None:
             index_list = [i for i in range(len(X))]
@@ -48,13 +55,12 @@ class TLMPreprocessor(BasePreprocessor):
         dataset = TensorDataset(all_guid, all_input_ids, all_input_mask, all_segment_ids, all_label_ids)
 
         return examples, dataset
-        
-    
+
     def transform_examples(self, X, y, index_list):
         data = [(X[i], self.label_vocab[y[i]], idx) for i, idx in enumerate(index_list)]
 
         df = pd.DataFrame(data)
-       
+
         examples = []
         for i, (text, label, guid) in enumerate(zip(df.iloc[:, 0], df.iloc[:, 1], df.iloc[:, 2])):
             if self.text_cleaner:
@@ -62,7 +68,7 @@ class TLMPreprocessor(BasePreprocessor):
             examples.append(TextClassificationInputExample(guid, text, None, label))
 
         return examples
-        
+
     def transform_features(self, examples, evaluate=False, no_cache=False, silent=False):
         """
         Converts a list of InputExample objects to a TensorDataset containing InputFeatures. Caches the InputFeatures.
@@ -140,10 +146,10 @@ class TLMPreprocessor(BasePreprocessor):
         return features
 
 
-def cleaner_sentiment140(text): 
+def cleaner_sentiment140(text):
     # return text  # TODO: if you would like to skip this.
     text = re.sub(r'\&\w*;', '', text)
-    text = re.sub('@[^\s]+','', text)
+    text = re.sub('@[^\s]+', '', text)
     text = re.sub(r'\$\w*', '', text)
     text = text.lower()
     text = re.sub(r'https?:\/\/.*\/\w*', '', text)
@@ -153,8 +159,9 @@ def cleaner_sentiment140(text):
     text = re.sub(r'\s\s+', ' ', text)
     text = [char for char in list(text) if char not in string.punctuation]
     text = ''.join(text)
-    text = text.lstrip(' ') 
+    text = text.lstrip(' ')
     return text
+
 
 def cleaner_news20(text):
     text = re.sub(r"[^A-Za-z0-9(),!?\'\`]", " ", text)
@@ -171,6 +178,7 @@ def cleaner_news20(text):
     text = re.sub(r"\?", " \? ", text)
     text = re.sub(r"\s{2,}", " ", text)
     return text.strip().lower()
+
 
 # Mapping the dataset to their specific cleaner
 customized_cleaner_dict["sentiment140"] = cleaner_sentiment140
