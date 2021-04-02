@@ -43,10 +43,10 @@ def add_args(parser):
     parser.add_argument('--dataset', type=str, default='agnews', metavar='N',
                         help='dataset used for training')
 
-    parser.add_argument('--data_file_path', type=str, default='../../fednlp_data/data_files/agnews_data.h5',
+    parser.add_argument('--data_file_path', type=str, default='/home/bill/fednlp_data/data_files/agnews_data.h5',
                         help='data h5 file path')
 
-    parser.add_argument('--partition_file_path', type=str, default='../../fednlp_data/partition_files/agnews_partition.h5',
+    parser.add_argument('--partition_file_path', type=str, default='/home/bill/fednlp_data/partition_files/agnews_partition.h5',
                         help='partition h5 file path')
     
     parser.add_argument('--partition_method', type=str, default='uniform',
@@ -183,7 +183,7 @@ if __name__ == "__main__":
 
 export CUDA_VISIBLE_DEVICES=0
 DATA_NAME=agnews
-python -m experiments.centralized.transformer_exps.main_tc \
+CUDA_VISIBLE_DEVICES=0 python -m experiments.centralized.transformer_exps.main_tc \
     --dataset ${DATA_NAME} \
     --data_file ~/fednlp_data/data_files/${DATA_NAME}_data.h5 \
     --partition_file ~/fednlp_data/partition_files/${DATA_NAME}_partition.h5 \
@@ -197,6 +197,5 @@ python -m experiments.centralized.transformer_exps.main_tc \
     --learning_rate 1e-5 \
     --num_train_epochs 5 \
     --output_dir /tmp/${DATA_NAME}_fed/ \
-    --n_gpu 1 --fp16
-
+    --n_gpu 1
 '''

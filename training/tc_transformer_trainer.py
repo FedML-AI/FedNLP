@@ -36,6 +36,7 @@ class TextClassificationTrainer:
 
         # model
         self.model = model
+        self.model.to(self.device)
 
         # training results
         self.results = {}
