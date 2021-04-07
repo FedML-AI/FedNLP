@@ -11,22 +11,16 @@ from data_preprocessing.base.base_example import TextClassificationInputExample
 from data_preprocessing.base.base_preprocessor import BasePreprocessor
 from data_preprocessing.utils.text_classification_utils import convert_examples_to_features
 
-customized_cleaner_dict = {}
-
 
 class TrivialPreprocessor(BasePreprocessor):
     # Used for models such as LSTM, CNN, etc.
     def __init__(self, **kwargs):
         super(TrivialPreprocessor, self).__init__(kwargs)
-        self.text_cleaner = customized_cleaner_dict.get(self.args.dataset, None)
 
     def transform(self, X, y):
         transformed_X = list()
         transformed_y = list()
         for i, single_x in enumerate(X):
-            if self.text_cleaner:
-                single_x = self.text_cleaner(single_x)
-            x_tokens = [token.text.strip().lower() for token in self.tokenizer(single_x.strip()) if token.text.strip()]
             x_token_ids = [self.word_vocab[token] if token in self.word_vocab else self.word_vocab["<UNK>"] for token in
                            x_tokens]
             transformed_X.append(x_token_ids)
@@ -38,7 +32,6 @@ class TLMPreprocessor(BasePreprocessor):
     # Used for Transformer language models (TLMs) such as BERT, RoBERTa, etc.
     def __init__(self, **kwargs):
         super(TLMPreprocessor, self).__init__(**kwargs)
-        self.text_cleaner = customized_cleaner_dict.get(self.args.dataset, None)
 
     def transform(self, X, y, index_list=None, evaluate=False):
         if index_list is None:
@@ -145,41 +138,3 @@ class TLMPreprocessor(BasePreprocessor):
                 torch.save(features, cached_features_file)
         return features
 
-
-def cleaner_sentiment140(text):
-    # return text  # TODO: if you would like to skip this.
-    text = re.sub(r'\&\w*;', '', text)
-    text = re.sub('@[^\s]+', '', text)
-    text = re.sub(r'\$\w*', '', text)
-    text = text.lower()
-    text = re.sub(r'https?:\/\/.*\/\w*', '', text)
-    text = re.sub(r'#\w*', '', text)
-    text = re.sub(r'[' + string.punctuation.replace('@', '') + ']+', ' ', text)
-    text = re.sub(r'\b\w{1,2}\b', '', text)
-    text = re.sub(r'\s\s+', ' ', text)
-    text = [char for char in list(text) if char not in string.punctuation]
-    text = ''.join(text)
-    text = text.lstrip(' ')
-    return text
-
-
-def cleaner_news20(text):
-    text = re.sub(r"[^A-Za-z0-9(),!?\'\`]", " ", text)
-    text = re.sub(r"\'s", " \'s", text)
-    text = re.sub(r"\'ve", " \'ve", text)
-    text = re.sub(r"n\'t", " n\'t", text)
-    text = re.sub(r"\'re", " \'re", text)
-    text = re.sub(r"\'d", " \'d", text)
-    text = re.sub(r"\'ll", " \'ll", text)
-    text = re.sub(r",", " , ", text)
-    text = re.sub(r"!", " ! ", text)
-    text = re.sub(r"\(", " \( ", text)
-    text = re.sub(r"\)", " \) ", text)
-    text = re.sub(r"\?", " \? ", text)
-    text = re.sub(r"\s{2,}", " ", text)
-    return text.strip().lower()
-
-
-# Mapping the dataset to their specific cleaner
-customized_cleaner_dict["sentiment140"] = cleaner_sentiment140
-customized_cleaner_dict["news_20"] = cleaner_news20

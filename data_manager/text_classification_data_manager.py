@@ -54,13 +54,6 @@ class TextClassificationDataManager(BaseDataManager):
         test_examples, test_dataset = self.preprocessor.transform(test_X, test_y, test_index_list, evaluate=True)
 
         return train_examples, test_examples, train_dataset, test_dataset
-    
-    @staticmethod
-    def load_attributes(data_path):
-        data_file = h5py.File(data_path, "r", swmr=True)
-        attributes = json.loads(data_file["attributes"][()])
-        data_file.close()
-        return attributes
 
     def get_data_loader(self):
         if self.train_loader is not None:

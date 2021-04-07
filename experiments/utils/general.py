@@ -16,8 +16,10 @@ from transformers import (
     AlbertTokenizer,
     BertConfig,
     BertTokenizer,
+    BertForTokenClassification,
     DistilBertConfig,
     DistilBertTokenizer,
+    DistilBertForTokenClassification,
     RobertaConfig,
     RobertaTokenizer,
     get_linear_schedule_with_warmup,
@@ -34,7 +36,8 @@ def create_model(args, formulation="classification"):
             # "albert": (AlbertConfig, AlbertForSequenceClassification, AlbertTokenizer),
             },
         "sequence_tagging":{
-
+            "bert": (BertConfig, BertForTokenClassification, BertTokenizer),
+            "distilbert": (DistilBertConfig, DistilBertForTokenClassification, DistilBertTokenizer),
         }, # TODO: add more.
         } 
     config_class, model_class, tokenizer_class = MODEL_CLASSES[formulation][args.model_type]

@@ -1,4 +1,6 @@
 from abc import ABC, abstractmethod
+import h5py
+import json
 
 
 class BaseDataManager(ABC):
@@ -35,9 +37,12 @@ class BaseDataManager(ABC):
     def __load_data(self, client_idx=None):
         pass
 
-    @abstractmethod
-    def load_attributes(self):
-        pass
+    @staticmethod
+    def load_attributes(data_path):
+        data_file = h5py.File(data_path, "r", swmr=True)
+        attributes = json.loads(data_file["attributes"][()])
+        data_file.close()
+        return attributes
 
     def get_dataset(self):
         return self.train_examples, self.test_examples, self.train_dataset, self.test_dataset
