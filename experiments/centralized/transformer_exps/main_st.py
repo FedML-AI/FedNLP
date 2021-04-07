@@ -21,7 +21,7 @@ from data_manager.seq_tagging_data_manager import SequenceTaggingDataManager
 
 from model.transformer.model_args import ClassificationArgs
 
-from training.tc_transformer_trainer import TextClassificationTrainer
+from training.st_transformer_trainer import SeqTaggingTrainer
 
 from experiments.utils.general import set_seed, create_model, add_centralized_args
  
@@ -88,6 +88,10 @@ if __name__ == "__main__":
     train_dl, test_dl = dm.get_data_loader()
     test_examples = dm.test_examples
 
+    # Create a SeqTaggingModel and start train
+    trainer = SeqTaggingTrainer(model_args, device, model, train_dl, test_dl, test_examples, tokenizer)
+    trainer.train_model()
+
 
 ''' Example Usage:
 
@@ -106,7 +110,7 @@ CUDA_VISIBLE_DEVICES=0 python -m experiments.centralized.transformer_exps.main_s
     --max_seq_length 256 \
     --learning_rate 5e-5 \
     --num_train_epochs 5 \
-    --evaluate_during_training_steps 500 \
+    --evaluate_during_training_steps 10 \
     --output_dir /tmp/${DATA_NAME}_fed/ \
     --n_gpu 1
 '''

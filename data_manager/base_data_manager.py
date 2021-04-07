@@ -28,13 +28,13 @@ class BaseDataManager(ABC):
         self.client_index_list = self.sample_client_index(process_id, num_workers)
 
     def load_all_data(self):
-        return self.__load_data()
+        return self.load_data()
 
     def load_client_data(self, client_idx):
-        return self.__load_data(client_idx)
+        return self.load_data(client_idx)
 
     @abstractmethod
-    def __load_data(self, client_idx=None):
+    def load_data(self, client_idx=None):
         pass
 
     @staticmethod
@@ -58,10 +58,10 @@ class BaseDataManager(ABC):
         # if client_index_list is None and train_dataset is None, it means we need to load all data from scratch
         if self.client_index_list is None:
             if self.train_dataset is None:
-                self.train_examples, self.test_examples, self.train_dataset, self.test_dataset = self.__load_data(None)
+                self.train_examples, self.test_examples, self.train_dataset, self.test_dataset = self.load_data(None)
             return
         # client_index_pointer will point the client index, we use that index to load the client data
-        self.train_examples, self.test_examples, self.train_dataset, self.test_dataset = self.__load_data(self.client_index_list[self.client_index_pointer])
+        self.train_examples, self.test_examples, self.train_dataset, self.test_dataset = self.load_data(self.client_index_list[self.client_index_pointer])
         # move to the next client index
         self.client_index_pointer = self.client_index_pointer + 1 if self.client_index_pointer + 1 < len(self.client_index_list) else 0
 

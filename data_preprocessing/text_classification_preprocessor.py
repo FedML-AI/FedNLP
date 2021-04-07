@@ -41,6 +41,7 @@ class TLMPreprocessor(BasePreprocessor):
         self.text_cleaner = customized_cleaner_dict.get(self.args.dataset, None)
 
     def transform(self, X, y, index_list=None, evaluate=False):
+        # index_list is creat for setting guid
         if index_list is None:
             index_list = [i for i in range(len(X))]
         examples = self.transform_examples(X, y, index_list)
@@ -57,6 +58,7 @@ class TLMPreprocessor(BasePreprocessor):
         return examples, dataset
 
     def transform_examples(self, X, y, index_list):
+        # index_list is creat for setting guid
         data = [(X[i], self.label_vocab[y[i]], idx) for i, idx in enumerate(index_list)]
 
         df = pd.DataFrame(data)

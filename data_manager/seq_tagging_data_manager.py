@@ -2,6 +2,7 @@ from data_manager.base_data_manager import BaseDataManager
 import h5py
 from torch.utils.data import DataLoader
 import logging
+import numpy as np
 
 class SequenceTaggingDataManager(BaseDataManager):
     """Data manager for sequence tagging tasks."""
@@ -18,7 +19,7 @@ class SequenceTaggingDataManager(BaseDataManager):
         # self.train_loader, self.test_loader = self.get_data_loader()
 
 
-    def __load_data(self, client_idx=None):
+    def load_data(self, client_idx=None):
         logging.info("start loading data")
         data_file = h5py.File(self.args.data_file_path, "r", swmr=True)
         partition_file = h5py.File(self.args.partition_file_path, "r", swmr=True)
@@ -39,10 +40,10 @@ class SequenceTaggingDataManager(BaseDataManager):
             train_index_list = partition_file[partition_method]["partition_data"][client_idx]["train"][()]
             test_index_list = partition_file[partition_method]["partition_data"][client_idx]["test"][()]
         
-        train_X = [data_file["X"][str(idx)][()] for idx in train_index_list]
-        train_y = [data_file["Y"][str(idx)][()] for idx in train_index_list]
-        test_X = [data_file["X"][str(idx)][()] for idx in test_index_list]
-        test_y = [data_file["Y"][str(idx)][()] for idx in test_index_list]
+        train_X = [[s.decode("utf-8") for s in data_file["X"][str(idx)][()]] for idx in train_index_list]
+        train_y = [[s.decode("utf-8") for s in data_file["Y"][str(idx)][()]] for idx in train_index_list]
+        test_X = [[s.decode("utf-8") for s in data_file["X"][str(idx)][()]]for idx in test_index_list]
+        test_y = [[s.decode("utf-8") for s in data_file["Y"][str(idx)][()]] for idx in test_index_list]
 
         data_file.close()
         partition_file.close()

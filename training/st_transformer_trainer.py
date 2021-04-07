@@ -12,9 +12,11 @@ import sklearn
 import torch
 import wandb
 from sklearn.metrics import (
+    accuracy_score,
     confusion_matrix,
     matthews_corrcoef,
 )
+from sklearn.preprocessing import MultiLabelBinarizer
 from torch.nn import CrossEntropyLoss
 
 from transformers import (
@@ -23,8 +25,8 @@ from transformers import (
 )
 
 
-class TextClassificationTrainer:
-    def __init__(self, args, device, model, train_dl=None, test_dl=None, test_examples=None):
+class SeqTaggingTrainer:
+    def __init__(self, args, device, model, train_dl=None, test_dl=None, test_examples=None, tokenizer=None):
         self.args = args
         self.device = device
 
@@ -39,6 +41,9 @@ class TextClassificationTrainer:
         # training results
         self.results = {}
         self.best_accuracy = 0.0
+
+        self.tokenizer = tokenizer
+        self.pad_token_label_id = self.args.pad_token_label_id
 
     def set_data(self, train_dl, test_dl=None, test_examples=None):
         # Used for fedtrainer
@@ -112,14 +117,17 @@ class TextClassificationTrainer:
         n_batches = len(self.test_dl)
         # TODO: check the value of len(self.test_examples)
         test_sample_len = len(self.test_examples)
-        preds = np.empty((test_sample_len, self.num_labels))
+        pad_token_label_id = self.pad_token_label_id
+        
 
-        out_label_ids = np.empty(test_sample_len)
+        preds = None
+        out_label_ids = None
+
         self.model.eval()
         logging.info("len(test_dl) = %d, n_batches = %d" % (len(self.test_dl), n_batches))
         for i, batch in enumerate(self.test_dl):
+            batch = tuple(t for t in batch)
             with torch.no_grad():
-                batch = tuple(t for t in batch)
                 sample_index_list = batch[0].to(self.device).cpu().numpy()
 
                 if i == len(self.test_dl) - 1:
@@ -140,16 +148,47 @@ class TextClassificationTrainer:
 
             end_index = start_index + self.args.eval_batch_size if i != (n_batches - 1) else test_sample_len
             logging.info("batch index = %d, start_index = %d, end_index = %d" % (i, start_index, end_index))
-            preds[start_index:end_index] = logits.detach().cpu().numpy()
-            out_label_ids[start_index:end_index] = labels.detach().cpu().numpy()
+
+            if preds is None:
+                preds = logits.detach().cpu().numpy()
+                out_label_ids = batch[4].detach().cpu().numpy()
+                out_input_ids = batch[1].detach().cpu().numpy()
+                out_attention_mask = batch[2].detach().cpu().numpy()
+            else:
+                preds = np.append(preds, logits.detach().cpu().numpy(), axis=0)
+                out_label_ids = np.append(out_label_ids, batch[4].detach().cpu().numpy(), axis=0)
+                out_input_ids = np.append(out_input_ids, batch[1].detach().cpu().numpy(), axis=0)
+                out_attention_mask = np.append(
+                    out_attention_mask, batch[2].detach().cpu().numpy(), axis=0,
+                )
+
 
         eval_loss = eval_loss / nb_eval_steps
 
-        model_outputs = preds
-        preds = np.argmax(preds, axis=1)
-        # logging.info("preds = " + str(preds))
-        # logging.info("out_label_ids = " + str(out_label_ids))
-        result, wrong = self.compute_metrics(preds, out_label_ids, self.test_examples)
+        token_logits = preds
+        preds = np.argmax(preds, axis=2)
+
+        label_map = {i: label for i, label in enumerate(self.args.labels_list)}
+
+        out_label_list = [[] for _ in range(out_label_ids.shape[0])]
+        preds_list = [[] for _ in range(out_label_ids.shape[0])]
+
+        for i in range(out_label_ids.shape[0]):
+            for j in range(out_label_ids.shape[1]):
+                if out_label_ids[i, j] != pad_token_label_id:
+                    out_label_list[i].append(label_map[out_label_ids[i][j]])
+                    preds_list[i].append(label_map[preds[i][j]])
+
+        word_tokens = []
+        for i in range(len(preds_list)):
+            w_log = self._convert_tokens_to_word_logits(
+                out_input_ids[i], out_label_ids[i], out_attention_mask[i], token_logits[i],
+            )
+            word_tokens.append(w_log)
+
+        model_outputs = [[word_tokens[i][j] for j in range(len(preds_list[i]))] for i in range(len(preds_list))]
+
+        result, wrong = self.compute_metrics(preds_list, out_label_list, self.test_examples)
         result["eval_loss"] = eval_loss
         results.update(result)
 
@@ -175,9 +214,16 @@ class TextClassificationTrainer:
     def compute_metrics(self, preds, labels, eval_examples=None):
         assert len(preds) == len(labels)
 
+        binarizer = MultiLabelBinarizer()
+        labels_binary = binarizer.fit_transform(labels)
+        preds_binary = binarizer.transform(preds)
+
         extra_metrics = {}
-        extra_metrics["acc"] = sklearn.metrics.accuracy_score(labels, preds)
+        extra_metrics["acc"] = sklearn.metrics.accuracy_score(labels_binary, preds_binary)
         mismatched = labels != preds
+
+        logging.info(111)
+        logging.info(mismatched)
 
         if eval_examples:
             wrong = [i for (i, v) in zip(eval_examples, mismatched) if v.any()]
@@ -203,3 +249,34 @@ class TextClassificationTrainer:
             optimizer, num_warmup_steps=self.args.warmup_steps, num_training_steps=iteration_in_total
         )
         return optimizer, scheduler
+
+    def _convert_tokens_to_word_logits(self, input_ids, label_ids, attention_mask, logits):
+
+        ignore_ids = [
+            self.tokenizer.convert_tokens_to_ids(self.tokenizer.pad_token),
+            self.tokenizer.convert_tokens_to_ids(self.tokenizer.sep_token),
+            self.tokenizer.convert_tokens_to_ids(self.tokenizer.cls_token),
+        ]
+
+        # Remove unuseful positions
+        masked_ids = input_ids[(1 == attention_mask)]
+        masked_labels = label_ids[(1 == attention_mask)]
+        masked_logits = logits[(1 == attention_mask)]
+        for id in ignore_ids:
+            masked_labels = masked_labels[(id != masked_ids)]
+            masked_logits = masked_logits[(id != masked_ids)]
+            masked_ids = masked_ids[(id != masked_ids)]
+
+        # Map to word logits
+        word_logits = []
+        tmp = []
+        for n, lab in enumerate(masked_labels):
+            if lab != self.pad_token_label_id:
+                if n != 0:
+                    word_logits.append(tmp)
+                tmp = [list(masked_logits[n])]
+            else:
+                tmp.append(list(masked_logits[n]))
+        word_logits.append(tmp)
+
+        return word_logits

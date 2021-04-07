@@ -96,8 +96,7 @@ def fedavg_main(process_id, worker_number, device, args):
                                  "is_debug_mode": args.is_debug_mode
                                  })
 
-    model_config, client_model, tokenizer = create_model(
-        model_args, formulation="classification")
+    model_config, client_model, tokenizer = create_model(model_args, formulation="classification")
 
     # data preprocessor
     preprocessor = TLMPreprocessor(

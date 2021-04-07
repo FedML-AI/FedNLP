@@ -20,7 +20,7 @@ class TextClassificationDataManager(BaseDataManager):
         # self.train_loader, self.test_loader = self.get_data_loader()
 
 
-    def __load_data(self, client_idx=None):
+    def load_data(self, client_idx=None):
         logging.info("start loading data")
         data_file = h5py.File(self.args.data_file_path, "r", swmr=True)
         partition_file = h5py.File(self.args.partition_file_path, "r", swmr=True)
