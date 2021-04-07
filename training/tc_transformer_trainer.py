@@ -24,15 +24,13 @@ from transformers import (
 
 
 class TextClassificationTrainer:
-    def __init__(self, args, device, model, train_dl, test_dl, test_examples):
+    def __init__(self, args, device, model, train_dl=None, test_dl=None, test_examples=None):
         self.args = args
         self.device = device
 
-        # training data
+        # set data
         self.num_labels = args.num_labels
-        self.test_examples = test_examples
-        self.train_dl = train_dl
-        self.test_dl = test_dl
+        self.set_data(self, train_dl, test_dl, test_examples)
 
         # model
         self.model = model
@@ -41,6 +39,12 @@ class TextClassificationTrainer:
         # training results
         self.results = {}
         self.best_accuracy = 0.0
+
+    def set_data(self, train_dl, test_dl=None, test_examples=None):
+        # Used for fedtrainer
+        self.train_dl = train_dl
+        self.test_dl = test_dl
+        self.test_examples = test_examples
 
     def train_model(self):
 
