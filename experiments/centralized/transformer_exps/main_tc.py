@@ -22,9 +22,25 @@ from data_manager.text_classification_data_manager import TextClassificationData
 
 from model.transformer.model_args import ClassificationArgs
 from model.transformer.bert_model import BertForSequenceClassification
+from model.transformer.distilbert_model import DistilBertForSequenceClassification
+
 from transformers import BertTokenizer, BertConfig
 
 from training.tc_transformer_trainer import TextClassificationTrainer
+
+from transformers import (
+    WEIGHTS_NAME,
+    AdamW,
+    AlbertConfig,
+    AlbertTokenizer,
+    BertConfig,
+    BertTokenizer,
+    DistilBertConfig,
+    DistilBertTokenizer,
+    RobertaConfig,
+    RobertaTokenizer,
+    get_linear_schedule_with_warmup,
+)
 
 
 def add_args(parser):
@@ -103,9 +119,9 @@ def create_model(args):
     # create model, tokenizer, and model config (HuggingFace style)
     MODEL_CLASSES = {
             "bert": (BertConfig, BertForSequenceClassification, BertTokenizer),
-            "roberta": (RobertaConfig, RobertaForSequenceClassification, RobertaTokenizer),
             "distilbert": (DistilBertConfig, DistilBertForSequenceClassification, DistilBertTokenizer),
-            "albert": (AlbertConfig, AlbertForSequenceClassification, AlbertTokenizer),
+            # "roberta": (RobertaConfig, RobertaForSequenceClassification, RobertaTokenizer),
+            # "albert": (AlbertConfig, AlbertForSequenceClassification, AlbertTokenizer),
         }
     config_class, model_class, tokenizer_class = MODEL_CLASSES[args.model_type]
     config = config_class.from_pretrained(args.model_name, num_labels=args.num_labels, **args.config)
