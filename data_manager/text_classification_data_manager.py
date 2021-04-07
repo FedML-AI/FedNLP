@@ -31,7 +31,9 @@ class TextClassificationDataManager(BaseDataManager):
             # Load all data from the file.
             train_index_list = []
             test_index_list = []
+            # TODO: can this be improved?
             for client_idx in partition_file[partition_method]["partition_data"].keys():
+                # TODO: add a progress bar?
                 train_index_list.extend(partition_file[partition_method]["partition_data"][client_idx]["train"][()])
                 test_index_list.extend(partition_file[partition_method]["partition_data"][client_idx]["test"][()])
         else:
