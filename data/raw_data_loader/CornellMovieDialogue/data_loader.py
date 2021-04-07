@@ -5,7 +5,7 @@ import numpy as np
 import json
 
 
-from data_preprocessing.base.base_raw_data_loader import Seq2SeqRawDataLoader
+from data.raw_data_loader.base.base_raw_data_loader import Seq2SeqRawDataLoader
 
 
 class RawDataLoader(Seq2SeqRawDataLoader):
@@ -65,38 +65,3 @@ class RawDataLoader(Seq2SeqRawDataLoader):
             f["Y/" + str(key)] = self.Y[key]
             f["history/" + str(key)] = np.array(self.history[key], dtype=utf8_type)
         f.close()
-
-
-class ClientDataLoader(BaseClientDataLoader):
-
-    def __init__(self, data_path, partition_path, client_idx=None, partition_method="uniform", tokenize=False):
-        data_fields = ["X", "Y", "history"]
-        super().__init__(data_path, partition_path, client_idx, partition_method, tokenize, data_fields)
-        if self.tokenize:
-            self.tokenize_data()
-
-    def tokenize_data(self):
-        tokenizer = self.spacy_tokenizer.en_tokenizer
-
-        def __tokenize_data(data):
-            for i in range(len(data["X"])):
-                data["X"][i] = [token.text.strip().lower() for token in tokenizer(data["X"][i].strip()) if token.text.strip()]
-                data["Y"][i] = [token.text.strip().lower() for token in tokenizer(data["Y"][i].strip()) if token.text.strip()]
-                for j in range(len(data["history"][i])):
-                    data["history"][i][j] = [token.text.strip().lower() for token in tokenizer(data["history"][i][j].strip()) if
-                                    token.text.strip()]
-
-        __tokenize_data(self.train_data)
-        __tokenize_data(self.test_data)
-
-# if __name__ == "__main__":
-#     data_file_path = "../../../../data/fednlp/seq2seq/CornellMovieDialogue/cornell_movie_dialogs_corpus/"
-#     data_loader = RawDataLoader(data_file_path)
-#     results = data_loader.data_loader()
-#     nature_partition_dict = RawDataLoader.nature_partition(results["attributes"])
-#     uniform_partition_dict = uniform_partition(results["attributes"]["index_list"])
-#
-#     pickle.dump(train_data_loader, open("cornell_movie_dialogue_data_loader.pkl", "wb"))
-#     pickle.dump({"uniform": uniform_partition_dict, "nature": nature_partition_dict},
-#                 open("cornell_movie_dialogue_partition.pkl", "wb"))
-#     print("done")

@@ -6,7 +6,7 @@ import nltk
 import h5py
 
 
-from data_preprocessing.base.base_raw_data_loader import SpanExtractionRawDataLoader
+from data.raw_data_loader.base.base_raw_data_loader import SpanExtractionRawDataLoader
 
 
 class RawDataLoader(SpanExtractionRawDataLoader):
@@ -57,86 +57,6 @@ class RawDataLoader(SpanExtractionRawDataLoader):
             f["question_ids/" + str(key)] = self.question_ids[key]
         f.close()
 
-class ClientDataLoader(BaseClientDataLoader):
-
-
-    def __init__(self, data_path, partition_path, client_idx=None, partition_method="uniform", tokenize=False, data_filter=None):
-        data_fields = ["context_X", "question_X", "Y", "question_ids"]
-        super().__init__(data_path, partition_path, client_idx, partition_method, tokenize, data_fields)
-        self.clean_data()
-        if self.tokenize:
-            self.tokenize_data()
-            self.transform_labels()
-
-        if data_filter:
-            data_filter(self.train_data)
-            data_filter(self.test_data)
-
-    def clean_data(self):
-        def __clean_data(data):
-            for i in range(len(data["context_X"])):
-                data["context_X"][i] = data["context_X"][i].replace("''", '" ').replace("``", '" ')
-        __clean_data(self.train_data)
-        __clean_data(self.test_data)
-
-    def tokenize_data(self):
-
-        def word_tokenize(sent):
-             return [token.replace("''", '"').replace("``", '"') for token in nltk.word_tokenize(sent)]
-        def __tokenize_data(data):
-            data["tokenized_context_X"] = list()
-            data["tokenized_question_X"] = list()
-            data["char_context_X"] = list()
-            data["char_question_X"] = list()
-            self.data_fields.extend(["tokenized_context_X", "tokenized_question_X", "char_context_X", "char_question_X"])
-            for i in range(len(data["context_X"])):
-                temp_tokens = word_tokenize(data["context_X"][i])
-                data["tokenized_context_X"].append(self.remove_stop_tokens(temp_tokens))
-                data["tokenized_question_X"].append(word_tokenize(data["question_X"][i]))
-                context_chars = [list(token) for token in data["tokenized_context_X"][i]]
-                question_chars = [list(token) for token in data["tokenized_question_X"][i]]
-                data["char_context_X"].append(context_chars)
-                data["char_question_X"].append(question_chars)
-
-        __tokenize_data(self.train_data)
-        __tokenize_data(self.test_data)
-
-    def remove_stop_tokens(self, temp_tokens):
-        tokens = []
-        for token in temp_tokens:
-            flag = False
-            l = ("-", "\u2212", "\u2014", "\u2013", "/", "~", '"', "'", "\u201C", "\u2019", "\u201D", "\u2018", "\u00B0")
-            tokens.extend(re.split("([{}])".format("".join(l)), token))
-        return tokens
-
-    def transform_labels(self):
-        def __transform_labels(data):
-            for i in range(len(data["context_X"])):
-                context = data["context_X"][i]
-                context_tokens = data["tokenized_context_X"][i]
-                start, stop = data["Y"][i]
-
-                spans = self.get_spans(context, context_tokens)
-                idxs = []
-                for word_idx, span in enumerate(spans):
-                    if not (stop <= span[0] or start >= span[1]):
-                        idxs.append(word_idx)
-                
-                data["Y"][i] = (idxs[0], idxs[-1] + 1)
-        __transform_labels(self.train_data)
-        __transform_labels(self.test_data)
-
-    def get_spans(self, text, all_tokens):
-        spans = []
-        cur_idx = 0
-        for token in all_tokens:
-            if text.find(token, cur_idx) < 0:
-                print("{} {} {}".format(token, cur_idx, text))
-                raise Exception()
-            cur_idx = text.find(token, cur_idx)
-            spans.append((cur_idx, cur_idx + len(token)))
-            cur_idx += len(token)
-        return spans
 
 
 

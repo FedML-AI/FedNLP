@@ -1,7 +1,7 @@
 import os
 
 
-from data_preprocessing.base.base_raw_data_loader import Seq2SeqRawDataLoader
+from data.raw_data_loader.base.base_raw_data_loader import Seq2SeqRawDataLoader
 
 
 class RawDataLoader(Seq2SeqRawDataLoader):
@@ -48,22 +48,3 @@ class RawDataLoader(Seq2SeqRawDataLoader):
         cnt += 1
         return cnt
 
-
-class ClientDataLoader(BaseClientDataLoader):
-
-    def __init__(self, data_path, partition_path, client_idx=None, partition_method="uniform", tokenize=False):
-        data_fields = ["X", "Y"]
-        super().__init__(data_path, partition_path, client_idx, partition_method, tokenize, data_fields)
-        if self.tokenize:
-            self.tokenize_data()
-
-    def tokenize_data(self):
-        tokenizer = self.spacy_tokenizer.en_tokenizer
-
-        def __tokenize_data(data):
-            for i in range(len(data["X"])):
-                data["X"][i] = [token.text.strip().lower() for token in tokenizer(data["X"][i].strip()) if token.text.strip()]
-                data["Y"][i] = [token.text.strip().lower() for token in tokenizer(data["Y"][i].strip()) if token.text.strip()]
-
-        __tokenize_data(self.train_data)
-        __tokenize_data(self.test_data)

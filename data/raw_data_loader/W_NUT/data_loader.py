@@ -1,7 +1,7 @@
 import os
 
 
-from data_preprocessing.base.base_raw_data_loader import SeqTaggingRawDataLoader
+from data.raw_data_loader.base.base_raw_data_loader import SeqTaggingRawDataLoader
 
 
 class RawDataLoader(SeqTaggingRawDataLoader):
@@ -44,9 +44,3 @@ class RawDataLoader(SeqTaggingRawDataLoader):
                     single_x.clear()
                     single_y.clear()
         return cnt
-
-
-class ClientDataLoader(BaseClientDataLoader):
-    def __init__(self, data_path, partition_path, client_idx=None, partition_method="uniform", tokenize=False):
-        data_fields = ["X", "Y"]
-        super().__init__(data_path, partition_path, client_idx, partition_method, tokenize, data_fields)

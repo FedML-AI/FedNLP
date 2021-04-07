@@ -1,4 +1,6 @@
 from abc import ABC, abstractmethod
+import h5py
+import json
 
 
 class BaseDataManager(ABC):
@@ -19,19 +21,28 @@ class BaseDataManager(ABC):
         self.test_examples = None
         self.train_loader = None
         self.test_loader = None
-        self.client_index = None
+        self.client_index_list = None
         self.client_index_pointer = 0
         self.attributes = None
 
-        self.client_index = self.sample_client_index(process_id, num_workers)
+        self.client_index_list = self.sample_client_index(process_id, num_workers)
+
+    def load_all_data(self):
+        return self.__load_data()
+
+    def load_client_data(self, client_idx):
+        return self.__load_data(client_idx)
 
     @abstractmethod
-    def load_data(self, client_idx=None):
+    def __load_data(self, client_idx=None):
         pass
 
-    @abstractmethod
-    def load_attributes(self):
-        pass
+    @staticmethod
+    def load_attributes(data_path):
+        data_file = h5py.File(data_path, "r", swmr=True)
+        attributes = json.loads(data_file["attributes"][()])
+        data_file.close()
+        return attributes
 
     def get_dataset(self):
         return self.train_examples, self.test_examples, self.train_dataset, self.test_dataset
@@ -41,20 +52,29 @@ class BaseDataManager(ABC):
         pass
 
     def load_next_round_data(self):
-        # TODO: add comments for the logic.
-        if self.client_index is None:
+        '''
+        load client data for next round training
+        '''
+        # if client_index_list is None and train_dataset is None, it means we need to load all data from scratch
+        if self.client_index_list is None:
             if self.train_dataset is None:
-                self.train_examples, self.test_examples, self.train_dataset, self.test_dataset = self.load_data(self.client_index)
+                self.train_examples, self.test_examples, self.train_dataset, self.test_dataset = self.__load_data(None)
             return
-        self.train_examples, self.test_examples, self.train_dataset, self.test_dataset = self.load_data(self.client_index[self.client_index_pointer])
-        self.client_index_pointer = self.client_index_pointer + 1 if self.client_index_pointer + 1 < len(self.client_index) else 0
+        # client_index_pointer will point the client index, we use that index to load the client data
+        self.train_examples, self.test_examples, self.train_dataset, self.test_dataset = self.__load_data(self.client_index_list[self.client_index_pointer])
+        # move to the next client index
+        self.client_index_pointer = self.client_index_pointer + 1 if self.client_index_pointer + 1 < len(self.client_index_list) else 0
 
     def sample_client_index(self, process_id, num_workers):
-        # TODO: add comments for the logic.
+        '''
+        Sample client indices according to process_id
+        '''
+        # process_id = 0 means this process is the server process
         if process_id == 0:
             return None
         else:
             num_clients = self.args.num_clients
+            # get the number of clients per workers
             size = num_clients // num_workers
             start = (process_id - 1) * size
             end = process_id * size if num_workers != process_id else num_clients

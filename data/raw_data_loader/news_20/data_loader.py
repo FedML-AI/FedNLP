@@ -2,7 +2,7 @@ import os
 import re
 
 
-from data_preprocessing.base.base_raw_data_loader import TextClassificationRawDataLoader
+from data.raw_data_loader.base.base_raw_data_loader import TextClassificationRawDataLoader
 
 _QUOTE_RE = re.compile(r'(writes in|writes:|wrote:|says:|said:'
                            r'|^In article|^Quoted from|^\||^>)')
@@ -76,43 +76,3 @@ class RawDataLoader(TextClassificationRawDataLoader):
             cnt += 1
         return cnt
 
-
-class ClientDataLoader(BaseClientDataLoader):
-
-    def __init__(self, data_path, partition_path, client_idx=None, partition_method="uniform", tokenize=False):
-        data_fields = ["X", "Y"]
-        super().__init__(data_path, partition_path, client_idx, partition_method, tokenize, data_fields)
-        self.clean_data()
-        if self.tokenize:
-            self.tokenize_data()
-
-    def tokenize_data(self):
-        def __tokenize_data(data):
-            for i in range(len(data["X"])):
-                data["X"][i] = data["X"][i].split(" ")
-
-        __tokenize_data(self.train_data)
-        __tokenize_data(self.test_data)
-
-    def clean_data(self):
-        def __clean_data(data):
-            for i in range(len(data["X"])):
-                data["X"][i] = self.clean_str(data["X"][i])
-        __clean_data(self.train_data)
-        __clean_data(self.test_data)
-
-    def clean_str(self, string):
-        string = re.sub(r"[^A-Za-z0-9(),!?\'\`]", " ", string)
-        string = re.sub(r"\'s", " \'s", string)
-        string = re.sub(r"\'ve", " \'ve", string)
-        string = re.sub(r"n\'t", " n\'t", string)
-        string = re.sub(r"\'re", " \'re", string)
-        string = re.sub(r"\'d", " \'d", string)
-        string = re.sub(r"\'ll", " \'ll", string)
-        string = re.sub(r",", " , ", string)
-        string = re.sub(r"!", " ! ", string)
-        string = re.sub(r"\(", " \( ", string)
-        string = re.sub(r"\)", " \) ", string)
-        string = re.sub(r"\?", " \? ", string)
-        string = re.sub(r"\s{2,}", " ", string)
-        return string.strip().lower()

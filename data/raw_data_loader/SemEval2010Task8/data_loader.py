@@ -2,7 +2,7 @@ import os
 import re
 
 
-from data_preprocessing.base.base_raw_data_loader import TextClassificationRawDataLoader
+from data.raw_data_loader.base.base_raw_data_loader import TextClassificationRawDataLoader
 
 
 class RawDataLoader(TextClassificationRawDataLoader):
@@ -38,36 +38,6 @@ class RawDataLoader(TextClassificationRawDataLoader):
                     cnt += 1
         return cnt
 
-
-class ClientDataLoader(BaseClientDataLoader):
-
-    def __init__(self, data_path, partition_path, client_idx=None, partition_method="uniform", tokenize=False):
-        data_fields = ["X", "Y"]
-        super().__init__(data_path, partition_path, client_idx, partition_method, tokenize, data_fields)
-        if self.tokenize:
-            self.clean_and_tokenize_data()
-
-    def clean_and_tokenize_data(self):
-        tokenizer = self.spacy_tokenizer.en_tokenizer
-
-        def __clean_and_tokenize_data(data):
-            for i in range(len(data["X"])):
-                sentence = data["X"][i]
-                e1 = re.findall(r'<e1>(.*)</e1>', sentence)[0]
-                e2 = re.findall(r'<e2>(.*)</e2>', sentence)[0]
-                sentence = sentence.replace('<e1>' + e1 + '</e1>', ' <e1> ' + e1 + ' </e1> ', 1)
-                sentence = sentence.replace('<e2>' + e2 + '</e2>', ' <e2> ' + e2 + ' </e2> ', 1)
-                sentence = [token.text.strip() for token in tokenizer(sentence) if token.text.strip()]
-                sentence = ' '.join(sentence)
-                sentence = sentence.replace('< e1 >', '<e1>')
-                sentence = sentence.replace('< e2 >', '<e2>')
-                sentence = sentence.replace('< /e1 >', '</e1>')
-                sentence = sentence.replace('< /e2 >', '</e2>')
-                sentence = sentence.split()
-                data["X"][i] = sentence
-
-        __clean_and_tokenize_data(self.train_data)
-        __clean_and_tokenize_data(self.test_data)
 
 
 

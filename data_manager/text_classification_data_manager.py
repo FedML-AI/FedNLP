@@ -19,8 +19,8 @@ class TextClassificationDataManager(BaseDataManager):
         # self.load_next_round_data()
         # self.train_loader, self.test_loader = self.get_data_loader()
 
-    # TODO: seperate to 2 functions: load_all_data / load_client_data
-    def load_data(self, client_idx=None):
+
+    def __load_data(self, client_idx=None):
         logging.info("start loading data")
         data_file = h5py.File(self.args.data_file_path, "r", swmr=True)
         partition_file = h5py.File(self.args.partition_file_path, "r", swmr=True)
@@ -41,10 +41,10 @@ class TextClassificationDataManager(BaseDataManager):
             train_index_list = partition_file[partition_method]["partition_data"][client_idx]["train"][()]
             test_index_list = partition_file[partition_method]["partition_data"][client_idx]["test"][()]
         
-        train_X = [data_file["X"][str(idx)][()].decode("utf8") for idx in train_index_list]
-        train_y = [data_file["Y"][str(idx)][()].decode("utf8") for idx in train_index_list]
-        test_X = [data_file["X"][str(idx)][()].decode("utf8") for idx in test_index_list]
-        test_y = [data_file["Y"][str(idx)][()].decode("utf8") for idx in test_index_list]
+        train_X = [data_file["X"][str(idx)][()] for idx in train_index_list]
+        train_y = [data_file["Y"][str(idx)][()] for idx in train_index_list]
+        test_X = [data_file["X"][str(idx)][()] for idx in test_index_list]
+        test_y = [data_file["Y"][str(idx)][()] for idx in test_index_list]
 
         data_file.close()
         partition_file.close()
@@ -54,19 +54,6 @@ class TextClassificationDataManager(BaseDataManager):
         test_examples, test_dataset = self.preprocessor.transform(test_X, test_y, test_index_list, evaluate=True)
 
         return train_examples, test_examples, train_dataset, test_dataset
-    
-    def load_data_fedml(self, worker_id, num_workers):
-        
-        return (train_data_num, train_data_global, test_data_global, \
-        train_data_local_num_dict, train_data_local_dict, test_data_local_dict)
-
-
-    @staticmethod
-    def load_attributes(data_path):
-        data_file = h5py.File(data_path, "r", swmr=True)
-        attributes = json.loads(data_file["attributes"][()])
-        data_file.close()
-        return attributes
 
     def get_data_loader(self):
         if self.train_loader is not None:
