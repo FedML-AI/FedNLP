@@ -5,18 +5,18 @@ import os
 import sys
 
 # add the FedML root directory to the python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "../../")))
-import data_preprocessing.news_20.data_loader
-import data_preprocessing.AGNews.data_loader
-import data_preprocessing.CNN_Dailymail.data_loader
-import data_preprocessing.CornellMovieDialogue.data_loader
-import data_preprocessing.SemEval2010Task8.data_loader
-import data_preprocessing.Sentiment140.data_loader
-import data_preprocessing.SQuAD_1_1.data_loader
-import data_preprocessing.SST_2.data_loader
-import data_preprocessing.W_NUT.data_loader
-import data_preprocessing.wikiner.data_loader
-import data_preprocessing.WMT.data_loader
+sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "../../../")))
+import data.raw_data_loader.news_20.data_loader
+import data.raw_data_loader.AGNews.data_loader
+import data.raw_data_loader.CNN_Dailymail.data_loader
+import data.raw_data_loader.CornellMovieDialogue.data_loader
+import data.raw_data_loader.SemEval2010Task8.data_loader
+import data.raw_data_loader.Sentiment140.data_loader
+import data.raw_data_loader.SQuAD_1_1.data_loader
+import data.raw_data_loader.SST_2.data_loader
+import data.raw_data_loader.W_NUT.data_loader
+import data.raw_data_loader.wikiner.data_loader
+import data.raw_data_loader.WMT.data_loader
 
 
 def add_args(parser):
@@ -41,27 +41,27 @@ def add_args(parser):
 def test_raw_data_loader(args, dataset_name):
     data_loader = None
     if dataset_name == "20news":
-        data_loader = data_preprocessing.news_20.data_loader.RawDataLoader(args.data_dir)
+        data_loader = data.raw_data_loader.news_20.data_loader.RawDataLoader(args.data_dir)
     elif dataset_name == "agnews":
-        data_loader = data_preprocessing.AGNews.data_loader.RawDataLoader(args.data_dir)
+        data_loader = data.raw_data_loader.AGNews.data_loader.RawDataLoader(args.data_dir)
     elif dataset_name == "cnn_dailymail":
-        data_loader = data_preprocessing.CNN_Dailymail.data_loader.RawDataLoader(args.data_dir)
+        data_loader = data.raw_data_loader.CNN_Dailymail.data_loader.RawDataLoader(args.data_dir)
     elif dataset_name == "cornell_movie_dialogue":
-        data_loader = data_preprocessing.CornellMovieDialogue.data_loader.RawDataLoader(args.data_dir)
+        data_loader = data.raw_data_loader.CornellMovieDialogue.data_loader.RawDataLoader(args.data_dir)
     elif dataset_name == "semeval_2010_task8":
-        data_loader = data_preprocessing.SemEval2010Task8.data_loader.RawDataLoader(args.data_dir)
+        data_loader = data.raw_data_loader.SemEval2010Task8.data_loader.RawDataLoader(args.data_dir)
     elif dataset_name == "sentiment140":
-        data_loader = data_preprocessing.Sentiment140.data_loader.RawDataLoader(args.data_dir)
+        data_loader = data.raw_data_loader.Sentiment140.data_loader.RawDataLoader(args.data_dir)
     elif dataset_name == "squad_1.1":
-        data_loader = data_preprocessing.SQuAD_1_1.data_loader.RawDataLoader(args.data_dir)
+        data_loader = data.raw_data_loader.SQuAD_1_1.data_loader.RawDataLoader(args.data_dir)
     elif dataset_name == "sst_2":
-        data_loader = data_preprocessing.SST_2.data_loader.RawDataLoader(args.data_dir)
+        data_loader = data.raw_data_loader.SST_2.data_loader.RawDataLoader(args.data_dir)
     elif dataset_name == "w_nut":
-        data_loader = data_preprocessing.W_NUT.data_loader.RawDataLoader(args.data_dir)
+        data_loader = data.raw_data_loader.W_NUT.data_loader.RawDataLoader(args.data_dir)
     elif dataset_name == "wikiner":
-        data_loader = data_preprocessing.wikiner.data_loader.RawDataLoader(args.data_dir)
+        data_loader = data.raw_data_loader.wikiner.data_loader.RawDataLoader(args.data_dir)
     elif dataset_name.startswith("wmt"):
-        data_loader = data_preprocessing.WMT.data_loader.RawDataLoader(args.data_dir.split(","))
+        data_loader = data.raw_data_loader.WMT.data_loader.RawDataLoader(args.data_dir.split(","))
     else:
         raise Exception("No such dataset!!")
     logger.info("Start loading data from files")

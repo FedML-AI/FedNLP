@@ -1,5 +1,5 @@
 
-from data_preprocessing.base.base_raw_data_loader import SeqTaggingRawDataLoader
+from data.raw_data_loader.base.base_raw_data_loader import SeqTaggingRawDataLoader
 import os
 import h5py
 import json
@@ -58,8 +58,3 @@ class RawDataLoader(SeqTaggingRawDataLoader):
             f["all_deps/" + str(key)] = np.array(self.all_deps[key], dtype=utf8_type)
         f.close()
 
-
-class ClientDataLoader(BaseClientDataLoader):
-    def __init__(self, data_path, partition_path, client_idx=None, partition_method="uniform", tokenize=False):
-        data_fields = ["X", "Y"]
-        super().__init__(data_path, partition_path, client_idx, partition_method, tokenize, data_fields)
