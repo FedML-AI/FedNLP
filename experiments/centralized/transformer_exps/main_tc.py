@@ -81,12 +81,9 @@ if __name__ == "__main__":
     preprocessor = TLMPreprocessor(args=model_args, label_vocab=attributes["label_vocab"], tokenizer=tokenizer)
 
     # data manager
-    process_id = 0
-    num_workers = 1
-    dm = TextClassificationDataManager(model_args, args, process_id, num_workers, preprocessor)
-    dm.load_next_round_data()  # The centralized version.
-    train_dl, test_dl = dm.get_data_loader()
-    test_examples = dm.test_examples
+    dm = TextClassificationDataManager(model_args, args, preprocessor=preprocessor)
+    
+    train_examples, test_examples, train_dl, test_dl = dm.load_centralized_data()
 
     # Create a ClassificationModel and start train
     trainer = TextClassificationTrainer(model_args, device, model, train_dl, test_dl, test_examples)

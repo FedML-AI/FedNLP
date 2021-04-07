@@ -55,10 +55,8 @@ def load_data_to_FedML(model_args, args, process_id, num_workers, preprocessor):
     # TODO: process_id should be 0 if we want to load all instances
     dm = TextClassificationDataManager(
         model_args, args, process_id, num_workers, preprocessor) 
-    dm.load_next_round_data()  # The centralized version.
-    train_dl, test_dl = dm.get_data_loader()
-    test_examples = dm.test_examples
-    # TODO:
+    # train_data_num: {key: client_index; value: number of samples}
+    # train_data_global/xxx_data: {key: client_index; value: PyTorch-DataLoader}
     return (train_data_num, train_data_global, test_data_global, \
         train_data_local_num_dict, train_data_local_dict, test_data_local_dict)
 
