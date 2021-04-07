@@ -40,7 +40,7 @@ if __name__ == "__main__":
                         datefmt='%Y-%m-%d,%H:%M:%S')
     logging.info(args)
 
-    set_seed(0)
+    set_seed(args.manual_seed)
 
     # device
     device = torch.device("cuda:0")
@@ -75,7 +75,7 @@ if __name__ == "__main__":
                               })
 
     num_labels = len(attributes["label_vocab"])
-    model_config, model, tokenizer = create_model(model_args)
+    model_config, model, tokenizer = create_model(model_args, formulation="classification")
 
     # preprocessor
     preprocessor = TLMPreprocessor(args=model_args, label_vocab=attributes["label_vocab"], tokenizer=tokenizer)
@@ -83,10 +83,10 @@ if __name__ == "__main__":
     # data manager
     process_id = 0
     num_workers = 1
-    tc_data_manager = TextClassificationDataManager(model_args, args, process_id, num_workers, preprocessor)
-    tc_data_manager.load_next_round_data()  # The centralized version.
-    train_dl, test_dl = tc_data_manager.get_data_loader()
-    test_examples = tc_data_manager.test_examples
+    dm = TextClassificationDataManager(model_args, args, process_id, num_workers, preprocessor)
+    dm.load_next_round_data()  # The centralized version.
+    train_dl, test_dl = dm.get_data_loader()
+    test_examples = dm.test_examples
 
     # Create a ClassificationModel and start train
     trainer = TextClassificationTrainer(model_args, device, model, train_dl, test_dl, test_examples)

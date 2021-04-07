@@ -12,25 +12,25 @@ import warnings
 import os
 import sklearn
 import data_preprocessing.base.utils
-import data_preprocessing.SQuAD_1_1.data_loader
+# import data_preprocessing.SQuAD_1_1.data_loader
 
-class TransformerTrainer(ModelTrainer):
+class FedTransformerTrainer(ModelTrainer):
 
-    def __init__(self, transformer_model, task_formulation="classification"):
-        self.transformer_model = transformer_model
-        self.model = self.transformer_model.model
+    def __init__(self, client_trainer, client_model, task_formulation="classification"):
+        self.client_trainer = client_trainer
+        self.client_model = client_model
         self.id = 0
         assert task_formulation in ["classification", "sequence_tagging", "question_answering", "seq2seq"]
         self.task_formulation = task_formulation
         
     def get_model_params(self):
-        return self.model.cpu().state_dict()
+        return self.client_model.cpu().state_dict()
 
     def set_model_params(self, model_parameters):
-        self.model.load_state_dict(model_parameters)
+        self.client_model.load_state_dict(model_parameters)
 
     def flatten_classification_data(self, train_data):
-        labels_map = self.transformer_model.labels_map
+        labels_map = self.client_trainer.labels_map
         train_data_flat = dict(X=[], Y=[])
         for item in train_data: 
             train_data_flat["X"] += [t for t in item["X"]]
@@ -59,27 +59,27 @@ class TransformerTrainer(ModelTrainer):
 
     def train(self, train_data, device, args):
         self.device = device
-        self.transformer_model.device = device
-        self.transformer_model._move_model_to_device() 
+        self.client_trainer.device = device
+        self.client_trainer._move_model_to_device() 
         
         if self.task_formulation == "classification":
             train_data_flat = self.flatten_classification_data(train_data)
             logging.info("Client(%d)"%self.id + ":| Local Train Data Size = %d" % (len(train_data_flat)))
             train_df = pd.DataFrame(train_data_flat)
-            global_step, training_details = self.transformer_model.train_model(train_df=train_df, client_desc="Client(%d)"%self.id)
+            global_step, training_details = self.client_trainer.train_model(train_df=train_df, client_desc="Client(%d)"%self.id)
         elif self.task_formulation == "sequence_tagging":
             train_data_flat = self.flatten_sequence_tagging_data(train_data) 
             logging.info("Client(%d)"%self.id + ":| Local Train Data Size = %d" % (len(train_data_flat)))
             train_df = pd.DataFrame(train_data_flat, columns=["sentence_id", "words", "labels"])
-            global_step, training_details = self.transformer_model.train_model(train_data=train_df, client_desc="Client(%d)"%self.id)
+            global_step, training_details = self.client_trainer.train_model(train_data=train_df, client_desc="Client(%d)"%self.id)
         elif self.task_formulation == "question_answering":
             train_data_flat = self.flatten_question_answering_data(train_data)
-            train_data_flat = data_preprocessing.SQuAD_1_1.data_loader.get_normal_format(train_data_flat)
+            # train_data_flat = data_preprocessing.SQuAD_1_1.data_loader.get_normal_format(train_data_flat)   # TODO: fix the reference 
             logging.info("Client(%d)"%self.id + ":| Local Train Data Size = %d" % (len(train_data_flat)))
             train_df = pd.DataFrame(train_data_flat)
-            global_step, training_details = self.transformer_model.train_model(train_data=train_data_flat, client_desc="Client(%d)"%self.id)
+            global_step, training_details = self.client_trainer.train_model(train_data=train_data_flat, client_desc="Client(%d)"%self.id)
         
-        # self.transformer_model.args.reprocess_input_data = False
+        # self.client_trainer.args.reprocess_input_data = False
 
 
     def test(self, test_data, device, args=None):
@@ -87,13 +87,13 @@ class TransformerTrainer(ModelTrainer):
             test_data_flat = self.flatten_classification_data(test_data)
             logging.info("Client(%d)"%self.id + ":| Local Test Data Size = %d" % (len(test_data_flat)))
             test_df = pd.DataFrame(test_data_flat)
-            result, model_outputs, wrong_predictions = self.transformer_model.eval_model(test_df, acc=sklearn.metrics.accuracy_score) 
+            result, model_outputs, wrong_predictions = self.client_trainer.eval_model(test_df, acc=sklearn.metrics.accuracy_score) 
             logging.info("Client(%d)"%self.id + ":| Local Test Evaluation Result =%s" % (str(result)))
         elif self.task_formulation == "sequence_tagging":
             test_data_flat = self.flatten_sequence_tagging_data(test_data)
             logging.info("Client(%d)"%self.id + ":| Local Test Data Size = %d" % (len(test_data_flat)))
             test_df = pd.DataFrame(test_data_flat, columns=["sentence_id", "words", "labels"])
-            result, model_outputs, preds_list = self.transformer_model.eval_model(test_df) 
+            result, model_outputs, preds_list = self.client_trainer.eval_model(test_df) 
             logging.info("Client(%d)"%self.id + ":| Local Test Evaluation Result =%s" % (str(result)))
         elif self.task_formulation == "question_answering":
             # TODO: 
@@ -108,13 +108,13 @@ class TransformerTrainer(ModelTrainer):
             test_data_flat = self.flatten_classification_data(global_test_data)
             logging.info("Client(%d)"%self.id + ":| Global Test Data Size = %d" % (len(test_data_flat)))
             test_df = pd.DataFrame(test_data_flat)
-            result, model_outputs, wrong_predictions = self.transformer_model.eval_model(test_df, acc=sklearn.metrics.accuracy_score) 
+            result, model_outputs, wrong_predictions = self.client_trainer.eval_model(test_df, acc=sklearn.metrics.accuracy_score) 
             logging.info("Client(%d)"%self.id + ":| Global Test Evaluation Result =%s" % (str(result)))
         elif self.task_formulation == "sequence_tagging":
             test_data_flat = self.flatten_sequence_tagging_data(global_test_data)
             logging.info("Client(%d)"%self.id + ":| Local Test Data Size = %d" % (len(test_data_flat)))
             test_df = pd.DataFrame(test_data_flat, columns=["sentence_id", "words", "labels"])
-            result, model_outputs, preds_list = self.transformer_model.eval_model(test_df) 
+            result, model_outputs, preds_list = self.client_trainer.eval_model(test_df) 
             logging.info("Client(%d)"%self.id + ":| Local Test Evaluation Result =%s" % (str(result)))
         elif self.task_formulation == "question_answering":
             # TODO: 

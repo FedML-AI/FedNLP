@@ -53,6 +53,7 @@ def set_seed(seed):
     np.random.seed(seed)
     random.seed(seed)
 
+
 def add_centralized_args(parser):
     """
     parser : argparse.ArgumentParser
@@ -121,5 +122,42 @@ def add_centralized_args(parser):
     # IO related
     parser.add_argument('--output_dir', type=str, default="/tmp/", metavar='N',
                         help='path to save the trained results and ckpts')
+
+    return parser
+
+
+def add_federated_args(parser): 
+    """
+    parser : argparse.ArgumentParser
+    return a parser added with args required by fit
+    """
+    parser = add_centralized_args(parser)
+
+    # Federated Learning related
+
+    parser.add_argument('--comm_round', type=int, default=10,
+                        help='how many round of communications we shoud use')
+
+    parser.add_argument('--is_mobile', type=int, default=0,
+                        help='whether the program is running on the FedML-Mobile server side')
+
+    parser.add_argument('--frequency_of_the_test', type=int, default=1,
+                        help='the frequency of the algorithms')
+
+    parser.add_argument('--ci', type=int, default=0,
+                        help='CI')
+
+    parser.add_argument('--client_num_in_total', type=int, default=1000, metavar='NN',
+                        help='number of workers in a distributed cluster')
+
+    parser.add_argument('--client_num_per_round', type=int, default=4, metavar='NN',
+                        help='number of workers')
+
+    parser.add_argument('--gpu_mapping_file', type=str, default="gpu_mapping.yaml",
+                        help='the gpu utilization file for servers and clients. If there is no \
+                    gpu_util_file, gpu will not be used.')
+
+    parser.add_argument('--gpu_mapping_key', type=str, default="mapping_default",
+                        help='the key in gpu utilization file')
 
     return parser
