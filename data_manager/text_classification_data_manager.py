@@ -55,6 +55,12 @@ class TextClassificationDataManager(BaseDataManager):
 
         return train_examples, test_examples, train_dataset, test_dataset
     
+    def load_data_fedml(self, worker_id, num_workers):
+        
+        return (train_data_num, train_data_global, test_data_global, \
+        train_data_local_num_dict, train_data_local_dict, test_data_local_dict)
+
+
     @staticmethod
     def load_attributes(data_path):
         data_file = h5py.File(data_path, "r", swmr=True)
