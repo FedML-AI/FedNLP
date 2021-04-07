@@ -1,7 +1,6 @@
 import argparse
 import logging
 import os
-import random
 import sys
 
 import numpy as np
@@ -21,10 +20,6 @@ from data_preprocessing.text_classification_preprocessor import TLMPreprocessor
 from data_manager.text_classification_data_manager import TextClassificationDataManager
 
 from model.transformer.model_args import ClassificationArgs
-from model.transformer.bert_model import BertForSequenceClassification
-from model.transformer.distilbert_model import DistilBertForSequenceClassification
-
-from transformers import BertTokenizer, BertConfig
 
 from training.tc_transformer_trainer import TextClassificationTrainer
 
