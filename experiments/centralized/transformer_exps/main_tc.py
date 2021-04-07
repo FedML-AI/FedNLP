@@ -104,10 +104,10 @@ def create_model(args, num_labels):
     MODEL_CLASSES = {
         "bert": (BertConfig, BertForSequenceClassification, BertTokenizer),
     }
-    config_class, model_class, tokenizer_class = MODEL_CLASSES[model_type]
-    config = config_class.from_pretrained(model_name, num_labels=num_labels, **args.config)
-    model = model_class.from_pretrained(model_name, config=config)
-    tokenizer = tokenizer_class.from_pretrained(model_name, do_lower_case=args.do_lower_case)
+    config_class, model_class, tokenizer_class = MODEL_CLASSES[args.model_type]
+    config = config_class.from_pretrained(args.model_name, num_labels=args.num_labels, **args.config)
+    model = model_class.from_pretrained(args.model_name, config=config)
+    tokenizer = tokenizer_class.from_pretrained(args.model_name, do_lower_case=args.do_lower_case)
     # logging.info(self.model)
     return config, model, tokenizer
 
@@ -141,14 +141,12 @@ if __name__ == "__main__":
     attributes = TextClassificationDataManager.load_attributes(args.data_file_path)
 
     # model
-    model_type = args.model_type
-    model_name = args.model_name
-    tc_args = ClassificationArgs()
-    tc_args.load(args.model_name)
-    tc_args.model_name = model_name
-    tc_args.model_type = model_type
-    tc_args.num_labels = len(attributes["label_vocab"])
-    tc_args.update_from_dict({"num_train_epochs": args.num_train_epochs,
+    model_args = ClassificationArgs()    
+    model_args.model_name = args.model_name
+    model_args.model_type = args.model_type
+    model_args.load(model_args.model_name)
+    model_args.num_labels = len(attributes["label_vocab"])
+    model_args.update_from_dict({"num_train_epochs": args.num_train_epochs,
                               "learning_rate": args.learning_rate,
                               "gradient_accumulation_steps": args.gradient_accumulation_steps,
                               "do_lower_case": args.do_lower_case,
@@ -168,31 +166,31 @@ if __name__ == "__main__":
                               })
 
     num_labels = len(attributes["label_vocab"])
-    model_config, model, tokenizer = create_model(tc_args, num_labels)
+    model_config, model, tokenizer = create_model(model_args)
 
     # preprocessor
-    preprocessor = TLMPreprocessor(args=tc_args, label_vocab=attributes["label_vocab"], tokenizer=tokenizer)
+    preprocessor = TLMPreprocessor(args=model_args, label_vocab=attributes["label_vocab"], tokenizer=tokenizer)
 
     # data manager
     process_id = 0
     num_workers = 1
-    tc_data_manager = TextClassificationDataManager(tc_args, args, process_id, num_workers, preprocessor)
+    tc_data_manager = TextClassificationDataManager(model_args, args, process_id, num_workers, preprocessor)
     tc_data_manager.load_next_round_data()  # The centralized version.
     train_dl, test_dl = tc_data_manager.get_data_loader()
     test_examples = tc_data_manager.test_examples
 
     # Create a ClassificationModel and start train
-    trainer = TextClassificationTrainer(tc_args, device, model, train_dl, test_dl, test_examples)
+    trainer = TextClassificationTrainer(model_args, device, model, train_dl, test_dl, test_examples)
     trainer.train_model()
 
 ''' Example Usage:
 
 export CUDA_VISIBLE_DEVICES=0
 DATA_NAME=agnews
-CUDA_VISIBLE_DEVICES=0 python -m main_tc \
+CUDA_VISIBLE_DEVICES=0 python -m experiments.centralized.transformer_exps.main_tc \
     --dataset ${DATA_NAME} \
-    --data_file /tmp/fednlp_data/data_files/${DATA_NAME}_data.h5 \
-    --partition_file /tmp/fednlp_data/partition_files/${DATA_NAME}_partition.h5 \
+    --data_file ~/fednlp_data/data_files/${DATA_NAME}_data.h5 \
+    --partition_file ~/fednlp_data/partition_files/${DATA_NAME}_partition.h5 \
     --partition_method uniform \
     --model_type bert \
     --model_name bert-base-uncased \
@@ -200,7 +198,7 @@ CUDA_VISIBLE_DEVICES=0 python -m main_tc \
     --train_batch_size 8 \
     --eval_batch_size 8 \
     --max_seq_length 256 \
-    --learning_rate 1e-5 \
+    --learning_rate 5e-5 \
     --num_train_epochs 5 \
     --output_dir /tmp/${DATA_NAME}_fed/ \
     --n_gpu 1
