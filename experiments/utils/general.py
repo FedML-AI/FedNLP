@@ -24,15 +24,20 @@ from transformers import (
 )
 
 
-def create_model(args):
+def create_model(args, formulation="classification"):
     # create model, tokenizer, and model config (HuggingFace style)
     MODEL_CLASSES = {
+        "classification":{
             "bert": (BertConfig, BertForSequenceClassification, BertTokenizer),
             "distilbert": (DistilBertConfig, DistilBertForSequenceClassification, DistilBertTokenizer),
             # "roberta": (RobertaConfig, RobertaForSequenceClassification, RobertaTokenizer),
             # "albert": (AlbertConfig, AlbertForSequenceClassification, AlbertTokenizer),
-        }
-    config_class, model_class, tokenizer_class = MODEL_CLASSES[args.model_type]
+            },
+        "sequence_tagging":{
+
+        }, # TODO: add more.
+        } 
+    config_class, model_class, tokenizer_class = MODEL_CLASSES[formulation][args.model_type]
     config = config_class.from_pretrained(args.model_name, num_labels=args.num_labels, **args.config)
     model = model_class.from_pretrained(args.model_name, config=config)
     tokenizer = tokenizer_class.from_pretrained(args.model_name, do_lower_case=args.do_lower_case)

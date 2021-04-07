@@ -17,9 +17,7 @@ from data_preprocessing.tc_data_manager import TCDatasetManager
 from model.transformer.model_args import ClassificationArgs
 from training.tc_transformer_trainer import TextClassificationTrainer
 
-
-from transformers.models.bert import BertConfig, BertTokenizer, BertForSequenceClassification
-
+from experiments.utils.general import set_seed, create_model
 
 def add_args(parser):
     """
@@ -108,15 +106,6 @@ def post_complete_message(tc_args):
 
     with os.fdopen(pipe_fd, 'w') as pipe:
         pipe.write("training is finished! \n%s" % (str(tc_args)))
-
-
-def set_seed(seed):
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-    np.random.seed(seed)
-    random.seed(seed)
 
 
 if __name__ == "__main__":
