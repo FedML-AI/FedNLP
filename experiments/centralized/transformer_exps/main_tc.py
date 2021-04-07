@@ -97,6 +97,8 @@ def add_args(parser):
 
     parser.add_argument('--num_train_epochs', type=int, default=3, metavar='EP',
                         help='how many epochs will be trained locally')
+    parser.add_argument('--evaluate_during_training_steps', type=int, default=100, metavar='EP',
+                        help='the frequency of the evaluation during training')                        
     parser.add_argument('--gradient_accumulation_steps', type=int, default=1, metavar='EP',
                         help='how many steps for accumulate the loss.')
     parser.add_argument('--n_gpu', type=int, default=1, metavar='EP',
@@ -175,6 +177,7 @@ if __name__ == "__main__":
                               "max_seq_length": args.max_seq_length,
                               "train_batch_size": args.train_batch_size,
                               "eval_batch_size": args.eval_batch_size,
+                              "evaluate_during_training_steps": args.evaluate_during_training_steps,
                               "fp16": args.fp16,
                               "data_file_path": args.data_file_path,
                               "partition_file_path": args.partition_file_path,
@@ -219,6 +222,7 @@ CUDA_VISIBLE_DEVICES=0 python -m experiments.centralized.transformer_exps.main_t
     --max_seq_length 256 \
     --learning_rate 5e-5 \
     --num_train_epochs 5 \
+    --evaluate_during_training_steps 500 \
     --output_dir /tmp/${DATA_NAME}_fed/ \
     --n_gpu 1
 '''
