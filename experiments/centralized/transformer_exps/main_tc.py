@@ -99,11 +99,17 @@ def add_args(parser):
     return args
 
 
-def create_model(args, num_labels):
+def create_model(args):
     # create model, tokenizer, and model config (HuggingFace style)
     MODEL_CLASSES = {
-        "bert": (BertConfig, BertForSequenceClassification, BertTokenizer),
-    }
+            "bert": (BertConfig, BertForSequenceClassification, BertTokenizer),
+            "xlnet": (XLNetConfig, XLNetForSequenceClassification, XLNetTokenizer),
+            "xlm": (XLMConfig, XLMForSequenceClassification, XLMTokenizer),
+            "roberta": (RobertaConfig, RobertaForSequenceClassification, RobertaTokenizer),
+            "distilbert": (DistilBertConfig, DistilBertForSequenceClassification, DistilBertTokenizer),
+            "albert": (AlbertConfig, AlbertForSequenceClassification, AlbertTokenizer),
+            "camembert": (CamembertConfig, CamembertForSequenceClassification, CamembertTokenizer),
+        }
     config_class, model_class, tokenizer_class = MODEL_CLASSES[args.model_type]
     config = config_class.from_pretrained(args.model_name, num_labels=args.num_labels, **args.config)
     model = model_class.from_pretrained(args.model_name, config=config)
@@ -192,10 +198,10 @@ CUDA_VISIBLE_DEVICES=0 python -m experiments.centralized.transformer_exps.main_t
     --data_file ~/fednlp_data/data_files/${DATA_NAME}_data.h5 \
     --partition_file ~/fednlp_data/partition_files/${DATA_NAME}_partition.h5 \
     --partition_method uniform \
-    --model_type bert \
-    --model_name bert-base-uncased \
+    --model_type distilbert \
+    --model_name distilbert-base-uncased  \
     --do_lower_case True \
-    --train_batch_size 8 \
+    --train_batch_size 32 \
     --eval_batch_size 8 \
     --max_seq_length 256 \
     --learning_rate 5e-5 \
