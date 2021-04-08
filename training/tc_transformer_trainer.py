@@ -112,7 +112,6 @@ class TextClassificationTrainer:
         eval_loss = 0.0
         nb_eval_steps = 0
         n_batches = len(self.test_dl)
-        # TODO: check the value of len(self.test_examples)
         test_sample_len = len(self.test_dl.dataset)
         preds = np.empty((test_sample_len, self.num_labels))
 
@@ -120,9 +119,8 @@ class TextClassificationTrainer:
         self.model.eval()
         logging.info("len(test_dl) = %d, n_batches = %d" % (len(self.test_dl), n_batches))
         for i, batch in enumerate(self.test_dl):
-            batch.to(self.device)
             with torch.no_grad():
-                batch = tuple(t for t in batch)
+                batch = tuple(t.to(self.device) for t in batch)
                 # sample_index_list = batch[0].cpu().numpy()
                 if i == len(self.test_dl) - 1:
                     logging.info(batch)
