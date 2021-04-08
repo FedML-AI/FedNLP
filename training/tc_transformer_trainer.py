@@ -40,15 +40,18 @@ class TextClassificationTrainer:
         self.results = {}
         self.best_accuracy = 0.0
 
-    def set_data(self, train_dl, test_dl=None, test_examples=None):
+    def set_data(self, train_dl=None, test_dl=None, test_examples=None):
         # Used for fedtrainer
-        self.train_dl = train_dl
-        self.test_dl = test_dl
-        self.test_examples = test_examples
+        if train_dl:
+            self.train_dl = train_dl
+        if test_dl:
+            self.test_dl = test_dl
+        if test_examples:
+            self.test_examples = test_examples
 
 
     def train_model(self):
-        
+
         self.model.to(self.device)
         # build optimizer and scheduler
         iteration_in_total = len(
@@ -106,7 +109,7 @@ class TextClassificationTrainer:
         logging.info(results)
         return global_step, tr_loss / global_step
 
-    def eval_model(self, epoch, global_step):
+    def eval_model(self, epoch=0, global_step=0):
         results = {}
 
         eval_loss = 0.0
