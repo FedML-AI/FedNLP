@@ -61,25 +61,28 @@ class FedTransformerTrainer(ModelTrainer):
         self.device = device
         self.client_trainer.device = device
         self.client_trainer._move_model_to_device() 
+        logging.info("Client(%d)"%self.id + ":| Local Train Data Size = %d" % (len(train_data)))
+        self.client_trainer.set_data(train_data)
+        self.client_trainer.train_model()
+
+        # if self.task_formulation == "classification":
+        #     # train_data_flat = self.flatten_classification_data(train_data)
+        #     logging.info("Client(%d)"%self.id + ":| Local Train Data Size = %d" % (len(train_data)))
+        #     # train_df = pd.DataFrame(train_data_flat)            
+        #     global_step, training_details = self.client_trainer.train_model()
+        # elif self.task_formulation == "sequence_tagging":
+        #     train_data_flat = self.flatten_sequence_tagging_data(train_data) 
+        #     logging.info("Client(%d)"%self.id + ":| Local Train Data Size = %d" % (len(train_data_flat)))
+        #     train_df = pd.DataFrame(train_data_flat, columns=["sentence_id", "words", "labels"])
+        #     global_step, training_details = self.client_trainer.train_model(train_data=train_df, client_desc="Client(%d)"%self.id)
+        # elif self.task_formulation == "question_answering":
+        #     train_data_flat = self.flatten_question_answering_data(train_data)
+        #     # train_data_flat = data_preprocessing.SQuAD_1_1.data_loader.get_normal_format(train_data_flat)   # TODO: fix the reference 
+        #     logging.info("Client(%d)"%self.id + ":| Local Train Data Size = %d" % (len(train_data_flat)))
+        #     train_df = pd.DataFrame(train_data_flat)
+        #     global_step, training_details = self.client_trainer.train_model(train_data=train_data_flat, client_desc="Client(%d)"%self.id)
         
-        if self.task_formulation == "classification":
-            train_data_flat = self.flatten_classification_data(train_data)
-            logging.info("Client(%d)"%self.id + ":| Local Train Data Size = %d" % (len(train_data_flat)))
-            train_df = pd.DataFrame(train_data_flat)
-            global_step, training_details = self.client_trainer.train_model(train_df=train_df, client_desc="Client(%d)"%self.id)
-        elif self.task_formulation == "sequence_tagging":
-            train_data_flat = self.flatten_sequence_tagging_data(train_data) 
-            logging.info("Client(%d)"%self.id + ":| Local Train Data Size = %d" % (len(train_data_flat)))
-            train_df = pd.DataFrame(train_data_flat, columns=["sentence_id", "words", "labels"])
-            global_step, training_details = self.client_trainer.train_model(train_data=train_df, client_desc="Client(%d)"%self.id)
-        elif self.task_formulation == "question_answering":
-            train_data_flat = self.flatten_question_answering_data(train_data)
-            # train_data_flat = data_preprocessing.SQuAD_1_1.data_loader.get_normal_format(train_data_flat)   # TODO: fix the reference 
-            logging.info("Client(%d)"%self.id + ":| Local Train Data Size = %d" % (len(train_data_flat)))
-            train_df = pd.DataFrame(train_data_flat)
-            global_step, training_details = self.client_trainer.train_model(train_data=train_data_flat, client_desc="Client(%d)"%self.id)
-        
-        # self.client_trainer.args.reprocess_input_data = False
+        # # self.client_trainer.args.reprocess_input_data = False
 
 
     def test(self, test_data, device, args=None):
