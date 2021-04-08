@@ -3,6 +3,7 @@ argon2-cffi==20.1.0
 astor==0.8.1
 async-generator==1.10
 attrs==20.3.0
+autopep8==1.5.6
 backcall==0.2.0
 base58==2.0.1
 bleach==3.2.1
@@ -27,6 +28,7 @@ future==0.18.2
 gensim==3.8.3
 gitdb==4.0.5
 GitPython==3.1.12
+grpcio==1.37.0
 h5py==3.1.0
 idna==2.10
 importlib-metadata==1.5.0
@@ -80,6 +82,7 @@ ptyprocess==0.7.0
 py-lz4framed==0.14.0
 py-rouge==1.1
 pyarrow==2.0.0
+pycodestyle==2.7.0
 pycparser==2.20
 pydeck==0.5.0
 Pygments==2.7.3
