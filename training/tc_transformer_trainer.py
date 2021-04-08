@@ -102,8 +102,8 @@ class TextClassificationTrainer:
 
                 if self.args.is_debug_mode == 1 and global_step > 3:
                     break
-        results, _, _ = self.eval_model(self.args.num_train_epochs-1, global_step)
-        logging.info(results)
+        # results, _, _ = self.eval_model(self.args.num_train_epochs-1, global_step)
+        # logging.info(results)
         return global_step, tr_loss / global_step
 
     def eval_model(self, epoch=0, global_step=0):

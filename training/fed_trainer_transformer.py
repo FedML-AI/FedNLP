@@ -41,14 +41,26 @@ class FedTransformerTrainer(ModelTrainer):
         self.client_trainer.test_dl = test_data
         self.client_trainer.eval_model()
 
+    def test_on_the_server(self, train_data_local_dict, test_data_local_dict, device, args=None):
+        global_test_data = []
+        for idx, local_test_data in test_data_local_dict.items():
+            global_test_data += local_test_data
+        logging.info("Client(%d)"%self.id + ":| Global Test Data Size = %d" % (len(global_test_data)))
+        self.client_trainer.test_dl = global_test_data
+        self.client_trainer.eval_model()
+        
+        # global_test_data = []
+        # for idx, local_test_data in test_data_local_dict.items():
+        #     global_test_data += local_test_data
+        
         # if self.task_formulation == "classification":
-        #     test_data_flat = self.flatten_classification_data(test_data)
-        #     logging.info("Client(%d)"%self.id + ":| Local Test Data Size = %d" % (len(test_data_flat)))
+        #     test_data_flat = self.flatten_classification_data(global_test_data)
+        #     logging.info("Client(%d)"%self.id + ":| Global Test Data Size = %d" % (len(test_data_flat)))
         #     test_df = pd.DataFrame(test_data_flat)
         #     result, model_outputs, wrong_predictions = self.client_trainer.eval_model(test_df, acc=sklearn.metrics.accuracy_score) 
-        #     logging.info("Client(%d)"%self.id + ":| Local Test Evaluation Result =%s" % (str(result)))
+        #     logging.info("Client(%d)"%self.id + ":| Global Test Evaluation Result =%s" % (str(result)))
         # elif self.task_formulation == "sequence_tagging":
-        #     test_data_flat = self.flatten_sequence_tagging_data(test_data)
+        #     test_data_flat = self.flatten_sequence_tagging_data(global_test_data)
         #     logging.info("Client(%d)"%self.id + ":| Local Test Data Size = %d" % (len(test_data_flat)))
         #     test_df = pd.DataFrame(test_data_flat, columns=["sentence_id", "words", "labels"])
         #     result, model_outputs, preds_list = self.client_trainer.eval_model(test_df) 
@@ -56,26 +68,5 @@ class FedTransformerTrainer(ModelTrainer):
         # elif self.task_formulation == "question_answering":
         #     # TODO: 
         #     pass
-
-    def test_on_the_server(self, train_data_local_dict, test_data_local_dict, device, args=None):
-        global_test_data = []
-        for idx, local_test_data in test_data_local_dict.items():
-            global_test_data += local_test_data
-        
-        if self.task_formulation == "classification":
-            test_data_flat = self.flatten_classification_data(global_test_data)
-            logging.info("Client(%d)"%self.id + ":| Global Test Data Size = %d" % (len(test_data_flat)))
-            test_df = pd.DataFrame(test_data_flat)
-            result, model_outputs, wrong_predictions = self.client_trainer.eval_model(test_df, acc=sklearn.metrics.accuracy_score) 
-            logging.info("Client(%d)"%self.id + ":| Global Test Evaluation Result =%s" % (str(result)))
-        elif self.task_formulation == "sequence_tagging":
-            test_data_flat = self.flatten_sequence_tagging_data(global_test_data)
-            logging.info("Client(%d)"%self.id + ":| Local Test Data Size = %d" % (len(test_data_flat)))
-            test_df = pd.DataFrame(test_data_flat, columns=["sentence_id", "words", "labels"])
-            result, model_outputs, preds_list = self.client_trainer.eval_model(test_df) 
-            logging.info("Client(%d)"%self.id + ":| Local Test Evaluation Result =%s" % (str(result)))
-        elif self.task_formulation == "question_answering":
-            # TODO: 
-            pass
-        return True
+        # return True
     
