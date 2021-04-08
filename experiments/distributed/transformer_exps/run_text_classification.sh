@@ -1,5 +1,4 @@
 LOG_FILE="fedavg_transformer_tc.log"
-CLIENT_NUM=10
 WORKER_NUM=10
 ROUND=500
 CI=0
@@ -15,7 +14,6 @@ mpirun -np $PROCESS_NUM -hostfile mpi_host_file \
 python -m fedavg_main_tc \
   --gpu_mapping_file "gpu_mapping.yaml" \
   --gpu_mapping_key mapping_default \
-  --client_num_in_total $CLIENT_NUM \
   --client_num_per_round $WORKER_NUM \
   --comm_round $ROUND \
   --ci $CI \
