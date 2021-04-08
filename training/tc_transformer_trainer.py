@@ -58,7 +58,7 @@ class TextClassificationTrainer:
         # training result
         global_step = 0
         tr_loss, logging_loss = 0.0, 0.0
-        for epoch in range(0, self.args.num_train_epochs):
+        for epoch in range(0, self.args.epochs):
 
             self.model.train()
 
