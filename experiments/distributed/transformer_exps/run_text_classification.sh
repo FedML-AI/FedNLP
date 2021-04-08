@@ -1,6 +1,6 @@
 LOG_FILE="fedavg_transformer_tc.log"
 WORKER_NUM=10
-ROUND=500
+ROUND=50
 CI=0
 
 DATA_DIR=/home/bill/fednlp_data/
