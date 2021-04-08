@@ -53,5 +53,5 @@ class FedTransformerTrainer(ModelTrainer):
 
         logging.info("Client(%d)"%self.id + ":| Global Test Data Size = %d" % (len(global_test_data)))
         self.client_trainer.test_dl = global_test_dl
-        self.client_trainer.eval_model()
+        self.client_trainer.eval_model(device=device)
         return True

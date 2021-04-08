@@ -106,7 +106,10 @@ class TextClassificationTrainer:
         # logging.info(results)
         return global_step, tr_loss / global_step
 
-    def eval_model(self, epoch=0, global_step=0):
+    def eval_model(self, epoch=0, global_step=0, device=-1):
+        if device < 0:
+            device = self.device
+
         results = {}
 
         eval_loss = 0.0
@@ -120,7 +123,7 @@ class TextClassificationTrainer:
         logging.info("len(test_dl) = %d, n_batches = %d" % (len(self.test_dl), n_batches))
         for i, batch in enumerate(self.test_dl):
             with torch.no_grad():
-                batch = tuple(t.to(self.device) for t in batch)
+                batch = tuple(t.to(device) for t in batch)
                 # sample_index_list = batch[0].cpu().numpy()
                 if i == len(self.test_dl) - 1:
                     logging.info(batch)
