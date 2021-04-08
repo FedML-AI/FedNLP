@@ -1,6 +1,6 @@
 LOG_FILE="fedavg_transformer_tc.log"
 WORKER_NUM=10
-ROUND=50
+ROUND=10  # 50 to test the simulated sampling
 CI=0
 
 DATA_DIR=/home/bill/fednlp_data/
