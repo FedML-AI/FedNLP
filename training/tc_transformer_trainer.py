@@ -47,7 +47,10 @@ class TextClassificationTrainer:
         self.test_examples = test_examples
 
 
-    def train_model(self):
+    def train_model(self, device=-1):
+        if device < 0:
+            device = self.device
+            
         logging.info("train_model self.device: " + str(self.device))
         self.model.to(self.device)
         # build optimizer and scheduler

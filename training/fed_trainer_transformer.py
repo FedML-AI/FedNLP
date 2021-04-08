@@ -30,14 +30,13 @@ class FedTransformerTrainer(ModelTrainer):
     def train(self, train_data, device, args):
         logging.info("Client(%d)"%self.id + ":| Local Train Data Size = %d" % (len(train_data)))
         self.client_trainer.train_dl = train_data
-        self.client_trainer.train_model()
-
+        self.client_trainer.train_model(device=device)
 
 
     def test(self, test_data, device, args=None):
         logging.info("Client(%d)"%self.id + ":| Local Test Data Size = %d" % (len(test_data)))
         self.client_trainer.test_dl = test_data
-        self.client_trainer.eval_model()
+        self.client_trainer.eval_model(device=device)
 
     def test_on_the_server(self, train_data_local_dict, test_data_local_dict, device, args=None):
         global_test_data = []
