@@ -72,6 +72,10 @@ def add_centralized_args(parser):
                         help="is_debug_mode")
 
     # Infrastructure related
+    parser.add_argument('--is_mobile', type=int, default=1, metavar='N',
+                        help='is mobile device?')
+
+    # Infrastructure related
     parser.add_argument('--device_id', type=int, default=8, metavar='N',  # TODO: why 8?
                         help='device id')
 
