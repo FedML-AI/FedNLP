@@ -68,6 +68,7 @@ def fedavg_main(process_id, worker_number, device, args):
                                  "max_seq_length": args.max_seq_length,
                                  "train_batch_size": args.train_batch_size,
                                  "eval_batch_size": args.eval_batch_size,
+                                 "evaluate_during_training": False, # Disabled for FedAvg.
                                  "evaluate_during_training_steps": args.evaluate_during_training_steps,
                                  "fp16": args.fp16,
                                  "data_file_path": args.data_file_path,
@@ -143,6 +144,9 @@ if __name__ == "__main__":
         process_id, worker_number, args.gpu_mapping_file, args.gpu_mapping_key)
     logging.info("process_id = %d, size = %d, device=%s" %
                  (process_id, worker_number, str(device)))
+
+    logging.info("torch.cuda.current_device()=" + str(torch.cuda.current_device()))
+    logging.info("torch.cuda.device_count()=" + str(torch.cuda.device_count()))
 
     fedavg_main(process_id, worker_number, device, args)
 
