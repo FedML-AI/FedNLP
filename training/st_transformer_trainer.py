@@ -112,8 +112,8 @@ class SeqTaggingTrainer:
 
                 if self.args.is_debug_mode == 1 and global_step > 3:
                     break
-        results, _, _ = self.eval_model(self.args.num_train_epochs-1, global_step)
-        logging.info(results)
+        # results, _, _ = self.eval_model(self.args.num_train_epochs-1, global_step)
+        # logging.info(results)
         return global_step, tr_loss / global_step
 
     def eval_model(self, epoch=0, global_step=0, device=None):
@@ -124,10 +124,15 @@ class SeqTaggingTrainer:
 
         eval_loss = 0.0
         nb_eval_steps = 0
+        logging.info("len test_dl")
+        logging.info(self.test_dl)
         n_batches = len(self.test_dl)
         # TODO: check the value of len(self.test_examples)
-        test_sample_len = len(self.test_examples)
+        logging.info("len test_dl.dataset")
+        test_sample_len = len(self.test_dl.dataset)
+        logging.info("pad token label id")
         pad_token_label_id = self.pad_token_label_id
+        logging.info("output dir")
         eval_output_dir = self.args.output_dir
         
 
@@ -229,6 +234,7 @@ class SeqTaggingTrainer:
         # wandb.log({"Evaluation Accuracy": result["acc"], "step": global_step})
         # wandb.log({"Evaluation Loss": result["eval_loss"], "step": global_step})
 
+        self.results.update(result)
         logging.info(self.results)
 
         return result, model_outputs, wrong
