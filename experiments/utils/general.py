@@ -35,7 +35,7 @@ def create_model(args, formulation="classification"):
             # "roberta": (RobertaConfig, RobertaForSequenceClassification, RobertaTokenizer),
             # "albert": (AlbertConfig, AlbertForSequenceClassification, AlbertTokenizer),
         },
-        "sequence_tagging": {
+        "seq_tagging": {
             "bert": (BertConfig, BertForTokenClassification, BertTokenizer),
             "distilbert": (DistilBertConfig, DistilBertForTokenClassification, DistilBertTokenizer),
         },  # TODO: add more.

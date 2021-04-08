@@ -54,8 +54,12 @@ class SeqTaggingTrainer:
         self.test_dl = test_dl
         self.test_examples = test_examples
 
-    def train_model(self):
+    def train_model(self, device=None):
+        if not device:
+            device = self.device
 
+        self.model.to(device)
+        
         # build optimizer and scheduler
         iteration_in_total = len(
             self.train_dl) // self.args.gradient_accumulation_steps * self.args.num_train_epochs
@@ -69,16 +73,16 @@ class SeqTaggingTrainer:
             self.model.train()
 
             for batch_idx, batch in enumerate(self.train_dl):
-
                 batch = tuple(t for t in batch)
                 # dataset = TensorDataset(all_guid, all_input_ids, all_input_mask, all_segment_ids, all_label_ids)
-                x = batch[1].to(self.device)
-                labels = batch[4].to(self.device)
+                x = batch[1].to(device)
+                labels = batch[4].to(device)
 
                 # (loss), logits, (hidden_states), (attentions)
                 output = self.model(x)
                 logits = output[0]
                 loss_fct = CrossEntropyLoss()
+
                 loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
 
                 # model outputs are always tuple in pytorch-transformers (see doc)
@@ -112,7 +116,10 @@ class SeqTaggingTrainer:
         logging.info(results)
         return global_step, tr_loss / global_step
 
-    def eval_model(self, epoch, global_step):
+    def eval_model(self, epoch=0, global_step=0, device=None):
+        if not device:
+            device = self.device
+
         results = {}
 
         eval_loss = 0.0
@@ -127,17 +134,18 @@ class SeqTaggingTrainer:
         preds = None
         out_label_ids = None
 
+        self.model.to(device)
         self.model.eval()
         logging.info("len(test_dl) = %d, n_batches = %d" % (len(self.test_dl), n_batches))
         for i, batch in enumerate(self.test_dl):
             batch = tuple(t for t in batch)
             with torch.no_grad():
-                sample_index_list = batch[0].to(self.device).cpu().numpy()
+                sample_index_list = batch[0].to(device).cpu().numpy()
 
                 if i == len(self.test_dl) - 1:
                     logging.info(batch)
-                x = batch[1].to(self.device)
-                labels = batch[4].to(self.device)
+                x = batch[1].to(device)
+                labels = batch[4].to(device)
 
                 output = self.model(x)
                 logits = output[0]

@@ -15,11 +15,11 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "../../../")))
 
 from training.fed_trainer_transformer import FedTransformerTrainer
 from experiments.utils.general import set_seed, create_model, add_federated_args
-from data_preprocessing.text_classification_preprocessor import TLMPreprocessor
-from training.tc_transformer_trainer import TextClassificationTrainer
-from model.transformer.model_args import ClassificationArgs
-from data_manager.text_classification_data_manager import TextClassificationDataManager
+from data_preprocessing.seq_tagging_preprocessor import TLMPreprocessor
+from training.st_transformer_trainer import SeqTaggingTrainer
+from model.transformer.model_args import SeqTaggingArgs
 from data_manager.base_data_manager import BaseDataManager
+from data_manager.seq_tagging_data_manager import SequenceTaggingDataManager
 from FedML.fedml_api.distributed.utils.gpu_mapping import mapping_processes_to_gpu_device_from_yaml_file
 from FedML.fedml_api.distributed.fedavg.FedAvgAPI import FedML_init, FedML_FedAvg_distributed
 import argparse
@@ -53,7 +53,7 @@ def fedavg_main(process_id, worker_number, device, args):
         args.data_file_path)
 
     # model init
-    model_args = ClassificationArgs()
+    model_args = SeqTaggingArgs()
     model_args.model_name = args.model_name
     model_args.model_type = args.model_type
     model_args.load(model_args.model_name)
@@ -81,7 +81,7 @@ def fedavg_main(process_id, worker_number, device, args):
                                  })
 
     model_config, client_model, tokenizer = create_model(
-        model_args, formulation="classification")
+        model_args, formulation="seq_tagging")
 
     # data preprocessor
     preprocessor = TLMPreprocessor(
@@ -91,11 +91,11 @@ def fedavg_main(process_id, worker_number, device, args):
     # data manager
     num_workers = args.client_num_per_round
 
-    client_trainer = TextClassificationTrainer(
-        model_args, device, client_model, None, None, None)
+    client_trainer = SeqTaggingTrainer(
+        model_args, device, client_model, None, None, None, tokenizer)
     fed_trainer = FedTransformerTrainer(
-        client_trainer, client_model, task_formulation="classification")
-    dm = TextClassificationDataManager(args, model_args, preprocessor, process_id, num_workers)
+        client_trainer, client_model, task_formulation="seq_tagging")
+    dm = SequenceTaggingDataManager(args, model_args, preprocessor, process_id, num_workers)
     train_data_num, train_data_global, test_data_global, train_data_local_num_dict, \
         train_data_local_dict, test_data_local_dict, num_clients = dm.load_federated_data(process_id=process_id)
     # start FedAvg algorithm
