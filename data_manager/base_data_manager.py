@@ -27,7 +27,10 @@ class BaseDataManager(ABC):
 
         self.num_clients = self.load_num_clients(self.args.partition_file_path, self.args.partition_method)
         args.client_num_in_total = self.num_clients
-        self.client_index_list = self.sample_client_index(process_id, num_workers)
+
+        # TODO: sync to the same logic to sample index
+        # self.client_index_list = self.sample_client_index(process_id, num_workers)
+        self.client_index_list = self.get_all_clients()
 
     @staticmethod
     def load_attributes(data_path):
@@ -57,7 +60,9 @@ class BaseDataManager(ABC):
             start = (process_id - 1) * size
             end = process_id * size if num_workers != process_id else num_clients
             return [i for i in range(start, end)]
-
+        
+    def get_all_clients(self):
+        return list(range(0, self.num_clients))
     # def load_all_data(self):
     #     return self.load_data()
 
