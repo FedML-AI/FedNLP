@@ -95,17 +95,17 @@ class TLMPreprocessor(BasePreprocessor):
                 mode, args.model_type, args.max_seq_length, len(self.label_vocab), len(examples),
             ),
         )
-        logging.info("cached_features_file = %s" % str(cached_features_file))
-        logging.info("args.reprocess_input_data = %s" % str(args.reprocess_input_data))
-        logging.info("no_cache = %s" % str(no_cache))
+        logging.debug("cached_features_file = %s" % str(cached_features_file))
+        logging.debug("args.reprocess_input_data = %s" % str(args.reprocess_input_data))
+        logging.debug("no_cache = %s" % str(no_cache))
         if os.path.exists(cached_features_file) and (
                 (not args.reprocess_input_data and not no_cache)
                 or (mode == "dev" and args.use_cached_eval_features and not no_cache)
         ):
             features = torch.load(cached_features_file)
-            logging.info(f" Features loaded from cache at {cached_features_file}")
+            logging.debug(f" Features loaded from cache at {cached_features_file}")
         else:
-            logging.info(" Converting to features started. Cache is not used.")
+            logging.debug(" Converting to features started. Cache is not used.")
 
             # If labels_map is defined, then labels need to be replaced with ints
             if args.labels_map and not args.regression:

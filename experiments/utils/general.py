@@ -71,9 +71,9 @@ def add_centralized_args(parser):
     parser.add_argument("--is_debug_mode", default=0, type=int,
                         help="is_debug_mode")
 
-    # Infrastructure related
-    parser.add_argument('--device_id', type=int, default=0, metavar='N',  # TODO: why 8?
-                        help='device id')
+    # # Infrastructure related
+    # parser.add_argument('--device_id', type=int, default=0, metavar='N',  # TODO: why 8?
+    #                     help='device id')
 
     # Data related
     # TODO: list all dataset names:

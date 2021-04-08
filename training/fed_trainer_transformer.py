@@ -58,9 +58,9 @@ class FedTransformerTrainer(ModelTrainer):
 
 
     def train(self, train_data, device, args):
-        self.device = device
-        self.client_trainer.device = device
-        self.client_trainer._move_model_to_device() 
+        # self.device = device
+        # self.client_trainer.device = device
+        # self.client_trainer._move_model_to_device() 
         logging.info("Client(%d)"%self.id + ":| Local Train Data Size = %d" % (len(train_data)))
         self.client_trainer.set_data(train_data)
         self.client_trainer.train_model()

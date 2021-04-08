@@ -34,7 +34,7 @@ class TextClassificationTrainer:
 
         # model
         self.model = model
-        self.model.to(self.device)
+        
 
         # training results
         self.results = {}
@@ -46,8 +46,10 @@ class TextClassificationTrainer:
         self.test_dl = test_dl
         self.test_examples = test_examples
 
-    def train_model(self):
 
+    def train_model(self):
+        
+        self.model.to(self.device)
         # build optimizer and scheduler
         iteration_in_total = len(
             self.train_dl) // self.args.gradient_accumulation_steps * self.args.num_train_epochs
