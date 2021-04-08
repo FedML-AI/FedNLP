@@ -113,7 +113,7 @@ class TextClassificationTrainer:
         nb_eval_steps = 0
         n_batches = len(self.test_dl)
         # TODO: check the value of len(self.test_examples)
-        test_sample_len = len(self.test_examples)
+        test_sample_len = len(self.test_dl.dataset)
         preds = np.empty((test_sample_len, self.num_labels))
 
         out_label_ids = np.empty(test_sample_len)
@@ -146,6 +146,8 @@ class TextClassificationTrainer:
             out_label_ids[start_index:end_index] = labels.detach().cpu().numpy()
 
         eval_loss = eval_loss / nb_eval_steps
+
+        
 
         model_outputs = preds
         preds = np.argmax(preds, axis=1)
