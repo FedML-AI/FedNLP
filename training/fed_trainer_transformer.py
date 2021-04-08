@@ -49,6 +49,7 @@ class FedTransformerTrainer(ModelTrainer):
                                 num_workers=0,
                                 pin_memory=True,
                                 drop_last=False)
+        # global_test_dl.to(device)
 
         logging.info("Client(%d)"%self.id + ":| Global Test Data Size = %d" % (len(global_test_data)))
         self.client_trainer.test_dl = global_test_dl

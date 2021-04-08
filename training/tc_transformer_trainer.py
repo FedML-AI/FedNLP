@@ -120,14 +120,14 @@ class TextClassificationTrainer:
         self.model.eval()
         logging.info("len(test_dl) = %d, n_batches = %d" % (len(self.test_dl), n_batches))
         for i, batch in enumerate(self.test_dl):
+            batch.to(self.device)
             with torch.no_grad():
                 batch = tuple(t for t in batch)
-                sample_index_list = batch[0].to(self.device).cpu().numpy()
-
+                # sample_index_list = batch[0].cpu().numpy()
                 if i == len(self.test_dl) - 1:
                     logging.info(batch)
-                x = batch[1].to(self.device)
-                labels = batch[4].to(self.device)
+                x = batch[1]
+                labels = batch[4]
 
                 output = self.model(x)
                 logits = output[0]
