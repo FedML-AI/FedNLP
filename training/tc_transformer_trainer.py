@@ -112,7 +112,7 @@ class TextClassificationTrainer:
         eval_loss = 0.0
         nb_eval_steps = 0
         n_batches = len(self.test_dl)
-        # TODO: check the value of len(self.test_examples)
+        
         test_sample_len = len(self.test_dl.dataset)
         preds = np.empty((test_sample_len, self.num_labels))
 
