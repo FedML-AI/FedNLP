@@ -57,7 +57,7 @@ def fedavg_main(process_id, worker_number, device, args):
     model_args.model_type = args.model_type
     model_args.load(model_args.model_name)
     model_args.num_labels = len(attributes["label_vocab"])
-    model_args.update_from_dict({"num_train_epochs": args.num_train_epochs,
+    model_args.update_from_dict({"epochs": args.epochs,
                                  "learning_rate": args.learning_rate,
                                  "gradient_accumulation_steps": args.gradient_accumulation_steps,
                                  "do_lower_case": args.do_lower_case,
