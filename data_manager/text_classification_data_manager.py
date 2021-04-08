@@ -82,10 +82,10 @@ class TextClassificationDataManager(BaseDataManager):
             # TODO: cancel the partiation file usage
             train_index_list = partition_file[partition_method]["partition_data"][client_idx]["train"][()]
             test_index_list = partition_file[partition_method]["partition_data"][client_idx]["test"][()]
-            train_X = [data_file["X"][str(idx)][()] for idx in train_index_list]
-            train_y = [data_file["Y"][str(idx)][()] for idx in train_index_list]
-            test_X = [data_file["X"][str(idx)][()] for idx in test_index_list]
-            test_y = [data_file["Y"][str(idx)][()] for idx in test_index_list]
+            train_X = [data_file["X"][str(idx)][()].decode("utf-8") for idx in train_index_list]
+            train_y = [data_file["Y"][str(idx)][()].decode("utf-8") for idx in train_index_list]
+            test_X = [data_file["X"][str(idx)][()].decode("utf-8") for idx in test_index_list]
+            test_y = [data_file["Y"][str(idx)][()].decode("utf-8") for idx in test_index_list]
             train_examples, train_dataset = self.preprocessor.transform(train_X, train_y, train_index_list)
             test_examples, test_dataset = self.preprocessor.transform(test_X, test_y, test_index_list, evaluate=True)
 

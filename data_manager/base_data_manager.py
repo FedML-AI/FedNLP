@@ -25,7 +25,7 @@ class BaseDataManager(ABC):
         self.client_index_pointer = 0
         self.attributes = None
 
-        self.num_clients = self.load_num_clients(self.args.partation_path)
+        self.num_clients = self.load_num_clients(self.args.partition_file_path, self.args.partition_method)
         self.client_index_list = self.sample_client_index(process_id, num_workers)
 
     @staticmethod
@@ -36,9 +36,9 @@ class BaseDataManager(ABC):
         return attributes
 
     @staticmethod
-    def load_num_clients(partation_path):
-        data_file = h5py.File(partation_path, "r", swmr=True)
-        num_clients = int(data_file["n_clients"][()])
+    def load_num_clients(partition_file_path, partition_name):
+        data_file = h5py.File(partition_file_path, "r", swmr=True)
+        num_clients = int(data_file[partition_name]["n_clients"][()])
         data_file.close()
         return num_clients
 
