@@ -1,7 +1,11 @@
 from abc import ABC, abstractmethod
 import h5py
 import json
-
+from torch.utils.data import DataLoader
+from tqdm import tqdm
+import logging
+import h5py
+import json
 
 class BaseDataManager(ABC):
     @abstractmethod
@@ -68,37 +72,141 @@ class BaseDataManager(ABC):
 
 
 
-    # def load_all_data(self):
-    #     return self.load_data()
-
-    # def load_client_data(self, client_idx):
-    #     return self.load_data(client_idx)
-
-    # @abstractmethod
-    # def load_data(self, client_idx=None):
-    #     pass
-
     
+    def load_centralized_data(self):
+        data_file = h5py.File(self.args.data_file_path, "r", swmr=True)
+        partition_file = h5py.File(self.args.partition_file_path, "r", swmr=True)
+        partition_method = self.args.partition_method
+        train_index_list = []
+        test_index_list = []
+        for client_idx in tqdm(partition_file[partition_method]["partition_data"].keys(), desc="Loading data from h5 file."):
+            train_index_list.extend(partition_file[partition_method]["partition_data"][client_idx]["train"][()])
+            test_index_list.extend(partition_file[partition_method]["partition_data"][client_idx]["test"][()])
+        train_X = [data_file["X"][str(idx)][()].decode("utf-8") for idx in train_index_list]
+        train_y = [data_file["Y"][str(idx)][()].decode("utf-8") for idx in train_index_list]
+        test_X = [data_file["X"][str(idx)][()].decode("utf-8") for idx in test_index_list]
+        test_y = [data_file["Y"][str(idx)][()].decode("utf-8") for idx in test_index_list]
+        data_file.close()
+        partition_file.close()
+        train_examples, train_dataset = self.preprocessor.transform(train_X, train_y, train_index_list)
+        test_examples, test_dataset = self.preprocessor.transform(test_X, test_y, test_index_list, evaluate=True)
+        train_dl = DataLoader(train_dataset,
+                                       batch_size=self.train_batch_size,
+                                       num_workers=0,
+                                       pin_memory=True,
+                                       drop_last=False)
 
-    # def get_dataset(self):
-    #     return self.train_examples, self.test_examples, self.train_dataset, self.test_dataset
+        test_dl = DataLoader(test_dataset,
+                                    batch_size=self.eval_batch_size,
+                                    num_workers=0,
+                                    pin_memory=True,
+                                    drop_last=False)
+        return train_examples, test_examples, train_dl, test_dl
 
-    # @abstractmethod
-    # def get_data_loader(self):
-    #     pass
 
-    # def load_next_round_data(self):
-    #     '''
-    #     load client data for next round training
-    #     '''
-    #     # if client_index_list is None and train_dataset is None, it means we need to load all data from scratch
-    #     if self.client_index_list is None:
-    #         if self.train_dataset is None:
-    #             self.train_examples, self.test_examples, self.train_dataset, self.test_dataset = self.load_data(None)
-    #         return
-    #     # client_index_pointer will point the client index, we use that index to load the client data
-    #     self.train_examples, self.test_examples, self.train_dataset, self.test_dataset = self.load_data(self.client_index_list[self.client_index_pointer])
-    #     # move to the next client index
-    #     self.client_index_pointer = self.client_index_pointer + 1 if self.client_index_pointer + 1 < len(self.client_index_list) else 0
+    def load_federated_data(self, process_id):
+        if process_id == 0:
+            return self._load_federated_data_server()
+        else:
+            return self._load_federated_data_local()
 
-    
+    def _load_federated_data_server(self):
+        data_file = h5py.File(self.args.data_file_path, "r", swmr=True)
+        partition_file = h5py.File(self.args.partition_file_path, "r", swmr=True)
+        partition_method = self.args.partition_method
+        train_index_list = []
+        test_index_list = []
+        test_data_local_dict = {}
+        test_X = []
+        test_y = []
+        for client_idx in tqdm(partition_file[partition_method]["partition_data"].keys(), desc="Loading data from h5 file."):
+            train_index_list.extend(partition_file[partition_method]["partition_data"][client_idx]["train"][()])
+            local_test_index_list = partition_file[partition_method]["partition_data"][client_idx]["test"][()]
+            test_index_list.extend(local_test_index_list)
+            # local_test_X = [data_file["X"][str(idx)][()].decode("utf-8") for idx in local_test_index_list]
+            # local_test_y = [data_file["Y"][str(idx)][()].decode("utf-8") for idx in local_test_index_list]
+            local_test_X, local_test_y = self.read_instance_from_h5(data_file, local_test_index_list)
+            _, local_test_dataset = self.preprocessor.transform(local_test_X, local_test_y, local_test_index_list, evaluate=True)
+            local_test_data = DataLoader(local_test_dataset,
+                                    batch_size=self.eval_batch_size,
+                                    num_workers=0,
+                                    pin_memory=True,
+                                    drop_last=False)
+            test_data_local_dict[int(client_idx)] = local_test_data
+            test_X += local_test_X
+            test_y += local_test_y
+
+        # train_X = [data_file["X"][str(idx)][()].decode("utf-8") for idx in train_index_list]
+        # train_y = [data_file["Y"][str(idx)][()].decode("utf-8") for idx in train_index_list]
+        train_X, train_y = self.read_instance_from_h5(data_file, train_index_list)
+        # test_X = [data_file["X"][str(idx)][()].decode("utf-8") for idx in test_index_list]
+        # test_y = [data_file["Y"][str(idx)][()].decode("utf-8") for idx in test_index_list]
+        data_file.close()
+        partition_file.close()
+
+        train_examples, train_dataset = self.preprocessor.transform(train_X, train_y, train_index_list)
+        test_examples, test_dataset = self.preprocessor.transform(test_X, test_y, test_index_list, evaluate=True)
+        train_data_global = DataLoader(train_dataset,
+                                       batch_size=self.train_batch_size,
+                                       num_workers=0,
+                                       pin_memory=True,
+                                       drop_last=False)
+
+        test_data_global = DataLoader(test_dataset,
+                                    batch_size=self.eval_batch_size,
+                                    num_workers=0,
+                                    pin_memory=True,
+                                    drop_last=False)
+        train_data_num = len(train_examples)
+        logging.info("train_dl_global number = " + str(len(train_data_global)))
+        logging.info("test_dl_global number = " + str(len(test_data_global)))
+        train_data_local_dict = None
+        train_data_local_num_dict = None
+        
+        return (train_data_num, train_data_global, test_data_global, \
+            train_data_local_num_dict, train_data_local_dict, test_data_local_dict, self.num_clients)
+
+    def _load_federated_data_local(self):
+        
+        data_file = h5py.File(self.args.data_file_path, "r", swmr=True)
+        partition_file = h5py.File(self.args.partition_file_path, "r", swmr=True)
+        partition_method = self.args.partition_method
+
+        train_data_local_dict = {}
+        test_data_local_dict = {}
+        train_data_local_num_dict = {}
+        logging.info("self.client_index_list = " + str(self.client_index_list))
+        
+        for client_idx in self.client_index_list:
+            # TODO: cancel the partiation file usage
+            train_index_list = partition_file[partition_method]["partition_data"][str(client_idx)]["train"][()]
+            test_index_list = partition_file[partition_method]["partition_data"][str(client_idx)]["test"][()]
+            train_X, train_y = self.read_instance_from_h5(data_file, train_index_list)
+            test_X, test_y = self.read_instance_from_h5(data_file, test_index_list)
+            # test_X = [data_file["X"][str(idx)][()].decode("utf-8") for idx in test_index_list]
+            # test_y = [data_file["Y"][str(idx)][()].decode("utf-8") for idx in test_index_list]
+            train_examples, train_dataset = self.preprocessor.transform(train_X, train_y, train_index_list)
+            test_examples, test_dataset = self.preprocessor.transform(test_X, test_y, test_index_list, evaluate=True)
+
+            train_loader = DataLoader(train_dataset,
+                                       batch_size=self.train_batch_size,
+                                       num_workers=0,
+                                       pin_memory=True,
+                                       drop_last=False)
+
+            test_loader = DataLoader(test_dataset,
+                                      batch_size=self.eval_batch_size,
+                                      num_workers=0,
+                                      pin_memory=True,
+                                      drop_last=False)
+            train_data_local_dict[client_idx] = train_loader
+            test_data_local_dict[client_idx] = test_loader
+            train_data_local_num_dict[client_idx] = len(train_examples)
+
+        data_file.close()
+        partition_file.close()
+        
+        train_data_global, test_data_global, train_data_num = None, None, 0
+        return (train_data_num, train_data_global, test_data_global, \
+            train_data_local_num_dict, train_data_local_dict, test_data_local_dict, self.num_clients)
+
