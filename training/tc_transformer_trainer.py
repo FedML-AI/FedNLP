@@ -42,16 +42,13 @@ class TextClassificationTrainer:
 
     def set_data(self, train_dl=None, test_dl=None, test_examples=None):
         # Used for fedtrainer
-        if train_dl:
-            self.train_dl = train_dl
-        if test_dl:
-            self.test_dl = test_dl
-        if test_examples:
-            self.test_examples = test_examples
+        self.train_dl = train_dl
+        self.test_dl = test_dl
+        self.test_examples = test_examples
 
 
     def train_model(self):
-
+        logging.info("train_model self.device: " + str(self.device))
         self.model.to(self.device)
         # build optimizer and scheduler
         iteration_in_total = len(
