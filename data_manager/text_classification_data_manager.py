@@ -65,7 +65,7 @@ class TextClassificationDataManager(BaseDataManager):
         logging.info("test_dl_global number = " + str(len(test_data_global)))
         train_data_local_dict = None
         test_data_local_dict = None
-        train_data_local_num_dict = {}
+        train_data_local_num_dict = None
         return (train_data_num, train_data_global, test_data_global, \
             train_data_local_num_dict, train_data_local_dict, test_data_local_dict)
 
@@ -107,8 +107,7 @@ class TextClassificationDataManager(BaseDataManager):
         data_file.close()
         partition_file.close()
         
-        train_data_num = 0
-        train_data_global, test_data_global = None, None
+        train_data_global, test_data_global, train_data_num = None, None, 0
         return (train_data_num, train_data_global, test_data_global, \
             train_data_local_num_dict, train_data_local_dict, test_data_local_dict)
 

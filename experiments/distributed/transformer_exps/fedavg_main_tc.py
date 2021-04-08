@@ -3,7 +3,7 @@ from experiments.utils.general import set_seed, create_model, add_federated_args
 from data_preprocessing.text_classification_preprocessor import TLMPreprocessor
 from training.tc_transformer_trainer import TextClassificationTrainer
 from model.transformer.model_args import ClassificationArgs
-from data_manager.text_classification_data_manager import TextClassificationDataManager
+from data_manager.text_classification_data_manager import BaseDataManager, TextClassificationDataManager
 from FedML.fedml_api.distributed.utils.gpu_mapping import mapping_processes_to_gpu_device_from_yaml_file
 from FedML.fedml_api.distributed.fedavg.FedAvgAPI import FedML_init, FedML_FedAvg_distributed
 import argparse
@@ -26,21 +26,6 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "")))
 sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "../../")))
 
 
-def create_model(args, num_labels):
-    # create model, tokenizer, and model config (HuggingFace style)
-    MODEL_CLASSES = {
-        "bert": (BertConfig, BertForSequenceClassification, BertTokenizer),
-    }
-    config_class, model_class, tokenizer_class = MODEL_CLASSES[model_type]
-    config = config_class.from_pretrained(
-        model_name, num_labels=num_labels, **args.config)
-    model = model_class.from_pretrained(model_name, config=config)
-    tokenizer = tokenizer_class.from_pretrained(
-        model_name, do_lower_case=args.do_lower_case)
-    # logging.info(self.model)
-    return config, model, tokenizer
-
-
 def post_complete_message(tc_args):
     pipe_path = "/tmp/fednlp_tc"
     if not os.path.exists(pipe_path):
@@ -51,20 +36,20 @@ def post_complete_message(tc_args):
         pipe.write("training is finished! \n%s" % (str(tc_args)))
 
 
-def load_data_to_FedML(model_args, args, process_id, num_workers, preprocessor):
-    # TODO: process_id should be 0 if we want to load all instances
-    dm = TextClassificationDataManager(
-        model_args, args, process_id, num_workers, preprocessor) 
-    # train_data_num: {key: client_index; value: number of samples}
-    # train_data_global/xxx_data: {key: client_index; value: PyTorch-DataLoader}
-    return (train_data_num, train_data_global, test_data_global, \
-        train_data_local_num_dict, train_data_local_dict, test_data_local_dict)
+# def load_data_to_FedML(model_args, args, process_id, num_workers, preprocessor):
+#     # TODO: process_id should be 0 if we want to load all instances
+#     dm = TextClassificationDataManager(
+#         model_args, args, process_id, num_workers, preprocessor)
+#     # train_data_num: {key: client_index; value: number of samples}
+#     # train_data_global/xxx_data: {key: client_index; value: PyTorch-DataLoader}
+#     return (train_data_num, train_data_global, test_data_global,
+#             train_data_local_num_dict, train_data_local_dict, test_data_local_dict)
 
 
 def fedavg_main(process_id, worker_number, device, args):
 
     # dataset attributes
-    attributes = TextClassificationDataManager.load_attributes(
+    attributes = BaseDataManager.load_attributes(
         args.data_file_path)
 
     # model init
@@ -94,7 +79,8 @@ def fedavg_main(process_id, worker_number, device, args):
                                  "is_debug_mode": args.is_debug_mode
                                  })
 
-    model_config, client_model, tokenizer = create_model(model_args, formulation="classification")
+    model_config, client_model, tokenizer = create_model(
+        model_args, formulation="classification")
 
     # data preprocessor
     preprocessor = TLMPreprocessor(
@@ -102,16 +88,15 @@ def fedavg_main(process_id, worker_number, device, args):
         tokenizer=tokenizer)
 
     # data manager
-    num_workers = 1
+    num_workers = args.
 
     client_trainer = TextClassificationTrainer(
         model_args, device, client_model, None, None, None)
     fed_trainer = FedTransformerTrainer(
         client_trainer, client_model, task_formulation="classification")
-
+    dm = TextClassificationDataManager(model_args, args, process_id, num_workers, preprocessor)
     train_data_num, train_data_global, test_data_global, train_data_local_num_dict, \
-        train_data_local_dict, test_data_local_dict = load_data_to_FedML(
-            model_args, args, process_id, num_workers, preprocessor)
+        train_data_local_dict, test_data_local_dict = 
     # start FedAvg algorithm
     # for distributed algorithm, train_data_gloabl and test_data_global are required
     FedML_FedAvg_distributed(

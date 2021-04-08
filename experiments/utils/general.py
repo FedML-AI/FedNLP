@@ -29,21 +29,24 @@ from transformers import (
 def create_model(args, formulation="classification"):
     # create model, tokenizer, and model config (HuggingFace style)
     MODEL_CLASSES = {
-        "classification":{
+        "classification": {
             "bert": (BertConfig, BertForSequenceClassification, BertTokenizer),
             "distilbert": (DistilBertConfig, DistilBertForSequenceClassification, DistilBertTokenizer),
             # "roberta": (RobertaConfig, RobertaForSequenceClassification, RobertaTokenizer),
             # "albert": (AlbertConfig, AlbertForSequenceClassification, AlbertTokenizer),
-            },
-        "sequence_tagging":{
+        },
+        "sequence_tagging": {
             "bert": (BertConfig, BertForTokenClassification, BertTokenizer),
             "distilbert": (DistilBertConfig, DistilBertForTokenClassification, DistilBertTokenizer),
-        }, # TODO: add more.
-        } 
-    config_class, model_class, tokenizer_class = MODEL_CLASSES[formulation][args.model_type]
-    config = config_class.from_pretrained(args.model_name, num_labels=args.num_labels, **args.config)
+        },  # TODO: add more.
+    }
+    config_class, model_class, tokenizer_class = MODEL_CLASSES[formulation][
+        args.model_type]
+    config = config_class.from_pretrained(
+        args.model_name, num_labels=args.num_labels, **args.config)
     model = model_class.from_pretrained(args.model_name, config=config)
-    tokenizer = tokenizer_class.from_pretrained(args.model_name, do_lower_case=args.do_lower_case)
+    tokenizer = tokenizer_class.from_pretrained(
+        args.model_name, do_lower_case=args.do_lower_case)
     # logging.info(self.model)
     return config, model, tokenizer
 
@@ -73,16 +76,19 @@ def add_centralized_args(parser):
                         help='device id')
 
     # Data related
-    # TODO: list all dataset names: 
+    # TODO: list all dataset names:
     parser.add_argument('--dataset', type=str, default='agnews', metavar='N',
                         help='dataset used for training')
 
-    parser.add_argument('--data_file_path', type=str, default='/home/bill/fednlp_data/data_files/agnews_data.h5',
-                        help='data h5 file path')
+    parser.add_argument(
+        '--data_file_path', type=str,
+        default='/home/bill/fednlp_data/data_files/agnews_data.h5',
+        help='data h5 file path')
 
-    parser.add_argument('--partition_file_path', type=str,
-                        default='/home/bill/fednlp_data/partition_files/agnews_partition.h5',
-                        help='partition h5 file path')
+    parser.add_argument(
+        '--partition_file_path', type=str,
+        default='/home/bill/fednlp_data/partition_files/agnews_partition.h5',
+        help='partition h5 file path')
 
     parser.add_argument('--partition_method', type=str, default='uniform',
                         help='partition method')
@@ -90,8 +96,9 @@ def add_centralized_args(parser):
     # Model related
     parser.add_argument('--model_type', type=str, default='bert', metavar='N',
                         help='transformer model type')
-    parser.add_argument('--model_name', type=str, default='bert-base-uncased', metavar='N',
-                        help='transformer model name')
+    parser.add_argument(
+        '--model_name', type=str, default='bert-base-uncased', metavar='N',
+        help='transformer model name')
     parser.add_argument('--do_lower_case', type=bool, default=True, metavar='N',
                         help='transformer model name')
 
@@ -104,17 +111,20 @@ def add_centralized_args(parser):
     parser.add_argument('--max_seq_length', type=int, default=128, metavar='N',
                         help='maximum sequence length (default: 128)')
 
-    parser.add_argument('--learning_rate', type=float, default=1e-5, metavar='LR',
-                        help='learning rate (default: 1e-5)')
+    parser.add_argument(
+        '--learning_rate', type=float, default=1e-5, metavar='LR',
+        help='learning rate (default: 1e-5)')
     parser.add_argument('--weight_decay', type=float, default=0, metavar='N',
                         help='L2 penalty')
 
     parser.add_argument('--num_train_epochs', type=int, default=3, metavar='EP',
                         help='how many epochs will be trained locally')
-    parser.add_argument('--evaluate_during_training_steps', type=int, default=100, metavar='EP',
-                        help='the frequency of the evaluation during training')                        
-    parser.add_argument('--gradient_accumulation_steps', type=int, default=1, metavar='EP',
-                        help='how many steps for accumulate the loss.')
+    parser.add_argument(
+        '--evaluate_during_training_steps', type=int, default=100, metavar='EP',
+        help='the frequency of the evaluation during training')
+    parser.add_argument(
+        '--gradient_accumulation_steps', type=int, default=1, metavar='EP',
+        help='how many steps for accumulate the loss.')
     parser.add_argument('--n_gpu', type=int, default=1, metavar='EP',
                         help='how many gpus will be used ')
     parser.add_argument('--fp16', default=False, action="store_true",
@@ -129,7 +139,7 @@ def add_centralized_args(parser):
     return parser
 
 
-def add_federated_args(parser): 
+def add_federated_args(parser):
     """
     parser : argparse.ArgumentParser
     return a parser added with args required by fit
@@ -141,8 +151,9 @@ def add_federated_args(parser):
     parser.add_argument('--comm_round', type=int, default=10,
                         help='how many round of communications we shoud use')
 
-    parser.add_argument('--is_mobile', type=int, default=0,
-                        help='whether the program is running on the FedML-Mobile server side')
+    parser.add_argument(
+        '--is_mobile', type=int, default=0,
+        help='whether the program is running on the FedML-Mobile server side')
 
     parser.add_argument('--frequency_of_the_test', type=int, default=1,
                         help='the frequency of the algorithms')
@@ -150,17 +161,20 @@ def add_federated_args(parser):
     parser.add_argument('--ci', type=int, default=0,
                         help='CI')
 
-    parser.add_argument('--client_num_in_total', type=int, default=1000, metavar='NN',
-                        help='number of workers in a distributed cluster')
+    parser.add_argument(
+        '--client_num_in_total', type=int, default=1000, metavar='NN',
+        help='number of workers in a distributed cluster')
 
-    parser.add_argument('--client_num_per_round', type=int, default=4, metavar='NN',
-                        help='number of workers')
+    parser.add_argument('--client_num_per_round', type=int,
+                        default=4, metavar='NN', help='number of workers')
 
-    parser.add_argument('--gpu_mapping_file', type=str, default="gpu_mapping.yaml",
-                        help='the gpu utilization file for servers and clients. If there is no \
+    parser.add_argument(
+        '--gpu_mapping_file', type=str, default="gpu_mapping.yaml",
+        help='the gpu utilization file for servers and clients. If there is no \
                     gpu_util_file, gpu will not be used.')
 
-    parser.add_argument('--gpu_mapping_key', type=str, default="mapping_default",
+    parser.add_argument('--gpu_mapping_key', type=str,
+                        default="mapping_default",
                         help='the key in gpu utilization file')
 
     return parser
