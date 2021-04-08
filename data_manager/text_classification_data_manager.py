@@ -78,7 +78,7 @@ class TextClassificationDataManager(BaseDataManager):
         train_data_local_dict = {}
         test_data_local_dict = {}
         train_data_local_num_dict = {}
-        logging.info("self.client_index_list", self.client_index_list)
+        logging.info("self.client_index_list = " + str(self.client_index_list))
         
         for client_idx in self.client_index_list:
             # TODO: cancel the partiation file usage
