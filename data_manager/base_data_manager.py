@@ -25,6 +25,7 @@ class BaseDataManager(ABC):
         self.client_index_pointer = 0
         self.attributes = None
 
+        self.num_clients = self.load_num_clients(self.args.partation_path)
         self.client_index_list = self.sample_client_index(process_id, num_workers)
 
     @staticmethod
@@ -35,11 +36,11 @@ class BaseDataManager(ABC):
         return attributes
 
     @staticmethod
-    def load_num_client(partation_path):
+    def load_num_clients(partation_path):
         data_file = h5py.File(partation_path, "r", swmr=True)
-        attributes = json.loads(data_file["attributes"][()])
+        num_clients = int(data_file["n_clients"][()])
         data_file.close()
-        return attributes
+        return num_clients
 
     def sample_client_index(self, process_id, num_workers):
         '''
@@ -49,7 +50,7 @@ class BaseDataManager(ABC):
         if process_id == 0:
             return None
         else:
-            num_clients = self.args.num_clients
+            num_clients = self.num_clients
             # get the number of clients per workers
             size = num_clients // num_workers
             start = (process_id - 1) * size
