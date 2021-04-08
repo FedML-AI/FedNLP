@@ -64,24 +64,28 @@ class TextClassificationDataManager(BaseDataManager):
         train_index_list = []
         test_index_list = []
         test_data_local_dict = {}
+        test_X = []
+        test_y = []
         for client_idx in tqdm(partition_file[partition_method]["partition_data"].keys(), desc="Loading data from h5 file."):
             train_index_list.extend(partition_file[partition_method]["partition_data"][client_idx]["train"][()])
-            test_index_list.extend(partition_file[partition_method]["partition_data"][client_idx]["test"][()])
             local_test_index_list = partition_file[partition_method]["partition_data"][client_idx]["test"][()]
-            local_test_X = [data_file["X"][str(idx)][()].decode("utf-8") for idx in test_index_list]
-            local_test_y = [data_file["Y"][str(idx)][()].decode("utf-8") for idx in test_index_list]
-            local_test_dataset = self.preprocessor.transform(local_test_X, local_test_y, test_index_list, evaluate=True)
+            test_index_list.extend(local_test_index_list)
+            local_test_X = [data_file["X"][str(idx)][()].decode("utf-8") for idx in local_test_index_list]
+            local_test_y = [data_file["Y"][str(idx)][()].decode("utf-8") for idx in local_test_index_list]
+            local_test_dataset = self.preprocessor.transform(local_test_X, local_test_y, local_test_index_list, evaluate=True)
             local_test_data = DataLoader(local_test_dataset,
                                     batch_size=self.eval_batch_size,
                                     num_workers=0,
                                     pin_memory=True,
                                     drop_last=False)
             test_data_local_dict[int(client_idx)] = local_test_data
+            test_X += local_test_X
+            test_y += local_test_y
 
         train_X = [data_file["X"][str(idx)][()].decode("utf-8") for idx in train_index_list]
         train_y = [data_file["Y"][str(idx)][()].decode("utf-8") for idx in train_index_list]
-        test_X = [data_file["X"][str(idx)][()].decode("utf-8") for idx in test_index_list]
-        test_y = [data_file["Y"][str(idx)][()].decode("utf-8") for idx in test_index_list]
+        # test_X = [data_file["X"][str(idx)][()].decode("utf-8") for idx in test_index_list]
+        # test_y = [data_file["Y"][str(idx)][()].decode("utf-8") for idx in test_index_list]
         data_file.close()
         partition_file.close()
 
