@@ -1,3 +1,18 @@
+import socket
+import sys
+
+import psutil
+import os 
+import numpy as np
+import torch
+
+# this is a temporal import, we will refactor FedML as a package installation
+import wandb
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "../../")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "../../../")))
+
 from training.fed_trainer_transformer import FedTransformerTrainer
 from experiments.utils.general import set_seed, create_model, add_federated_args
 from data_preprocessing.text_classification_preprocessor import TLMPreprocessor
@@ -8,23 +23,7 @@ from FedML.fedml_api.distributed.utils.gpu_mapping import mapping_processes_to_g
 from FedML.fedml_api.distributed.fedavg.FedAvgAPI import FedML_init, FedML_FedAvg_distributed
 import argparse
 import logging
-import os
-import random
-import sys
-import socket
-import sys
-
-import psutil
-
-import numpy as np
-import torch
-
-# this is a temporal import, we will refactor FedML as a package installation
-import wandb
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "")))
-sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "../../")))
-
+ 
 
 def post_complete_message(tc_args):
     pipe_path = "/tmp/fednlp_tc"

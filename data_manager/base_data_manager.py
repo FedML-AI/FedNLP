@@ -34,6 +34,13 @@ class BaseDataManager(ABC):
         data_file.close()
         return attributes
 
+    @staticmethod
+    def load_num_client(partation_path):
+        data_file = h5py.File(partation_path, "r", swmr=True)
+        attributes = json.loads(data_file["attributes"][()])
+        data_file.close()
+        return attributes
+
     def sample_client_index(self, process_id, num_workers):
         '''
         Sample client indices according to process_id
@@ -48,7 +55,7 @@ class BaseDataManager(ABC):
             start = (process_id - 1) * size
             end = process_id * size if num_workers != process_id else num_clients
             return [i for i in range(start, end)]
-            
+
     # def load_all_data(self):
     #     return self.load_data()
 

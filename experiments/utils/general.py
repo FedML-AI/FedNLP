@@ -176,5 +176,8 @@ def add_federated_args(parser):
     parser.add_argument('--gpu_mapping_key', type=str,
                         default="mapping_default",
                         help='the key in gpu utilization file')
+                        
+    parser.add_argument('--epochs', type=int, default=3, metavar='EP',
+                        help='how many epochs will be trained locally')
 
     return parser
