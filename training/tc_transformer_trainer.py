@@ -47,10 +47,10 @@ class TextClassificationTrainer:
         self.test_examples = test_examples
 
 
-    def train_model(self, device=-1):
-        if device < 0:
+    def train_model(self, device=None):
+        if device:
             device = self.device
-            
+
         logging.info("train_model self.device: " + str(self.device))
         self.model.to(self.device)
         # build optimizer and scheduler
@@ -109,8 +109,8 @@ class TextClassificationTrainer:
         # logging.info(results)
         return global_step, tr_loss / global_step
 
-    def eval_model(self, epoch=0, global_step=0, device=-1):
-        if device < 0:
+    def eval_model(self, epoch=0, global_step=0, device=None):
+        if device:
             device = self.device
 
         results = {}
