@@ -117,7 +117,7 @@ def add_centralized_args(parser):
     parser.add_argument('--weight_decay', type=float, default=0, metavar='N',
                         help='L2 penalty')
 
-    parser.add_argument('--num_train_epochs', type=int, default=3, metavar='EP',
+    parser.add_argument('--num_train_epochs', type=int, default=1, metavar='EP',
                         help='how many epochs will be trained locally')
     parser.add_argument(
         '--evaluate_during_training_steps', type=int, default=100, metavar='EP',
