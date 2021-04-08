@@ -95,9 +95,10 @@ def fedavg_main(process_id, worker_number, device, args):
         client_trainer, client_model, task_formulation="classification")
     dm = TextClassificationDataManager(model_args, args, process_id, num_workers, preprocessor)
     train_data_num, train_data_global, test_data_global, train_data_local_num_dict, \
-        train_data_local_dict, test_data_local_dict = dm.load_federated_data(process_id=process_id)
+        train_data_local_dict, test_data_local_dict, num_clients = dm.load_federated_data(process_id=process_id)
     # start FedAvg algorithm
     # for distributed algorithm, train_data_gloabl and test_data_global are required
+    args.client_num_in_total = num_clients
     FedML_FedAvg_distributed(
         process_id, worker_number, device, comm, client_model, train_data_num,
         train_data_global, test_data_global, train_data_local_num_dict,

@@ -67,7 +67,7 @@ class TextClassificationDataManager(BaseDataManager):
         test_data_local_dict = None
         train_data_local_num_dict = None
         return (train_data_num, train_data_global, test_data_global, \
-            train_data_local_num_dict, train_data_local_dict, test_data_local_dict)
+            train_data_local_num_dict, train_data_local_dict, test_data_local_dict, self.num_clients)
 
     def _load_federated_data_local(self):
         
@@ -111,7 +111,7 @@ class TextClassificationDataManager(BaseDataManager):
         
         train_data_global, test_data_global, train_data_num = None, None, 0
         return (train_data_num, train_data_global, test_data_global, \
-            train_data_local_num_dict, train_data_local_dict, test_data_local_dict)
+            train_data_local_num_dict, train_data_local_dict, test_data_local_dict, self.num_clients)
 
     def get_data_loader(self):
         if self.train_loader is not None:
