@@ -37,8 +37,8 @@ class FedTransformerTrainer(ModelTrainer):
 
 
     def test(self, test_data, device, args=None):
-        logging.info("Client(%d)"%self.id + ":| Local Train Data Size = %d" % (len(test_data)))
-        self.client_trainertest_dl = test_data
+        logging.info("Client(%d)"%self.id + ":| Local Test Data Size = %d" % (len(test_data)))
+        self.client_trainer.test_dl = test_data
         self.client_trainer.eval_model()
 
         # if self.task_formulation == "classification":
