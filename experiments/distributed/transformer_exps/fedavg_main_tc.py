@@ -156,3 +156,4 @@ if __name__ == "__main__":
 
     if args.local_rank == 0:
         post_complete_message(args)
+

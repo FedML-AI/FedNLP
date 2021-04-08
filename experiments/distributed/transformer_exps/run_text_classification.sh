@@ -4,22 +4,24 @@ WORKER_NUM=10
 ROUND=500
 CI=0
 
+DATA_DIR=/home/bill/fednlp_data/
+DATA_NAME=agnews
 PROCESS_NUM=`expr $WORKER_NUM + 1`
 echo $PROCESS_NUM
 
 hostname > mpi_host_file
 
 mpirun -np $PROCESS_NUM -hostfile mpi_host_file \
-python -m text_classification_fedavg \
+python -m fedavg_main_tc \
   --gpu_mapping_file "gpu_mapping.yaml" \
   --gpu_mapping_key mapping_default \
   --client_num_in_total $CLIENT_NUM \
   --client_num_per_round $WORKER_NUM \
   --comm_round $ROUND \
   --ci $CI \
-  --dataset sentiment140 \
-  --data_file "../../../data/text_classification/Sentiment140/sentiment_140_data_loader.pkl" \
-  --partition_file "../../../data/text_classification/Sentiment140/sentiment_140_partition.pkl" \
+  --dataset "${DATA_NAME}" \
+  --data_file "${DATA_DIR}/data_files/${DATA_NAME}_data.h5" \
+  --partition_file "${DATA_DIR}/partition_files/${DATA_NAME}_partition.h5" \
   --partition_method uniform \
   --model_type distilbert \
   --model_name distilbert-base-uncased \
@@ -29,6 +31,6 @@ python -m text_classification_fedavg \
   --max_seq_length 128 \
   --learning_rate 1e-5 \
   --epochs 1 \
-  --output_dir "./output" \
+  --output_dir "/tmp/fedavg_${DATA_NAME}_output/" \
   --fp16
   # 2> ${LOG_FILE} &
