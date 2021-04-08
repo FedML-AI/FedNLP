@@ -44,6 +44,10 @@ class BaseDataManager(ABC):
         data_file.close()
         return num_clients
 
+    @abstractmethod
+    def read_instance_from_h5(self, data_file, index_list):
+        pass
+
     def sample_client_index(self, process_id, num_workers):
         '''
         Sample client indices according to process_id
@@ -61,6 +65,9 @@ class BaseDataManager(ABC):
         
     def get_all_clients(self):
         return list(range(0, self.num_clients))
+
+
+
     # def load_all_data(self):
     #     return self.load_data()
 
