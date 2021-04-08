@@ -58,14 +58,52 @@ class TextClassificationDataManager(BaseDataManager):
             return self._load_federated_data_local()
 
     def _load_federated_data_server(self):
-        train_examples, test_examples, train_data_global, test_data_global = self.load_centralized_data()
-        
+        data_file = h5py.File(self.args.data_file_path, "r", swmr=True)
+        partition_file = h5py.File(self.args.partition_file_path, "r", swmr=True)
+        partition_method = self.args.partition_method
+        train_index_list = []
+        test_index_list = []
+        test_data_local_dict = {}
+        for client_idx in tqdm(partition_file[partition_method]["partition_data"].keys(), desc="Loading data from h5 file."):
+            train_index_list.extend(partition_file[partition_method]["partition_data"][client_idx]["train"][()])
+            test_index_list.extend(partition_file[partition_method]["partition_data"][client_idx]["test"][()])
+            local_test_index_list = partition_file[partition_method]["partition_data"][client_idx]["test"][()]
+            local_test_X = [data_file["X"][str(idx)][()].decode("utf-8") for idx in test_index_list]
+            local_test_y = [data_file["Y"][str(idx)][()].decode("utf-8") for idx in test_index_list]
+            local_test_dataset = self.preprocessor.transform(local_test_X, local_test_y, test_index_list, evaluate=True)
+            local_test_data = DataLoader(local_test_dataset,
+                                    batch_size=self.eval_batch_size,
+                                    num_workers=0,
+                                    pin_memory=True,
+                                    drop_last=False)
+            test_data_local_dict[int(client_idx)] = local_test_data
+
+        train_X = [data_file["X"][str(idx)][()].decode("utf-8") for idx in train_index_list]
+        train_y = [data_file["Y"][str(idx)][()].decode("utf-8") for idx in train_index_list]
+        test_X = [data_file["X"][str(idx)][()].decode("utf-8") for idx in test_index_list]
+        test_y = [data_file["Y"][str(idx)][()].decode("utf-8") for idx in test_index_list]
+        data_file.close()
+        partition_file.close()
+
+        train_examples, train_dataset = self.preprocessor.transform(train_X, train_y, train_index_list)
+        test_examples, test_dataset = self.preprocessor.transform(test_X, test_y, test_index_list, evaluate=True)
+        train_data_global = DataLoader(train_dataset,
+                                       batch_size=self.train_batch_size,
+                                       num_workers=0,
+                                       pin_memory=True,
+                                       drop_last=False)
+
+        test_data_global = DataLoader(test_dataset,
+                                    batch_size=self.eval_batch_size,
+                                    num_workers=0,
+                                    pin_memory=True,
+                                    drop_last=False)
         train_data_num = len(train_examples)
         logging.info("train_dl_global number = " + str(len(train_data_global)))
         logging.info("test_dl_global number = " + str(len(test_data_global)))
         train_data_local_dict = None
-        test_data_local_dict = None
         train_data_local_num_dict = None
+        
         return (train_data_num, train_data_global, test_data_global, \
             train_data_local_num_dict, train_data_local_dict, test_data_local_dict, self.num_clients)
 
