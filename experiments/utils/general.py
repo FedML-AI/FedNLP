@@ -147,6 +147,8 @@ def add_federated_args(parser):
     parser = add_centralized_args(parser)
 
     # Federated Learning related
+    parser.add_argument('--backend', type=str, default="MPI",
+                        help='Backend for Server and Client')
 
     parser.add_argument('--comm_round', type=int, default=10,
                         help='how many round of communications we shoud use')
