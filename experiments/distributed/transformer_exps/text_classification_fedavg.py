@@ -233,6 +233,7 @@ def main(process_id, worker_number, args):
 
     model_trainer = TransformerTrainer(transformer_model=transformer_model, task_formulation="classification")
 
+
     # start FedAvg algorithm
     # for distributed algorithm, train_data_gloabl and test_data_global are required
     FedML_FedAvg_distributed(process_id, worker_number, device, comm,
