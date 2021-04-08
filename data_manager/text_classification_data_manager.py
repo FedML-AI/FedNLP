@@ -80,6 +80,7 @@ class TextClassificationDataManager(BaseDataManager):
         train_data_local_num_dict = {}
         for client_idx in self.client_index_list:
             # TODO: cancel the partiation file usage
+            client_idx = str(client_idx)
             train_index_list = partition_file[partition_method]["partition_data"][client_idx]["train"][()]
             test_index_list = partition_file[partition_method]["partition_data"][client_idx]["test"][()]
             train_X = [data_file["X"][str(idx)][()].decode("utf-8") for idx in train_index_list]
