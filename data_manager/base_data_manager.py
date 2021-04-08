@@ -26,6 +26,7 @@ class BaseDataManager(ABC):
         self.attributes = None
 
         self.num_clients = self.load_num_clients(self.args.partition_file_path, self.args.partition_method)
+        args.client_num_in_total = self.num_clients
         self.client_index_list = self.sample_client_index(process_id, num_workers)
 
     @staticmethod
