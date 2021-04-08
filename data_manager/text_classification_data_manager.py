@@ -72,7 +72,7 @@ class TextClassificationDataManager(BaseDataManager):
             test_index_list.extend(local_test_index_list)
             local_test_X = [data_file["X"][str(idx)][()].decode("utf-8") for idx in local_test_index_list]
             local_test_y = [data_file["Y"][str(idx)][()].decode("utf-8") for idx in local_test_index_list]
-            local_test_dataset = self.preprocessor.transform(local_test_X, local_test_y, local_test_index_list, evaluate=True)
+            _, local_test_dataset = self.preprocessor.transform(local_test_X, local_test_y, local_test_index_list, evaluate=True)
             local_test_data = DataLoader(local_test_dataset,
                                     batch_size=self.eval_batch_size,
                                     num_workers=0,
