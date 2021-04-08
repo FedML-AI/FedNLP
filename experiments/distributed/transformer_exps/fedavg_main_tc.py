@@ -128,7 +128,7 @@ if __name__ == "__main__":
                  ", process ID = " + str(os.getpid()) +
                  ", process Name = " + str(psutil.Process(os.getpid())))
 
-    logging.info("process_id = %d, size = %d" % (process_id, worker_number))
+    # logging.info("process_id = %d, size = %d" % (process_id, worker_number))
 
     if process_id == 0:
         # initialize the wandb machine learning experimental tracking platform (https://wandb.ai/automl/fednlp).

@@ -152,7 +152,7 @@ def add_federated_args(parser):
                         help='how many round of communications we shoud use')
 
     parser.add_argument(
-        '--is_mobile', type=int, default=0,
+        '--is_mobile', type=int, default=1,
         help='whether the program is running on the FedML-Mobile server side')
 
     parser.add_argument('--frequency_of_the_test', type=int, default=1,
