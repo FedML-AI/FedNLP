@@ -3,7 +3,7 @@ from data_manager.base_data_manager import BaseDataManager
 
 class Seq2SeqDataManager(BaseDataManager):
     """Data manager for seq2seq"""
-    def __init__(self, args, model_args, process_id, num_workers, preprocessor):
+    def __init__(self, args, model_args, preprocessor, process_id=0, num_workers=1):
         # TODO: ref to a defination of the "args" and "model_args"
         #           --- what will they must contain? (e.g., data_file_path)
 

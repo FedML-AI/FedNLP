@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 class TextClassificationDataManager(BaseDataManager):
     """Data manager for text classification"""
-    def __init__(self, args, model_args, process_id=0, num_workers=1, preprocessor=None):
+    def __init__(self, args, model_args, preprocessor, process_id=0, num_workers=1):
         # TODO: ref to a defination of the "args" and "model_args"
         #           --- what will they must contain? (e.g., data_file_path)
 

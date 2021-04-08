@@ -6,7 +6,7 @@ import numpy as np
 
 class SequenceTaggingDataManager(BaseDataManager):
     """Data manager for sequence tagging tasks."""
-    def __init__(self, args, model_args, process_id, num_workers, preprocessor):
+    def __init__(self, args, model_args, preprocessor, process_id=0, num_workers=1):
         # TODO: ref to a defination of the "args" and "model_args"
         #           --- what will they must contain? (e.g., data_file_path)
 

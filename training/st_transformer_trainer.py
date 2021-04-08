@@ -15,8 +15,8 @@ from sklearn.metrics import (
     accuracy_score,
     confusion_matrix,
     matthews_corrcoef,
+    classification_report
 )
-from sklearn.preprocessing import MultiLabelBinarizer
 from torch.nn import CrossEntropyLoss
 
 from transformers import (
@@ -118,6 +118,7 @@ class SeqTaggingTrainer:
         # TODO: check the value of len(self.test_examples)
         test_sample_len = len(self.test_examples)
         pad_token_label_id = self.pad_token_label_id
+        eval_output_dir = self.args.output_dir
         
 
         preds = None
@@ -172,12 +173,16 @@ class SeqTaggingTrainer:
 
         out_label_list = [[] for _ in range(out_label_ids.shape[0])]
         preds_list = [[] for _ in range(out_label_ids.shape[0])]
+        flattern_preds = []
+        flattern_out_labels = []
 
         for i in range(out_label_ids.shape[0]):
             for j in range(out_label_ids.shape[1]):
                 if out_label_ids[i, j] != pad_token_label_id:
                     out_label_list[i].append(label_map[out_label_ids[i][j]])
                     preds_list[i].append(label_map[preds[i][j]])
+                    flattern_preds.append(label_map[preds[i][j]])
+                    flattern_out_labels.append(label_map[out_label_ids[i][j]])
 
         word_tokens = []
         for i in range(len(preds_list)):
@@ -188,15 +193,19 @@ class SeqTaggingTrainer:
 
         model_outputs = [[word_tokens[i][j] for j in range(len(preds_list[i]))] for i in range(len(preds_list))]
 
-        result, wrong = self.compute_metrics(preds_list, out_label_list, self.test_examples)
+        result, wrong = self.compute_metrics(flattern_preds, flattern_out_labels, self.test_examples)
         result["eval_loss"] = eval_loss
         results.update(result)
 
-        os.makedirs(self.args.output_dir, exist_ok=True)
-        output_eval_file = os.path.join(self.args.output_dir, "eval_results.txt")
+        os.makedirs(eval_output_dir, exist_ok=True)
+        output_eval_file = os.path.join(eval_output_dir, "eval_results.txt")
         with open(output_eval_file, "w") as writer:
+            if self.args.classification_report:
+                cls_report = classification_report(out_label_list, preds_list)
+                writer.write("{}\n".format(cls_report))
             for key in sorted(result.keys()):
                 writer.write("{} = {}\n".format(key, str(result[key])))
+
         if result["acc"] > self.best_accuracy:
             self.best_accuracy = result["acc"]
         logging.info("best_accuracy = %f" % self.best_accuracy)
@@ -206,7 +215,6 @@ class SeqTaggingTrainer:
         # wandb.log({"Evaluation Accuracy": result["acc"], "step": global_step})
         # wandb.log({"Evaluation Loss": result["eval_loss"], "step": global_step})
 
-        self.results.update(result)
         logging.info(self.results)
 
         return result, model_outputs, wrong
@@ -214,16 +222,10 @@ class SeqTaggingTrainer:
     def compute_metrics(self, preds, labels, eval_examples=None):
         assert len(preds) == len(labels)
 
-        binarizer = MultiLabelBinarizer()
-        labels_binary = binarizer.fit_transform(labels)
-        preds_binary = binarizer.transform(preds)
-
         extra_metrics = {}
-        extra_metrics["acc"] = sklearn.metrics.accuracy_score(labels_binary, preds_binary)
+        extra_metrics["acc"] = sklearn.metrics.accuracy_score(labels, preds)
         mismatched = labels != preds
 
-        logging.info(111)
-        logging.info(mismatched)
 
         if eval_examples:
             wrong = [i for (i, v) in zip(eval_examples, mismatched) if v.any()]

@@ -81,7 +81,7 @@ if __name__ == "__main__":
     preprocessor = TLMPreprocessor(args=model_args, label_vocab=attributes["label_vocab"], tokenizer=tokenizer)
 
     # data manager
-    dm = TextClassificationDataManager(model_args, args, preprocessor=preprocessor)
+    dm = TextClassificationDataManager(args, model_args, preprocessor)
     
     train_examples, test_examples, train_dl, test_dl = dm.load_centralized_data()
 
@@ -92,11 +92,11 @@ if __name__ == "__main__":
 ''' Example Usage:
 
 export CUDA_VISIBLE_DEVICES=0
-DATA_NAME=agnews
+DATA_NAME=sst_2
 CUDA_VISIBLE_DEVICES=0 python -m experiments.centralized.transformer_exps.main_tc \
     --dataset ${DATA_NAME} \
-    --data_file ~/fednlp_data/data_files/${DATA_NAME}_data.h5 \
-    --partition_file ~/fednlp_data/partition_files/${DATA_NAME}_partition.h5 \
+    --data_file ./data/fednlp_data/data_files/${DATA_NAME}_data.h5 \
+    --partition_file ./data/fednlp_data/partition_files/${DATA_NAME}_partition.h5 \
     --partition_method uniform \
     --model_type distilbert \
     --model_name distilbert-base-uncased  \
