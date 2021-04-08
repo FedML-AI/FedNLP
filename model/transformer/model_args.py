@@ -4,6 +4,8 @@ import sys
 from dataclasses import asdict, dataclass, field
 from multiprocessing import cpu_count
 
+from torch.nn import CrossEntropyLoss
+
 
 def get_default_process_count():
     process_count = cpu_count() - 2 if cpu_count() > 2 else 1
@@ -130,3 +132,30 @@ class ClassificationArgs(ModelArgs):
     tie_value: int = 1
     evaluate_during_training_steps: int = 20
     evaluate_during_training: bool = True
+
+
+@dataclass
+class SeqTaggingArgs(ModelArgs):
+    """
+    Model args for a SeqTaggingArgs
+    """
+
+    model_class: str = "SeqTaggingModel"
+    labels_list: list = field(default_factory=list)
+    labels_map: dict = field(default_factory=dict)
+    lazy_delimiter: str = "\t"
+    lazy_labels_column: int = 1
+    lazy_loading: bool = False
+    lazy_loading_start_line: int = 1
+    lazy_text_a_column: bool = None
+    lazy_text_b_column: bool = None
+    lazy_text_column: int = 0
+    onnx: bool = False
+    regression: bool = False
+    sliding_window: bool = False
+    stride: float = 0.8
+    tie_value: int = 1
+    evaluate_during_training_steps: int = 20
+    evaluate_during_training: bool = True
+    classification_report: bool = True
+    pad_token_label_id: int = CrossEntropyLoss().ignore_index

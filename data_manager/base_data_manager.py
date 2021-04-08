@@ -102,18 +102,8 @@ class BaseDataManager(ABC):
             test_index_list.extend(
                 partition_file[partition_method]["partition_data"]
                 [client_idx]["test"][()])
-        train_X = [
-            data_file["X"][str(idx)][()].decode("utf-8")
-            for idx in train_index_list]
-        train_y = [
-            data_file["Y"][str(idx)][()].decode("utf-8")
-            for idx in train_index_list]
-        test_X = [
-            data_file["X"][str(idx)][()].decode("utf-8")
-            for idx in test_index_list]
-        test_y = [
-            data_file["Y"][str(idx)][()].decode("utf-8")
-            for idx in test_index_list]
+        train_X, train_y = self.read_instance_from_h5(data_file, train_index_list)
+        test_X, test_y = self.read_instance_from_h5(data_file, test_index_list)
         data_file.close()
         partition_file.close()
         train_examples, train_dataset = self.preprocessor.transform(

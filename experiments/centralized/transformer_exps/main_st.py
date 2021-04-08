@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "../../../")))
 from data_preprocessing.seq_tagging_preprocessor import TLMPreprocessor
 from data_manager.seq_tagging_data_manager import SequenceTaggingDataManager
 
-from model.transformer.model_args import ClassificationArgs
+from model.transformer.model_args import SeqTaggingArgs
 
 from training.st_transformer_trainer import SeqTaggingTrainer
 
@@ -49,7 +49,7 @@ if __name__ == "__main__":
     attributes = SequenceTaggingDataManager.load_attributes(args.data_file_path)
 
     # model
-    model_args = ClassificationArgs()    
+    model_args = SeqTaggingArgs()    
     model_args.model_name = args.model_name
     model_args.model_type = args.model_type
     model_args.load(model_args.model_name)

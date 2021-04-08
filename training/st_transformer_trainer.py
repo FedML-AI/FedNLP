@@ -13,9 +13,12 @@ import torch
 import wandb
 from sklearn.metrics import (
     accuracy_score,
-    confusion_matrix,
-    matthews_corrcoef,
-    classification_report
+    classification_report, 
+    f1_score, 
+    precision_score, 
+    recall_score,
+    classification_report,
+    matthews_corrcoef
 )
 from torch.nn import CrossEntropyLoss
 
@@ -181,8 +184,8 @@ class SeqTaggingTrainer:
                 if out_label_ids[i, j] != pad_token_label_id:
                     out_label_list[i].append(label_map[out_label_ids[i][j]])
                     preds_list[i].append(label_map[preds[i][j]])
-                    flattern_preds.append(label_map[preds[i][j]])
-                    flattern_out_labels.append(label_map[out_label_ids[i][j]])
+                    flattern_preds.append(preds[i][j])
+                    flattern_out_labels.append(out_label_ids[i][j])
 
         word_tokens = []
         for i in range(len(preds_list)):
@@ -193,6 +196,9 @@ class SeqTaggingTrainer:
 
         model_outputs = [[word_tokens[i][j] for j in range(len(preds_list[i]))] for i in range(len(preds_list))]
 
+        flattern_preds = np.array(flattern_preds)
+        flattern_out_labels = np.array(flattern_out_labels)
+
         result, wrong = self.compute_metrics(flattern_preds, flattern_out_labels, self.test_examples)
         result["eval_loss"] = eval_loss
         results.update(result)
@@ -201,7 +207,7 @@ class SeqTaggingTrainer:
         output_eval_file = os.path.join(eval_output_dir, "eval_results.txt")
         with open(output_eval_file, "w") as writer:
             if self.args.classification_report:
-                cls_report = classification_report(out_label_list, preds_list)
+                cls_report = classification_report(flattern_out_labels, flattern_preds, labels=list(range(len(self.args.labels_list))))
                 writer.write("{}\n".format(cls_report))
             for key in sorted(result.keys()):
                 writer.write("{} = {}\n".format(key, str(result[key])))
@@ -234,9 +240,12 @@ class SeqTaggingTrainer:
 
         mcc = matthews_corrcoef(labels, preds)
 
-        tn, fp, fn, tp = confusion_matrix(labels, preds, labels=[0, 1]).ravel()
+        precision = precision_score(labels, preds, average="micro")
+        recall = recall_score(labels, preds, average="micro")
+        f1 = f1_score(labels, preds, average="micro")
+
         return (
-            {**{"mcc": mcc, "tp": tp, "tn": tn, "fp": fp, "fn": fn}, **extra_metrics},
+            {**{"mcc": mcc, "precision": precision, "recall": recall, "f1": f1}, **extra_metrics},
             wrong,
         )
 

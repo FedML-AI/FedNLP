@@ -11,8 +11,6 @@ from data_preprocessing.base.base_example import SeqTaggingInputExample
 from data_preprocessing.base.base_preprocessor import BasePreprocessor
 from data_preprocessing.utils.seq_tagging_utils import convert_examples_to_features
 
-from torch.nn import CrossEntropyLoss
-
 customized_cleaner_dict = {}
 
 
@@ -40,8 +38,6 @@ class TLMPreprocessor(BasePreprocessor):
     def __init__(self, **kwargs):
         super(TLMPreprocessor, self).__init__(**kwargs)
         self.text_cleaner = customized_cleaner_dict.get(self.args.dataset, None)
-
-        self.args.pad_token_label_id = CrossEntropyLoss().ignore_index
 
     def transform(self, X, y, index_list=None, evaluate=False):
         if index_list is None:

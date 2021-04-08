@@ -21,5 +21,5 @@ class SequenceTaggingDataManager(BaseDataManager):
 
     def read_instance_from_h5(self, data_file, index_list):
         X = [[s.decode("utf-8") for s in data_file["X"][str(idx)][()]] for idx in index_list]
-        y = [[s.decode("utf-8") for s in data_file["Y"][str(idx)][()].decode("utf-8")] for idx in index_list]
+        y = [[s.decode("utf-8") for s in data_file["Y"][str(idx)][()]] for idx in index_list]
         return X, y
