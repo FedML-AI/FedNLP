@@ -88,7 +88,7 @@ def fedavg_main(process_id, worker_number, device, args):
         tokenizer=tokenizer)
 
     # data manager
-    num_workers = args.
+    num_workers = args.client_num_per_round
 
     client_trainer = TextClassificationTrainer(
         model_args, device, client_model, None, None, None)
@@ -96,7 +96,7 @@ def fedavg_main(process_id, worker_number, device, args):
         client_trainer, client_model, task_formulation="classification")
     dm = TextClassificationDataManager(model_args, args, process_id, num_workers, preprocessor)
     train_data_num, train_data_global, test_data_global, train_data_local_num_dict, \
-        train_data_local_dict, test_data_local_dict = 
+        train_data_local_dict, test_data_local_dict = dm.load_federated_data()
     # start FedAvg algorithm
     # for distributed algorithm, train_data_gloabl and test_data_global are required
     FedML_FedAvg_distributed(

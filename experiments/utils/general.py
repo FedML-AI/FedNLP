@@ -163,7 +163,7 @@ def add_federated_args(parser):
 
     parser.add_argument(
         '--client_num_in_total', type=int, default=1000, metavar='NN',
-        help='number of workers in a distributed cluster')
+        help='number of clients in a distributed cluster')
 
     parser.add_argument('--client_num_per_round', type=int,
                         default=4, metavar='NN', help='number of workers')
