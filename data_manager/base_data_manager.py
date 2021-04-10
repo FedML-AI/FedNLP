@@ -102,14 +102,14 @@ class BaseDataManager(ABC):
             test_index_list.extend(
                 partition_file[partition_method]["partition_data"]
                 [client_idx]["test"][()])
-        train_X, train_y = self.read_instance_from_h5(data_file, train_index_list)
-        test_X, test_y = self.read_instance_from_h5(data_file, test_index_list)
+        train_data = self.read_instance_from_h5(data_file, train_index_list)
+        test_data = self.read_instance_from_h5(data_file, test_index_list)
         data_file.close()
         partition_file.close()
         train_examples, train_dataset = self.preprocessor.transform(
-            train_X, train_y, train_index_list)
+            **train_data, index_list=train_index_list)
         test_examples, test_dataset = self.preprocessor.transform(
-            test_X, test_y, test_index_list, evaluate=True)
+            **test_data, index_list=test_index_list, evaluate=True)
         train_dl = DataLoader(train_dataset,
                               batch_size=self.train_batch_size,
                               num_workers=0,
@@ -137,8 +137,6 @@ class BaseDataManager(ABC):
         train_index_list = []
         test_index_list = []
         test_data_local_dict = {}
-        test_X = []
-        test_y = []
         for client_idx in tqdm(
             partition_file[partition_method]
             ["partition_data"].keys(),
@@ -151,32 +149,30 @@ class BaseDataManager(ABC):
             test_index_list.extend(local_test_index_list)
             # local_test_X = [data_file["X"][str(idx)][()].decode("utf-8") for idx in local_test_index_list]
             # local_test_y = [data_file["Y"][str(idx)][()].decode("utf-8") for idx in local_test_index_list]
-            local_test_X, local_test_y = self.read_instance_from_h5(
+            local_test_data = self.read_instance_from_h5(
                 data_file, local_test_index_list)
             _, local_test_dataset = self.preprocessor.transform(
-                local_test_X, local_test_y, local_test_index_list, evaluate=True)
+                **local_test_data, index_list=local_test_index_list, evaluate=True)
             local_test_data = DataLoader(local_test_dataset,
                                          batch_size=self.eval_batch_size,
                                          num_workers=0,
                                          pin_memory=True,
                                          drop_last=False)
             test_data_local_dict[int(client_idx)] = local_test_data
-            test_X += local_test_X
-            test_y += local_test_y
 
-        # train_X = [data_file["X"][str(idx)][()].decode("utf-8") for idx in train_index_list]
-        # train_y = [data_file["Y"][str(idx)][()].decode("utf-8") for idx in train_index_list]
-        train_X, train_y = self.read_instance_from_h5(
+        train_data = self.read_instance_from_h5(
             data_file, train_index_list)
-        # test_X = [data_file["X"][str(idx)][()].decode("utf-8") for idx in test_index_list]
-        # test_y = [data_file["Y"][str(idx)][()].decode("utf-8") for idx in test_index_list]
+        
+        test_data = self.read_instance_from_h5(
+            data_file, train_index_list)
+
         data_file.close()
         partition_file.close()
 
         train_examples, train_dataset = self.preprocessor.transform(
-            train_X, train_y, train_index_list)
+            **train_data, index_list=train_index_list)
         test_examples, test_dataset = self.preprocessor.transform(
-            test_X, test_y, test_index_list, evaluate=True)
+            **test_data, index_list=test_index_list, evaluate=True)
         train_data_global = DataLoader(train_dataset,
                                        batch_size=self.train_batch_size,
                                        num_workers=0,
@@ -220,16 +216,16 @@ class BaseDataManager(ABC):
                 "partition_data"][
                 str(client_idx)]["test"][
                 ()]
-            train_X, train_y = self.read_instance_from_h5(
+            train_data = self.read_instance_from_h5(
                 data_file, train_index_list)
-            test_X, test_y = self.read_instance_from_h5(
+            test_data = self.read_instance_from_h5(
                 data_file, test_index_list)
             # test_X = [data_file["X"][str(idx)][()].decode("utf-8") for idx in test_index_list]
             # test_y = [data_file["Y"][str(idx)][()].decode("utf-8") for idx in test_index_list]
             train_examples, train_dataset = self.preprocessor.transform(
-                train_X, train_y, train_index_list)
+                **train_data, index_list=train_index_list)
             test_examples, test_dataset = self.preprocessor.transform(
-                test_X, test_y, test_index_list, evaluate=True)
+                **test_data, index_list=test_index_list, evaluate=True)
 
             train_loader = DataLoader(train_dataset,
                                       batch_size=self.train_batch_size,

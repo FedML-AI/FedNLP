@@ -17,9 +17,11 @@ from transformers import (
     BertConfig,
     BertTokenizer,
     BertForTokenClassification,
+    BertForQuestionAnswering,
     DistilBertConfig,
     DistilBertTokenizer,
     DistilBertForTokenClassification,
+    DistilBertForQuestionAnswering,
     RobertaConfig,
     RobertaTokenizer,
     get_linear_schedule_with_warmup,
@@ -38,12 +40,17 @@ def create_model(args, formulation="classification"):
         "seq_tagging": {
             "bert": (BertConfig, BertForTokenClassification, BertTokenizer),
             "distilbert": (DistilBertConfig, DistilBertForTokenClassification, DistilBertTokenizer),
-        },  # TODO: add more.
+        },
+        "span_extraction": {
+            "bert": (BertConfig, BertForQuestionAnswering, BertTokenizer),
+            "distilbert": (DistilBertConfig, DistilBertForQuestionAnswering, DistilBertTokenizer),
+        },
     }
     config_class, model_class, tokenizer_class = MODEL_CLASSES[formulation][
         args.model_type]
-    config = config_class.from_pretrained(
-        args.model_name, num_labels=args.num_labels, **args.config)
+    # config = config_class.from_pretrained(
+    #     args.model_name, num_labels=args.num_labels, **args.config)
+    config = config_class.from_pretrained(args.model_name, **args.config)
     model = model_class.from_pretrained(args.model_name, config=config)
     tokenizer = tokenizer_class.from_pretrained(
         args.model_name, do_lower_case=args.do_lower_case)

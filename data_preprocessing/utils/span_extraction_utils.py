@@ -9,6 +9,7 @@ import mmap
 import os
 import re
 import string
+import numpy as np
 from functools import partial
 from io import open
 from multiprocessing import Pool, cpu_count
@@ -20,7 +21,6 @@ from torch.utils.data import DataLoader, Dataset, RandomSampler, SequentialSampl
 from tqdm import tqdm, trange
 from transformers import AdamW, SquadExample, XLMTokenizer, get_linear_schedule_with_warmup
 from transformers.data.processors.squad import (
-    squad_convert_example_to_features,
     squad_convert_example_to_features_init,
 )
 from transformers.tokenization_bert import BasicTokenizer, whitespace_tokenize
@@ -28,156 +28,117 @@ from transformers.tokenization_bert import BasicTokenizer, whitespace_tokenize
 logger = logging.getLogger(__name__)
 
 
-class InputExample(object):
-    """
-    A single training/test example.
-    For examples without an answer, the start and end position are -1.
-    """
-
-    def __init__(
-        self,
-        qas_id,
-        question_text,
-        doc_tokens,
-        orig_answer_text=None,
-        start_position=None,
-        end_position=None,
-        is_impossible=None,
-    ):
-        self.qas_id = qas_id
-        self.question_text = question_text
-        self.doc_tokens = doc_tokens
-        self.orig_answer_text = orig_answer_text
-        self.start_position = start_position
-        self.end_position = end_position
-        self.is_impossible = is_impossible
-
-    def __str__(self):
-        return self.__repr__()
-
-    def __repr__(self):
-        s = ""
-        s += "qas_id: %s" % (self.qas_id)
-        s += ", question_text: %s" % (self.question_text)
-        s += ", doc_tokens: [%s]" % (" ".join(self.doc_tokens))
-        if self.start_position:
-            s += ", start_position: %d" % (self.start_position)
-        if self.end_position:
-            s += ", end_position: %d" % (self.end_position)
-        if self.is_impossible:
-            s += ", is_impossible: %r" % (self.is_impossible)
-        return s
-
-
 def to_list(tensor):
     return tensor.detach().cpu().tolist()
 
 
-class InputFeatures(object):
-    """A single set of features of data."""
+class SquadFeatures(object):
+    """
+    Single squad example features to be fed to a model.
+    Those features are model-specific and can be crafted from :class:`~transformers.data.processors.squad.SquadExample`
+    using the :method:`~transformers.data.processors.squad.squad_convert_examples_to_features` method.
+
+    Args:
+        input_ids: Indices of input sequence tokens in the vocabulary.
+        attention_mask: Mask to avoid performing attention on padding token indices.
+        token_type_ids: Segment token indices to indicate first and second portions of the inputs.
+        cls_index: the index of the CLS token.
+        p_mask: Mask identifying tokens that can be answers vs. tokens that cannot.
+            Mask with 1 for tokens than cannot be in the answer and 0 for token that can be in an answer
+        example_index: the index of the example
+        unique_id: The unique Feature identifier
+        paragraph_len: The length of the context
+        token_is_max_context: List of booleans identifying which tokens have their maximum context in this feature object.
+            If a token does not have their maximum context in this feature object, it means that another feature object
+            has more information related to that token and should be prioritized over this feature for that token.
+        tokens: list of tokens corresponding to the input ids
+        token_to_orig_map: mapping between the tokens and the original text, needed in order to identify the answer.
+        start_position: start of the answer token index
+        end_position: end of the answer token index
+    """
 
     def __init__(
         self,
-        unique_id,
-        example_index,
-        doc_span_index,
-        tokens,
-        token_to_orig_map,
-        token_is_max_context,
         input_ids,
-        input_mask,
-        segment_ids,
+        attention_mask,
+        token_type_ids,
         cls_index,
         p_mask,
+        example_index,
+        unique_id,
         paragraph_len,
-        start_position=None,
-        end_position=None,
-        is_impossible=None,
+        token_is_max_context,
+        tokens,
+        token_to_orig_map,
+        start_position,
+        end_position,
+        is_impossible,
     ):
-        self.unique_id = unique_id
-        self.example_index = example_index
-        self.doc_span_index = doc_span_index
-        self.tokens = tokens
-        self.token_to_orig_map = token_to_orig_map
-        self.token_is_max_context = token_is_max_context
         self.input_ids = input_ids
-        self.input_mask = input_mask
-        self.segment_ids = segment_ids
+        self.attention_mask = attention_mask
+        self.token_type_ids = token_type_ids
         self.cls_index = cls_index
         self.p_mask = p_mask
+
+        self.example_index = example_index
+        self.unique_id = unique_id
         self.paragraph_len = paragraph_len
+        self.token_is_max_context = token_is_max_context
+        self.tokens = tokens
+        self.token_to_orig_map = token_to_orig_map
+
         self.start_position = start_position
         self.end_position = end_position
         self.is_impossible = is_impossible
 
+def _improve_answer_span(doc_tokens, input_start, input_end, tokenizer, orig_answer_text):
+    """Returns tokenized answer spans that better match the annotated answer."""
+    tok_answer_text = " ".join(tokenizer.tokenize(orig_answer_text))
 
-def get_examples(examples_to_process, is_training=True, version_2_with_negative=True):
-    if not isinstance(examples_to_process, list):
-        raise TypeError("Input should be a list of examples.")
+    for new_start in range(input_start, input_end + 1):
+        for new_end in range(input_end, new_start - 1, -1):
+            text_span = " ".join(doc_tokens[new_start : (new_end + 1)])
+            if text_span == tok_answer_text:
+                return (new_start, new_end)
 
-    examples = []
-    for paragraph in examples_to_process:
-        context_text = paragraph["context"]
-        for qa in paragraph["qas"]:
-            qas_id = qa["id"]
-            question_text = qa["question"]
-            start_position_character = None
-            answer_text = None
-            answers = []
+    return (input_start, input_end)
 
-            if "is_impossible" in qa:
-                is_impossible = qa["is_impossible"]
-            else:
-                is_impossible = False
+def _new_check_is_max_context(doc_spans, cur_span_index, position):
+    """Check if this is the 'max context' doc span for the token."""
+    # if len(doc_spans) == 1:
+    # return True
+    best_score = None
+    best_span_index = None
+    for (span_index, doc_span) in enumerate(doc_spans):
+        end = doc_span["start"] + doc_span["length"] - 1
+        if position < doc_span["start"]:
+            continue
+        if position > end:
+            continue
+        num_left_context = position - doc_span["start"]
+        num_right_context = end - position
+        score = min(num_left_context, num_right_context) + 0.01 * doc_span["length"]
+        if best_score is None or score > best_score:
+            best_score = score
+            best_span_index = span_index
 
-            if not is_impossible:
-                if is_training:
-                    answer = qa["answers"][0]
-                    answer_text = answer["text"]
-                    start_position_character = answer["answer_start"]
-                else:
-                    answers = qa["answers"]
-
-            example = SquadExample(
-                qas_id=qas_id,
-                question_text=question_text,
-                context_text=context_text,
-                answer_text=answer_text,
-                start_position_character=start_position_character,
-                title=None,
-                is_impossible=is_impossible,
-                answers=answers,
-            )
-            examples.append(example)
-    return examples
+    return cur_span_index == best_span_index
 
 
-def convert_example_to_feature(example_row):
-    (
-        example,
-        tokenizer,
-        max_seq_length,
-        doc_stride,
-        max_query_length,
-        is_training,
-        cls_token_at_end,
-        cls_token,
-        sep_token,
-        pad_token,
-        sequence_a_segment_id,
-        sequence_b_segment_id,
-        cls_token_segment_id,
-        pad_token_segment_id,
-        mask_padding_with_zero,
-        sequence_a_is_doc,
-        unique_id,
-        example_index,
-    ) = example_row
 
-    query_tokens = tokenizer.tokenize(example.question_text)
+def squad_convert_example_to_features(example, max_seq_length, doc_stride, max_query_length, is_training):
+    features = []
+    if is_training and not example.is_impossible:
+        # Get start and end position
+        start_position = example.start_position
+        end_position = example.end_position
 
-    if len(query_tokens) > max_query_length:
-        query_tokens = query_tokens[0:max_query_length]
+        # If the answer cannot be found in the text, then skip this example.
+        actual_text = " ".join(example.doc_tokens[start_position : (end_position + 1)])
+        cleaned_answer_text = " ".join(whitespace_tokenize(example.answer_text))
+        if actual_text.find(cleaned_answer_text) == -1:
+            logger.warning("Could not find answer: '%s' vs. '%s'", actual_text, cleaned_answer_text)
+            return []
 
     tok_to_orig_index = []
     orig_to_tok_index = []
@@ -189,192 +150,145 @@ def convert_example_to_feature(example_row):
             tok_to_orig_index.append(i)
             all_doc_tokens.append(sub_token)
 
-    tok_start_position = None
-    tok_end_position = None
-    if is_training and example.is_impossible:
-        tok_start_position = -1
-        tok_end_position = -1
     if is_training and not example.is_impossible:
         tok_start_position = orig_to_tok_index[example.start_position]
         if example.end_position < len(example.doc_tokens) - 1:
             tok_end_position = orig_to_tok_index[example.end_position + 1] - 1
         else:
             tok_end_position = len(all_doc_tokens) - 1
+
         (tok_start_position, tok_end_position) = _improve_answer_span(
-            all_doc_tokens, tok_start_position, tok_end_position, tokenizer, example.orig_answer_text,
+            all_doc_tokens, tok_start_position, tok_end_position, tokenizer, example.answer_text
         )
 
-    # The -3 accounts for [CLS], [SEP] and [SEP]
-    max_tokens_for_doc = max_seq_length - len(query_tokens) - 3
+    spans = []
 
-    # We can have documents that are longer than the maximum sequence length.
-    # To deal with this we do a sliding window approach, where we take chunks
-    # of the up to our max length with a stride of `doc_stride`.
-    _DocSpan = collections.namedtuple("DocSpan", ["start", "length"])  # pylint: disable=invalid-name
-    doc_spans = []
-    start_offset = 0
-    while start_offset < len(all_doc_tokens):
-        length = len(all_doc_tokens) - start_offset
-        if length > max_tokens_for_doc:
-            length = max_tokens_for_doc
-        doc_spans.append(_DocSpan(start=start_offset, length=length))
-        if start_offset + length == len(all_doc_tokens):
-            break
-        start_offset += min(length, doc_stride)
+    truncated_query = tokenizer.encode(example.question_text, add_special_tokens=False, max_length=max_query_length)
+    sequence_added_tokens = (
+        tokenizer.max_len - tokenizer.max_len_single_sentence + 1
+        if "roberta" in str(type(tokenizer))
+        else tokenizer.max_len - tokenizer.max_len_single_sentence
+    )
+    sequence_pair_added_tokens = tokenizer.max_len - tokenizer.max_len_sentences_pair
 
-    for (doc_span_index, doc_span) in enumerate(doc_spans):
-        tokens = []
+    span_doc_tokens = all_doc_tokens
+    while len(spans) * doc_stride < len(all_doc_tokens):
+
+        encoded_dict = tokenizer.encode_plus(
+            truncated_query if tokenizer.padding_side == "right" else span_doc_tokens,
+            span_doc_tokens if tokenizer.padding_side == "right" else truncated_query,
+            max_length=max_seq_length,
+            return_overflowing_tokens=True,
+            pad_to_max_length=True,
+            stride=max_seq_length - doc_stride - len(truncated_query) - sequence_pair_added_tokens,
+            truncation_strategy="only_second" if tokenizer.padding_side == "right" else "only_first",
+        )
+
+        paragraph_len = min(
+            len(all_doc_tokens) - len(spans) * doc_stride,
+            max_seq_length - len(truncated_query) - sequence_pair_added_tokens,
+        )
+
+        if tokenizer.pad_token_id in encoded_dict["input_ids"]:
+            non_padded_ids = encoded_dict["input_ids"][: encoded_dict["input_ids"].index(tokenizer.pad_token_id)]
+        else:
+            non_padded_ids = encoded_dict["input_ids"]
+
+        tokens = tokenizer.convert_ids_to_tokens(non_padded_ids)
+
         token_to_orig_map = {}
-        token_is_max_context = {}
-        segment_ids = []
+        for i in range(paragraph_len):
+            index = len(truncated_query) + sequence_added_tokens + i if tokenizer.padding_side == "right" else i
+            token_to_orig_map[index] = tok_to_orig_index[len(spans) * doc_stride + i]
+
+        encoded_dict["paragraph_len"] = paragraph_len
+        encoded_dict["tokens"] = tokens
+        encoded_dict["token_to_orig_map"] = token_to_orig_map
+        encoded_dict["truncated_query_with_special_tokens_length"] = len(truncated_query) + sequence_added_tokens
+        encoded_dict["token_is_max_context"] = {}
+        encoded_dict["start"] = len(spans) * doc_stride
+        encoded_dict["length"] = paragraph_len
+
+        spans.append(encoded_dict)
+
+        if "overflowing_tokens" not in encoded_dict:
+            break
+        span_doc_tokens = encoded_dict["overflowing_tokens"]
+
+    for doc_span_index in range(len(spans)):
+        for j in range(spans[doc_span_index]["paragraph_len"]):
+            is_max_context = _new_check_is_max_context(spans, doc_span_index, doc_span_index * doc_stride + j)
+            index = (
+                j
+                if tokenizer.padding_side == "left"
+                else spans[doc_span_index]["truncated_query_with_special_tokens_length"] + j
+            )
+            spans[doc_span_index]["token_is_max_context"][index] = is_max_context
+
+    for span in spans:
+        # Identify the position of the CLS token
+        cls_index = span["input_ids"].index(tokenizer.cls_token_id)
 
         # p_mask: mask with 1 for token than cannot be in the answer (0 for token which can be in an answer)
         # Original TF implem also keep the classification token (set to 0) (not sure why...)
-        p_mask = []
+        p_mask = np.array(span["token_type_ids"])
 
-        # CLS token at the beginning
-        if not cls_token_at_end:
-            tokens.append(cls_token)
-            segment_ids.append(cls_token_segment_id)
-            p_mask.append(0)
-            cls_index = 0
+        p_mask = np.minimum(p_mask, 1)
 
-        # XLNet: P SEP Q SEP CLS
-        # Others: CLS Q SEP P SEP
-        if not sequence_a_is_doc:
-            # Query
-            tokens += query_tokens
-            segment_ids += [sequence_a_segment_id] * len(query_tokens)
-            p_mask += [1] * len(query_tokens)
+        if tokenizer.padding_side == "right":
+            # Limit positive values to one
+            p_mask = 1 - p_mask
 
-            # SEP token
-            tokens.append(sep_token)
-            segment_ids.append(sequence_a_segment_id)
-            p_mask.append(1)
+        p_mask[np.where(np.array(span["input_ids"]) == tokenizer.sep_token_id)[0]] = 1
 
-        # Paragraph
-        for i in range(doc_span.length):
-            split_token_index = doc_span.start + i
-            token_to_orig_map[len(tokens)] = tok_to_orig_index[split_token_index]
-
-            is_max_context = _check_is_max_context(doc_spans, doc_span_index, split_token_index)
-            token_is_max_context[len(tokens)] = is_max_context
-            tokens.append(all_doc_tokens[split_token_index])
-            if not sequence_a_is_doc:
-                segment_ids.append(sequence_b_segment_id)
-            else:
-                segment_ids.append(sequence_a_segment_id)
-            p_mask.append(0)
-        paragraph_len = doc_span.length
-
-        if sequence_a_is_doc:
-            # SEP token
-            tokens.append(sep_token)
-            segment_ids.append(sequence_a_segment_id)
-            p_mask.append(1)
-
-            tokens += query_tokens
-            segment_ids += [sequence_b_segment_id] * len(query_tokens)
-            p_mask += [1] * len(query_tokens)
-
-        # SEP token
-        tokens.append(sep_token)
-        segment_ids.append(sequence_b_segment_id)
-        p_mask.append(1)
-
-        # CLS token at the end
-        if cls_token_at_end:
-            tokens.append(cls_token)
-            segment_ids.append(cls_token_segment_id)
-            p_mask.append(0)
-            cls_index = len(tokens) - 1  # Index of classification token
-
-        input_ids = tokenizer.convert_tokens_to_ids(tokens)
-
-        # The mask has 1 for real tokens and 0 for padding tokens. Only real
-        # tokens are attended to.
-        input_mask = [1 if mask_padding_with_zero else 0] * len(input_ids)
-
-        # Zero-pad up to the sequence length.
-        while len(input_ids) < max_seq_length:
-            input_ids.append(pad_token)
-            input_mask.append(0 if mask_padding_with_zero else 1)
-            segment_ids.append(pad_token_segment_id)
-            p_mask.append(1)
-
-        assert len(input_ids) == max_seq_length
-        assert len(input_mask) == max_seq_length
-        assert len(segment_ids) == max_seq_length
+        # Set the CLS index to '0'
+        p_mask[cls_index] = 0
 
         span_is_impossible = example.is_impossible
-        start_position = None
-        end_position = None
+        start_position = 0
+        end_position = 0
         if is_training and not span_is_impossible:
             # For training, if our document chunk does not contain an annotation
             # we throw it out, since there is nothing to predict.
-            doc_start = doc_span.start
-            doc_end = doc_span.start + doc_span.length - 1
+            doc_start = span["start"]
+            doc_end = span["start"] + span["length"] - 1
             out_of_span = False
+
             if not (tok_start_position >= doc_start and tok_end_position <= doc_end):
                 out_of_span = True
+
             if out_of_span:
-                start_position = 0
-                end_position = 0
+                start_position = cls_index
+                end_position = cls_index
                 span_is_impossible = True
             else:
-                if sequence_a_is_doc:
+                if tokenizer.padding_side == "left":
                     doc_offset = 0
                 else:
-                    doc_offset = len(query_tokens) + 2
+                    doc_offset = len(truncated_query) + sequence_added_tokens
+
                 start_position = tok_start_position - doc_start + doc_offset
                 end_position = tok_end_position - doc_start + doc_offset
 
-        if is_training and span_is_impossible:
-            start_position = cls_index
-            end_position = cls_index
-
-        # if example_index < 20:
-        #     logger.info("*** Example ***")
-        #     logger.info("unique_id: %s" % (unique_id))
-        #     logger.info("example_index: %s" % (example_index))
-        #     logger.info("doc_span_index: %s" % (doc_span_index))
-        #     logger.info("tokens: %s" % " ".join(tokens))
-        #     logger.info(
-        #         "token_to_orig_map: %s" % " ".join(["%d:%d" % (x, y) for (x, y) in token_to_orig_map.items()])
-        #     )
-        #     logger.info(
-        #         "token_is_max_context: %s"
-        #         % " ".join(["%d:%s" % (x, y) for (x, y) in token_is_max_context.items()])
-        #     )
-        #     logger.info("input_ids: %s" % " ".join([str(x) for x in input_ids]))
-        #     logger.info("input_mask: %s" % " ".join([str(x) for x in input_mask]))
-        #     logger.info("segment_ids: %s" % " ".join([str(x) for x in segment_ids]))
-        #     if is_training and span_is_impossible:
-        #         logger.info("impossible example")
-        #     if is_training and not span_is_impossible:
-        #         answer_text = " ".join(tokens[start_position : (end_position + 1)])
-        #         logger.info("start_position: %d" % (start_position))
-        #         logger.info("end_position: %d" % (end_position))
-        #         logger.info("answer: %s" % (answer_text))
-        feature = InputFeatures(
-            unique_id=unique_id,
-            example_index=example_index,
-            doc_span_index=doc_span_index,
-            tokens=tokens,
-            token_to_orig_map=token_to_orig_map,
-            token_is_max_context=token_is_max_context,
-            input_ids=input_ids,
-            input_mask=input_mask,
-            segment_ids=segment_ids,
-            cls_index=cls_index,
-            p_mask=p_mask,
-            paragraph_len=paragraph_len,
-            start_position=start_position,
-            end_position=end_position,
-            is_impossible=span_is_impossible,
+        features.append(
+            SquadFeatures(
+                span["input_ids"],
+                span["attention_mask"],
+                span["token_type_ids"],
+                cls_index,
+                p_mask.tolist(),
+                example_index=0,  # Can not set unique_id and example_index here. They will be set after multiple processing.
+                unique_id=0,
+                paragraph_len=span["paragraph_len"],
+                token_is_max_context=span["token_is_max_context"],
+                tokens=span["tokens"],
+                token_to_orig_map=span["token_to_orig_map"],
+                start_position=start_position,
+                end_position=end_position,
+                is_impossible=span_is_impossible,
+            )
         )
-
-        return feature
+    return features
 
 
 def squad_convert_examples_to_features(
@@ -473,283 +387,6 @@ def squad_convert_examples_to_features(
         example_index += 1
     features = new_features
     del new_features
-
-    # Convert to Tensors and build dataset
-    all_input_ids = torch.tensor([f.input_ids for f in features], dtype=torch.long)
-    all_attention_masks = torch.tensor([f.attention_mask for f in features], dtype=torch.long)
-    all_token_type_ids = torch.tensor([f.token_type_ids for f in features], dtype=torch.long)
-    all_cls_index = torch.tensor([f.cls_index for f in features], dtype=torch.long)
-    all_p_mask = torch.tensor([f.p_mask for f in features], dtype=torch.float)
-    all_is_impossible = torch.tensor([f.is_impossible for f in features], dtype=torch.float)
-
-    if not is_training:
-        all_feature_index = torch.arange(all_input_ids.size(0), dtype=torch.long)
-        dataset = TensorDataset(
-            all_input_ids, all_attention_masks, all_token_type_ids, all_feature_index, all_cls_index, all_p_mask
-        )
-    else:
-        all_start_positions = torch.tensor([f.start_position for f in features], dtype=torch.long)
-        all_end_positions = torch.tensor([f.end_position for f in features], dtype=torch.long)
-        dataset = TensorDataset(
-            all_input_ids,
-            all_attention_masks,
-            all_token_type_ids,
-            all_start_positions,
-            all_end_positions,
-            all_cls_index,
-            all_p_mask,
-            all_is_impossible,
-        )
-
-    return features, dataset
-
-
-def convert_examples_to_features(
-    examples,
-    tokenizer,
-    max_seq_length,
-    doc_stride,
-    max_query_length,
-    is_training,
-    cls_token_at_end=False,
-    cls_token="[CLS]",
-    sep_token="[SEP]",
-    pad_token=0,
-    sequence_a_segment_id=0,
-    sequence_b_segment_id=1,
-    cls_token_segment_id=0,
-    pad_token_segment_id=0,
-    mask_padding_with_zero=True,
-    sequence_a_is_doc=False,
-    silent=False,
-    args=None,
-):
-    """Converts examples into a list of `InputBatch`s."""
-
-    unique_id = 1000000000
-    # cnt_pos, cnt_neg = 0, 0
-    # max_N, max_M = 1024, 1024
-    # f = np.zeros((max_N, max_M), dtype=np.float32)
-
-    if args.use_multiprocessing:
-        example_rows = [
-            (
-                example,
-                tokenizer,
-                max_seq_length,
-                doc_stride,
-                max_query_length,
-                is_training,
-                cls_token_at_end,
-                cls_token,
-                sep_token,
-                pad_token,
-                sequence_a_segment_id,
-                sequence_b_segment_id,
-                cls_token_segment_id,
-                pad_token_segment_id,
-                mask_padding_with_zero,
-                sequence_a_is_doc,
-                unique_id + i,
-                i,
-            )
-            for i, example in enumerate(examples)
-        ]
-
-        with Pool(args.process_count) as p:
-            features = list(
-                tqdm(
-                    p.imap(convert_example_to_feature, example_rows, chunksize=args.multiprocessing_chunksize),
-                    total=len(example_rows),
-                    disable=args.silent,
-                )
-            )
-    else:
-        features = []
-        for (example_index, example) in enumerate(tqdm(examples, disable=silent)):
-
-            # if example_index % 100 == 0:
-            #     logger.info('Converting %s/%s pos %s neg %s', example_index, len(examples), cnt_pos, cnt_neg)
-
-            query_tokens = tokenizer.tokenize(example.question_text)
-
-            if len(query_tokens) > max_query_length:
-                query_tokens = query_tokens[0:max_query_length]
-
-            tok_to_orig_index = []
-            orig_to_tok_index = []
-            all_doc_tokens = []
-            for (i, token) in enumerate(example.doc_tokens):
-                orig_to_tok_index.append(len(all_doc_tokens))
-                sub_tokens = tokenizer.tokenize(token)
-                for sub_token in sub_tokens:
-                    tok_to_orig_index.append(i)
-                    all_doc_tokens.append(sub_token)
-
-            tok_start_position = None
-            tok_end_position = None
-            if is_training and example.is_impossible:
-                tok_start_position = -1
-                tok_end_position = -1
-            if is_training and not example.is_impossible:
-                tok_start_position = orig_to_tok_index[example.start_position]
-                if example.end_position < len(example.doc_tokens) - 1:
-                    tok_end_position = orig_to_tok_index[example.end_position + 1] - 1
-                else:
-                    tok_end_position = len(all_doc_tokens) - 1
-                (tok_start_position, tok_end_position) = _improve_answer_span(
-                    all_doc_tokens, tok_start_position, tok_end_position, tokenizer, example.orig_answer_text,
-                )
-
-            # The -3 accounts for [CLS], [SEP] and [SEP]
-            max_tokens_for_doc = max_seq_length - len(query_tokens) - 3
-
-            # We can have documents that are longer than the maximum sequence length.
-            # To deal with this we do a sliding window approach, where we take chunks
-            # of the up to our max length with a stride of `doc_stride`.
-            _DocSpan = collections.namedtuple("DocSpan", ["start", "length"])  # pylint: disable=invalid-name
-            doc_spans = []
-            start_offset = 0
-            while start_offset < len(all_doc_tokens):
-                length = len(all_doc_tokens) - start_offset
-                if length > max_tokens_for_doc:
-                    length = max_tokens_for_doc
-                doc_spans.append(_DocSpan(start=start_offset, length=length))
-                if start_offset + length == len(all_doc_tokens):
-                    break
-                start_offset += min(length, doc_stride)
-
-            for (doc_span_index, doc_span) in enumerate(doc_spans):
-                tokens = []
-                token_to_orig_map = {}
-                token_is_max_context = {}
-                segment_ids = []
-
-                # p_mask: mask with 1 for token than cannot be in the answer (0 for token which can be in an answer)
-                # Original TF implem also keep the classification token (set to 0) (not sure why...)
-                p_mask = []
-
-                # CLS token at the beginning
-                if not cls_token_at_end:
-                    tokens.append(cls_token)
-                    segment_ids.append(cls_token_segment_id)
-                    p_mask.append(0)
-                    cls_index = 0
-
-                # XLNet: P SEP Q SEP CLS
-                # Others: CLS Q SEP P SEP
-                if not sequence_a_is_doc:
-                    # Query
-                    tokens += query_tokens
-                    segment_ids += [sequence_a_segment_id] * len(query_tokens)
-                    p_mask += [1] * len(query_tokens)
-
-                    # SEP token
-                    tokens.append(sep_token)
-                    segment_ids.append(sequence_a_segment_id)
-                    p_mask.append(1)
-
-                # Paragraph
-                for i in range(doc_span.length):
-                    split_token_index = doc_span.start + i
-                    token_to_orig_map[len(tokens)] = tok_to_orig_index[split_token_index]
-
-                    is_max_context = _check_is_max_context(doc_spans, doc_span_index, split_token_index)
-                    token_is_max_context[len(tokens)] = is_max_context
-                    tokens.append(all_doc_tokens[split_token_index])
-                    if not sequence_a_is_doc:
-                        segment_ids.append(sequence_b_segment_id)
-                    else:
-                        segment_ids.append(sequence_a_segment_id)
-                    p_mask.append(0)
-                paragraph_len = doc_span.length
-
-                if sequence_a_is_doc:
-                    # SEP token
-                    tokens.append(sep_token)
-                    segment_ids.append(sequence_a_segment_id)
-                    p_mask.append(1)
-
-                    tokens += query_tokens
-                    segment_ids += [sequence_b_segment_id] * len(query_tokens)
-                    p_mask += [1] * len(query_tokens)
-
-                # SEP token
-                tokens.append(sep_token)
-                segment_ids.append(sequence_b_segment_id)
-                p_mask.append(1)
-
-                # CLS token at the end
-                if cls_token_at_end:
-                    tokens.append(cls_token)
-                    segment_ids.append(cls_token_segment_id)
-                    p_mask.append(0)
-                    cls_index = len(tokens) - 1  # Index of classification token
-
-                input_ids = tokenizer.convert_tokens_to_ids(tokens)
-
-                # The mask has 1 for real tokens and 0 for padding tokens. Only real
-                # tokens are attended to.
-                input_mask = [1 if mask_padding_with_zero else 0] * len(input_ids)
-
-                # Zero-pad up to the sequence length.
-                while len(input_ids) < max_seq_length:
-                    input_ids.append(pad_token)
-                    input_mask.append(0 if mask_padding_with_zero else 1)
-                    segment_ids.append(pad_token_segment_id)
-                    p_mask.append(1)
-
-                assert len(input_ids) == max_seq_length
-                assert len(input_mask) == max_seq_length
-                assert len(segment_ids) == max_seq_length
-
-                span_is_impossible = example.is_impossible
-                start_position = None
-                end_position = None
-                if is_training and not span_is_impossible:
-                    # For training, if our document chunk does not contain an annotation
-                    # we throw it out, since there is nothing to predict.
-                    doc_start = doc_span.start
-                    doc_end = doc_span.start + doc_span.length - 1
-                    out_of_span = False
-                    if not (tok_start_position >= doc_start and tok_end_position <= doc_end):
-                        out_of_span = True
-                    if out_of_span:
-                        start_position = 0
-                        end_position = 0
-                        span_is_impossible = True
-                    else:
-                        if sequence_a_is_doc:
-                            doc_offset = 0
-                        else:
-                            doc_offset = len(query_tokens) + 2
-                        start_position = tok_start_position - doc_start + doc_offset
-                        end_position = tok_end_position - doc_start + doc_offset
-
-                if is_training and span_is_impossible:
-                    start_position = cls_index
-                    end_position = cls_index
-
-                features.append(
-                    InputFeatures(
-                        unique_id=unique_id,
-                        example_index=example_index,
-                        doc_span_index=doc_span_index,
-                        tokens=tokens,
-                        token_to_orig_map=token_to_orig_map,
-                        token_is_max_context=token_is_max_context,
-                        input_ids=input_ids,
-                        input_mask=input_mask,
-                        segment_ids=segment_ids,
-                        cls_index=cls_index,
-                        p_mask=p_mask,
-                        paragraph_len=paragraph_len,
-                        start_position=start_position,
-                        end_position=end_position,
-                        is_impossible=span_is_impossible,
-                    )
-                )
-                unique_id += 1
 
     return features
 
@@ -1865,52 +1502,3 @@ def build_examples(to_predict):
 
     return examples
 
-
-class LazyQuestionAnsweringDataset(Dataset):
-    def __init__(self, data_file, tokenizer, args):
-        self.data_file = data_file
-        self.num_entries = self._get_n_lines(self.data_file)
-        self.tokenizer = tokenizer
-        self.args = args
-        squad_convert_example_to_features_init(self.tokenizer)
-
-    @staticmethod
-    def _get_n_lines(data_file):
-        counter = 0
-        myfile = open(data_file, "r+")
-        for line in myfile:
-            counter += 1
-
-        return counter
-
-    # @staticmethod
-    # def _get_n_lines(data_file):
-    #     with open(data_file, encoding="utf-8") as f:
-    #         for line_idx, _ in enumerate(f, 1):
-    #             pass
-
-    #     return line_idx
-
-    def __getitem__(self, idx):
-        if idx == 0:
-            idx = 1
-        line = linecache.getline(self.data_file, idx)
-        qa_sample = json.loads(line)
-        example = get_examples([qa_sample])[0]
-        f = squad_convert_example_to_features(
-            example, self.args.max_seq_length, self.args.doc_stride, self.args.max_query_length, True
-        )[0]
-
-        return (
-            torch.tensor(f.input_ids, dtype=torch.long),
-            torch.tensor(f.attention_mask, dtype=torch.long),
-            torch.tensor(f.token_type_ids, dtype=torch.long),
-            torch.tensor(f.cls_index, dtype=torch.long),
-            torch.tensor(f.start_position, dtype=torch.long),
-            torch.tensor(f.end_position, dtype=torch.long),
-            torch.tensor(f.p_mask, dtype=torch.float),
-            torch.tensor(f.is_impossible, dtype=torch.float),
-        )
-
-    def __len__(self):
-        return self.num_entries

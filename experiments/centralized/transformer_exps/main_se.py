@@ -16,12 +16,12 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "../../")))
 sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "../../../")))
 
 
-from data_preprocessing.seq_tagging_preprocessor import TLMPreprocessor
-from data_manager.seq_tagging_data_manager import SequenceTaggingDataManager
+from data_preprocessing.span_extraction_preprocessor import TLMPreprocessor
+from data_manager.span_extraction_data_manager import SpanExtractionDataManager
 
-from model.transformer.model_args import SeqTaggingArgs
+from model.transformer.model_args import SpanExtractionArgs
 
-from training.st_transformer_trainer import SeqTaggingTrainer
+from training.se_transformer_trainer import SpanExtractionTrainer
 
 from experiments.utils.general import set_seed, create_model, add_centralized_args
  
@@ -46,15 +46,13 @@ if __name__ == "__main__":
     device = torch.device("cuda:0")
 
     # attributes
-    attributes = SequenceTaggingDataManager.load_attributes(args.data_file_path)
-    num_labels = len(attributes["label_vocab"])
+    attributes = SpanExtractionDataManager.load_attributes(args.data_file_path)
 
     # model
-    model_args = SeqTaggingArgs()    
+    model_args = SpanExtractionArgs()    
     model_args.model_name = args.model_name
     model_args.model_type = args.model_type
     model_args.load(model_args.model_name)
-    model_args.num_labels = num_labels
     model_args.update_from_dict({"num_train_epochs": args.num_train_epochs,
                               "learning_rate": args.learning_rate,
                               "gradient_accumulation_steps": args.gradient_accumulation_steps,
@@ -74,28 +72,26 @@ if __name__ == "__main__":
                               "output_dir": args.output_dir,
                               "is_debug_mode": args.is_debug_mode
                               })
-    model_args.config["num_labels"] = num_labels
-    model_config, model, tokenizer = create_model(model_args, formulation="seq_tagging")
+
+    model_config, model, tokenizer = create_model(model_args, formulation="span_extraction")
 
     # preprocessor
-    preprocessor = TLMPreprocessor(args=model_args, label_vocab=attributes["label_vocab"], tokenizer=tokenizer)
+    preprocessor = TLMPreprocessor(args=model_args, tokenizer=tokenizer)
 
     # data manager
-    process_id = 0
-    num_workers = 1
-    dm = SequenceTaggingDataManager(args, model_args, preprocessor)
+    dm = SpanExtractionDataManager(args, model_args, preprocessor)
+    
     train_examples, test_examples, train_dl, test_dl = dm.load_centralized_data()
 
-    # Create a SeqTaggingModel and start train
-    trainer = SeqTaggingTrainer(model_args, device, model, train_dl, test_dl, test_examples, tokenizer)
-    trainer.train_model()
-
+    # Create a ClassificationModel and start train
+    # trainer = SpanExtractionTrainer(model_args, device, model, train_dl, test_dl, test_examples)
+    # trainer.train_model()
 
 ''' Example Usage:
 
 export CUDA_VISIBLE_DEVICES=0
-DATA_NAME=w_nut
-CUDA_VISIBLE_DEVICES=0 python -m experiments.centralized.transformer_exps.main_st \
+DATA_NAME=squad_1.1
+CUDA_VISIBLE_DEVICES=0 python -m experiments.centralized.transformer_exps.main_se \
     --dataset ${DATA_NAME} \
     --data_file ./data/fednlp_data/data_files/${DATA_NAME}_data.h5 \
     --partition_file ./data/fednlp_data/partition_files/${DATA_NAME}_partition.h5 \
@@ -108,7 +104,9 @@ CUDA_VISIBLE_DEVICES=0 python -m experiments.centralized.transformer_exps.main_s
     --max_seq_length 256 \
     --learning_rate 5e-5 \
     --num_train_epochs 5 \
-    --evaluate_during_training_steps 10 \
+    --evaluate_during_training_steps 250 \
     --output_dir /tmp/${DATA_NAME}_fed/ \
     --n_gpu 1
+
+
 '''

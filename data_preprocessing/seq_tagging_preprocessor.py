@@ -26,6 +26,7 @@ class TrivialPreprocessor(BasePreprocessor):
         for i, single_x in enumerate(X):
             if self.text_cleaner:
                 single_x = self.text_cleaner(single_x)
+            x_tokens = [token.text.strip().lower() for token in self.tokenizer(single_x.strip()) if token.text.strip()]
             x_token_ids = [self.word_vocab[token] if token in self.word_vocab else self.word_vocab["<UNK>"] for token in
                            x_tokens]
             transformed_X.append(x_token_ids)

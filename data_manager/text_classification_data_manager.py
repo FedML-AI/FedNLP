@@ -20,4 +20,4 @@ class TextClassificationDataManager(BaseDataManager):
     def read_instance_from_h5(self, data_file, index_list):
         X = [data_file["X"][str(idx)][()].decode("utf-8") for idx in index_list]
         y = [data_file["Y"][str(idx)][()].decode("utf-8") for idx in index_list]
-        return X, y
+        return {"X": X, "y": y}

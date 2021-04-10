@@ -47,13 +47,14 @@ if __name__ == "__main__":
 
     # attributes
     attributes = TextClassificationDataManager.load_attributes(args.data_file_path)
+    num_labels = len(attributes["label_vocab"])
 
     # model
     model_args = ClassificationArgs()    
     model_args.model_name = args.model_name
     model_args.model_type = args.model_type
     model_args.load(model_args.model_name)
-    model_args.num_labels = len(attributes["label_vocab"])
+    model_args.num_labels = num_labels
     model_args.update_from_dict({"num_train_epochs": args.num_train_epochs,
                               "learning_rate": args.learning_rate,
                               "gradient_accumulation_steps": args.gradient_accumulation_steps,
@@ -74,7 +75,7 @@ if __name__ == "__main__":
                               "is_debug_mode": args.is_debug_mode
                               })
 
-    num_labels = len(attributes["label_vocab"])
+    model_args.config["num_labels"] = num_labels
     model_config, model, tokenizer = create_model(model_args, formulation="classification")
 
     # preprocessor
@@ -92,7 +93,7 @@ if __name__ == "__main__":
 ''' Example Usage:
 
 export CUDA_VISIBLE_DEVICES=0
-DATA_NAME=sst_2
+DATA_NAME=agnews
 CUDA_VISIBLE_DEVICES=0 python -m experiments.centralized.transformer_exps.main_tc \
     --dataset ${DATA_NAME} \
     --data_file ./data/fednlp_data/data_files/${DATA_NAME}_data.h5 \

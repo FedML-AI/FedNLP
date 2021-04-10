@@ -142,20 +142,31 @@ class SeqTaggingArgs(ModelArgs):
 
     model_class: str = "SeqTaggingModel"
     labels_list: list = field(default_factory=list)
-    labels_map: dict = field(default_factory=dict)
     lazy_delimiter: str = "\t"
     lazy_labels_column: int = 1
     lazy_loading: bool = False
     lazy_loading_start_line: int = 1
-    lazy_text_a_column: bool = None
-    lazy_text_b_column: bool = None
-    lazy_text_column: int = 0
     onnx: bool = False
-    regression: bool = False
-    sliding_window: bool = False
-    stride: float = 0.8
-    tie_value: int = 1
     evaluate_during_training_steps: int = 20
     evaluate_during_training: bool = True
     classification_report: bool = True
     pad_token_label_id: int = CrossEntropyLoss().ignore_index
+
+
+@dataclass
+class SpanExtractionArgs(ModelArgs):
+    """
+    Model args for a SpanExtractionModel
+    """
+
+    model_class: str = "QuestionAnsweringModel"
+    doc_stride: int = 384
+    early_stopping_metric: str = "correct"
+    early_stopping_metric_minimize: bool = False
+    lazy_loading: bool = False
+    max_answer_length: int = 100
+    max_query_length: int = 64
+    n_best_size: int = 20
+    null_score_diff_threshold: float = 0.0
+    evaluate_during_training_steps: int = 20
+    evaluate_during_training: bool = True
