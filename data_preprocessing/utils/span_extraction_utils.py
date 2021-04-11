@@ -20,23 +20,25 @@ from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader, Dataset, RandomSampler, SequentialSampler, TensorDataset
 from tqdm import tqdm, trange
 from transformers import AdamW, SquadExample, XLMTokenizer, get_linear_schedule_with_warmup
-from transformers.data.processors.squad import (
-    squad_convert_example_to_features_init,
-)
+from transformers.tokenization_utils_base import BatchEncoding, TruncationStrategy, PreTrainedTokenizerBase
+
 from transformers.tokenization_bert import BasicTokenizer, whitespace_tokenize
 
 logger = logging.getLogger(__name__)
 
 
+# Store the tokenizers which insert 2 separators tokens
+MULTI_SEP_TOKENS_TOKENIZERS_SET = {"roberta", "camembert", "bart", "mpnet"}
+
 def to_list(tensor):
     return tensor.detach().cpu().tolist()
 
 
-class SquadFeatures(object):
+class SquadFeatures:
     """
-    Single squad example features to be fed to a model.
-    Those features are model-specific and can be crafted from :class:`~transformers.data.processors.squad.SquadExample`
-    using the :method:`~transformers.data.processors.squad.squad_convert_examples_to_features` method.
+    Single squad example features to be fed to a model. Those features are model-specific and can be crafted from
+    :class:`~transformers.data.processors.squad.SquadExample` using the
+    :method:`~transformers.data.processors.squad.squad_convert_examples_to_features` method.
 
     Args:
         input_ids: Indices of input sequence tokens in the vocabulary.
@@ -55,6 +57,7 @@ class SquadFeatures(object):
         token_to_orig_map: mapping between the tokens and the original text, needed in order to identify the answer.
         start_position: start of the answer token index
         end_position: end of the answer token index
+        encoding: optionally store the BatchEncoding with the fast-tokenizer alignment methods.
     """
 
     def __init__(
@@ -73,6 +76,8 @@ class SquadFeatures(object):
         start_position,
         end_position,
         is_impossible,
+        guid: str = None,
+        encoding: BatchEncoding = None,
     ):
         self.input_ids = input_ids
         self.attention_mask = attention_mask
@@ -90,6 +95,9 @@ class SquadFeatures(object):
         self.start_position = start_position
         self.end_position = end_position
         self.is_impossible = is_impossible
+        self.guid = guid
+
+        self.encoding = encoding
 
 def _improve_answer_span(doc_tokens, input_start, input_end, tokenizer, orig_answer_text):
     """Returns tokenized answer spans that better match the annotated answer."""
@@ -124,9 +132,14 @@ def _new_check_is_max_context(doc_spans, cur_span_index, position):
 
     return cur_span_index == best_span_index
 
+def squad_convert_example_to_features_init(tokenizer_for_convert: PreTrainedTokenizerBase):
+    global tokenizer
+    tokenizer = tokenizer_for_convert
 
 
-def squad_convert_example_to_features(example, max_seq_length, doc_stride, max_query_length, is_training):
+def squad_convert_example_to_features(
+    example, max_seq_length, doc_stride, max_query_length, padding_strategy, is_training
+):
     features = []
     if is_training and not example.is_impossible:
         # Get start and end position
@@ -137,7 +150,7 @@ def squad_convert_example_to_features(example, max_seq_length, doc_stride, max_q
         actual_text = " ".join(example.doc_tokens[start_position : (end_position + 1)])
         cleaned_answer_text = " ".join(whitespace_tokenize(example.answer_text))
         if actual_text.find(cleaned_answer_text) == -1:
-            logger.warning("Could not find answer: '%s' vs. '%s'", actual_text, cleaned_answer_text)
+            logger.warning(f"Could not find answer: '{actual_text}' vs. '{cleaned_answer_text}'")
             return []
 
     tok_to_orig_index = []
@@ -145,7 +158,17 @@ def squad_convert_example_to_features(example, max_seq_length, doc_stride, max_q
     all_doc_tokens = []
     for (i, token) in enumerate(example.doc_tokens):
         orig_to_tok_index.append(len(all_doc_tokens))
-        sub_tokens = tokenizer.tokenize(token)
+        if tokenizer.__class__.__name__ in [
+            "RobertaTokenizer",
+            "LongformerTokenizer",
+            "BartTokenizer",
+            "RobertaTokenizerFast",
+            "LongformerTokenizerFast",
+            "BartTokenizerFast",
+        ]:
+            sub_tokens = tokenizer.tokenize(token, add_prefix_space=True)
+        else:
+            sub_tokens = tokenizer.tokenize(token)
         for sub_token in sub_tokens:
             tok_to_orig_index.append(i)
             all_doc_tokens.append(sub_token)
@@ -163,25 +186,42 @@ def squad_convert_example_to_features(example, max_seq_length, doc_stride, max_q
 
     spans = []
 
-    truncated_query = tokenizer.encode(example.question_text, add_special_tokens=False, max_length=max_query_length)
-    sequence_added_tokens = (
-        tokenizer.max_len - tokenizer.max_len_single_sentence + 1
-        if "roberta" in str(type(tokenizer))
-        else tokenizer.max_len - tokenizer.max_len_single_sentence
+    truncated_query = tokenizer.encode(
+        example.question_text, add_special_tokens=False, truncation=True, max_length=max_query_length
     )
-    sequence_pair_added_tokens = tokenizer.max_len - tokenizer.max_len_sentences_pair
+
+    # Tokenizers who insert 2 SEP tokens in-between <context> & <question> need to have special handling
+    # in the way they compute mask of added tokens.
+    tokenizer_type = type(tokenizer).__name__.replace("Tokenizer", "").lower()
+    sequence_added_tokens = (
+        tokenizer.model_max_length - tokenizer.max_len_single_sentence + 1
+        if tokenizer_type in MULTI_SEP_TOKENS_TOKENIZERS_SET
+        else tokenizer.model_max_length - tokenizer.max_len_single_sentence
+    )
+    sequence_pair_added_tokens = tokenizer.model_max_length - tokenizer.max_len_sentences_pair
 
     span_doc_tokens = all_doc_tokens
     while len(spans) * doc_stride < len(all_doc_tokens):
 
-        encoded_dict = tokenizer.encode_plus(
-            truncated_query if tokenizer.padding_side == "right" else span_doc_tokens,
-            span_doc_tokens if tokenizer.padding_side == "right" else truncated_query,
+        # Define the side we want to truncate / pad and the text/pair sorting
+        if tokenizer.padding_side == "right":
+            texts = truncated_query
+            pairs = span_doc_tokens
+            truncation = TruncationStrategy.ONLY_SECOND.value
+        else:
+            texts = span_doc_tokens
+            pairs = truncated_query
+            truncation = TruncationStrategy.ONLY_FIRST.value
+
+        encoded_dict = tokenizer.encode_plus(  # TODO(thom) update this logic
+            texts,
+            pairs,
+            truncation=truncation,
+            padding=padding_strategy,
             max_length=max_seq_length,
             return_overflowing_tokens=True,
-            pad_to_max_length=True,
             stride=max_seq_length - doc_stride - len(truncated_query) - sequence_pair_added_tokens,
-            truncation_strategy="only_second" if tokenizer.padding_side == "right" else "only_first",
+            return_token_type_ids=True,
         )
 
         paragraph_len = min(
@@ -190,7 +230,14 @@ def squad_convert_example_to_features(example, max_seq_length, doc_stride, max_q
         )
 
         if tokenizer.pad_token_id in encoded_dict["input_ids"]:
-            non_padded_ids = encoded_dict["input_ids"][: encoded_dict["input_ids"].index(tokenizer.pad_token_id)]
+            if tokenizer.padding_side == "right":
+                non_padded_ids = encoded_dict["input_ids"][: encoded_dict["input_ids"].index(tokenizer.pad_token_id)]
+            else:
+                last_padding_id_position = (
+                    len(encoded_dict["input_ids"]) - 1 - encoded_dict["input_ids"][::-1].index(tokenizer.pad_token_id)
+                )
+                non_padded_ids = encoded_dict["input_ids"][last_padding_id_position + 1 :]
+
         else:
             non_padded_ids = encoded_dict["input_ids"]
 
@@ -211,7 +258,9 @@ def squad_convert_example_to_features(example, max_seq_length, doc_stride, max_q
 
         spans.append(encoded_dict)
 
-        if "overflowing_tokens" not in encoded_dict:
+        if "overflowing_tokens" not in encoded_dict or (
+            "overflowing_tokens" in encoded_dict and len(encoded_dict["overflowing_tokens"]) == 0
+        ):
             break
         span_doc_tokens = encoded_dict["overflowing_tokens"]
 
@@ -230,18 +279,22 @@ def squad_convert_example_to_features(example, max_seq_length, doc_stride, max_q
         cls_index = span["input_ids"].index(tokenizer.cls_token_id)
 
         # p_mask: mask with 1 for token than cannot be in the answer (0 for token which can be in an answer)
-        # Original TF implem also keep the classification token (set to 0) (not sure why...)
-        p_mask = np.array(span["token_type_ids"])
-
-        p_mask = np.minimum(p_mask, 1)
-
+        # Original TF implem also keep the classification token (set to 0)
+        p_mask = np.ones_like(span["token_type_ids"])
         if tokenizer.padding_side == "right":
-            # Limit positive values to one
-            p_mask = 1 - p_mask
+            p_mask[len(truncated_query) + sequence_added_tokens :] = 0
+        else:
+            p_mask[-len(span["tokens"]) : -(len(truncated_query) + sequence_added_tokens)] = 0
 
-        p_mask[np.where(np.array(span["input_ids"]) == tokenizer.sep_token_id)[0]] = 1
+        pad_token_indices = np.where(span["input_ids"] == tokenizer.pad_token_id)
+        special_token_indices = np.asarray(
+            tokenizer.get_special_tokens_mask(span["input_ids"], already_has_special_tokens=True)
+        ).nonzero()
 
-        # Set the CLS index to '0'
+        p_mask[pad_token_indices] = 1
+        p_mask[special_token_indices] = 1
+
+        # Set the cls index to 0: the CLS index can be used for impossible answers
         p_mask[cls_index] = 0
 
         span_is_impossible = example.is_impossible
@@ -286,6 +339,7 @@ def squad_convert_example_to_features(example, max_seq_length, doc_stride, max_q
                 start_position=start_position,
                 end_position=end_position,
                 is_impossible=span_is_impossible,
+                guid=example.guid,
             )
         )
     return features
@@ -638,16 +692,16 @@ def write_predictions(
         assert len(nbest_json) >= 1
 
         if not version_2_with_negative:
-            all_predictions[example.qas_id] = nbest_json[0]["text"]
+            all_predictions[example.guid] = nbest_json[0]["text"]
         else:
             # predict "" iff the null score - the score of best non-null > threshold
             score_diff = score_null - best_non_null_entry.start_logit - (best_non_null_entry.end_logit)
-            scores_diff_json[example.qas_id] = score_diff
+            scores_diff_json[example.guid] = score_diff
             if score_diff > null_score_diff_threshold:
-                all_predictions[example.qas_id] = ""
+                all_predictions[example.guid] = ""
             else:
-                all_predictions[example.qas_id] = best_non_null_entry.text
-        all_nbest_json[example.qas_id] = nbest_json
+                all_predictions[example.guid] = best_non_null_entry.text
+        all_nbest_json[example.guid] = nbest_json
 
     with open(output_prediction_file, "w") as writer:
         writer.write(json.dumps(all_predictions, indent=4) + "\n")
@@ -834,12 +888,12 @@ def write_predictions_extended(
         assert best_non_null_entry is not None
 
         score_diff = score_null
-        scores_diff_json[example.qas_id] = score_diff
+        scores_diff_json[example.guid] = score_diff
         # note(zhiliny): always predict best_non_null_entry
         # and the evaluation script will search for the best threshold
-        all_predictions[example.qas_id] = best_non_null_entry.text
+        all_predictions[example.guid] = best_non_null_entry.text
 
-        all_nbest_json[example.qas_id] = nbest_json
+        all_nbest_json[example.guid] = nbest_json
 
     with open(output_prediction_file, "w") as writer:
         writer.write(json.dumps(all_predictions, indent=4) + "\n")
@@ -1031,16 +1085,16 @@ def get_best_predictions(
         assert len(nbest_json) >= 1
 
         if not version_2_with_negative:
-            all_predictions[example.qas_id] = nbest_json[0]["text"]
+            all_predictions[example.guid] = nbest_json[0]["text"]
         else:
             # predict "" iff the null score - the score of best non-null > threshold
             score_diff = score_null - best_non_null_entry.start_logit - (best_non_null_entry.end_logit)
-            scores_diff_json[example.qas_id] = score_diff
+            scores_diff_json[example.guid] = score_diff
             if score_diff > null_score_diff_threshold:
-                all_predictions[example.qas_id] = ""
+                all_predictions[example.guid] = ""
             else:
-                all_predictions[example.qas_id] = best_non_null_entry.text
-        all_nbest_json[example.qas_id] = nbest_json
+                all_predictions[example.guid] = best_non_null_entry.text
+        all_nbest_json[example.guid] = nbest_json
 
     all_best = [
         {
@@ -1214,12 +1268,12 @@ def get_best_predictions_extended(
         assert best_non_null_entry is not None
 
         score_diff = score_null
-        scores_diff_json[example.qas_id] = score_diff
+        scores_diff_json[example.guid] = score_diff
         # note(zhiliny): always predict best_non_null_entry
         # and the evaluation script will search for the best threshold
-        all_predictions[example.qas_id] = best_non_null_entry.text
+        all_predictions[example.guid] = best_non_null_entry.text
 
-        all_nbest_json[example.qas_id] = nbest_json
+        all_nbest_json[example.guid] = nbest_json
 
         all_best = [
             {

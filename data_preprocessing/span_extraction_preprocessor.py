@@ -43,6 +43,7 @@ class TLMPreprocessor(BasePreprocessor):
     def transform(self, context_X, question_X, y, index_list=None, evaluate=False):
         if index_list is None:
             index_list = [i for i in range(len(context_X))]
+
         examples = self.transform_examples(context_X, question_X, y, index_list)
         features = self.transform_features(examples, evaluate=evaluate)
 
@@ -58,12 +59,13 @@ class TLMPreprocessor(BasePreprocessor):
         if evaluate:
             all_feature_index = torch.arange(all_input_ids.size(0), dtype=torch.long)
             dataset = TensorDataset(
-                all_input_ids, all_attention_masks, all_token_type_ids, all_feature_index, all_cls_index, all_p_mask
+                all_guid, all_input_ids, all_attention_masks, all_token_type_ids, all_feature_index, all_cls_index, all_p_mask
             )
         else:
             all_start_positions = torch.tensor([f.start_position for f in features], dtype=torch.long)
             all_end_positions = torch.tensor([f.end_position for f in features], dtype=torch.long)
             dataset = TensorDataset(
+                all_guid,
                 all_input_ids,
                 all_attention_masks,
                 all_token_type_ids,

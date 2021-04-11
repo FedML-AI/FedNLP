@@ -1,5 +1,5 @@
 from data_manager.base_data_manager import BaseDataManager
-
+from tqdm import tqdm
 
 class SpanExtractionDataManager(BaseDataManager):
     """Data manager for reading comprehension (span-based QA).""" 
@@ -12,7 +12,11 @@ class SpanExtractionDataManager(BaseDataManager):
 
         
     def read_instance_from_h5(self, data_file, index_list):
-        context_X = [data_file["context_X"][str(idx)][()].decode("utf-8") for idx in index_list]
-        question_X = [data_file["question_X"][str(idx)][()].decode("utf-8") for idx in index_list]
-        y = [data_file["Y"][str(idx)][()].decode("utf-8") for idx in index_list]
+        context_X = list()
+        question_X = list()
+        y = list()
+        for idx in tqdm(index_list, desc="Loading data from h5 file."):
+            context_X.append(data_file["context_X"][str(idx)][()].decode("utf-8"))
+            question_X.append(data_file["question_X"][str(idx)][()].decode("utf-8"))
+            y.append(data_file["Y"][str(idx)][()] )
         return {"context_X": context_X, "question_X": question_X, "y": y}

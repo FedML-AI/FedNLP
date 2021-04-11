@@ -95,7 +95,7 @@ class BaseDataManager(ABC):
         for client_idx in tqdm(
             partition_file[partition_method]
             ["partition_data"].keys(),
-                desc="Loading data from h5 file."):
+                desc="Loading index from h5 file."):
             train_index_list.extend(
                 partition_file[partition_method]["partition_data"]
                 [client_idx]["train"][()])

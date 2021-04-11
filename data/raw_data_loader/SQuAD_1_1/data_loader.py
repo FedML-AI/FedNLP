@@ -56,27 +56,3 @@ class RawDataLoader(SpanExtractionRawDataLoader):
             f["Y/" + str(key)] = self.Y[key]
             f["question_ids/" + str(key)] = self.question_ids[key]
         f.close()
-
-
-
-
-def get_normal_format(dataset, cut_off=None):
-    """
-    reformat the dataset to normal version.
-    """
-    reformatted_data = []
-    assert len(dataset["context_X"]) == len(dataset["question_X"]) == len(dataset["Y"]) == len(dataset["question_ids"])
-    for c, q, a, qid in zip(dataset["context_X"], dataset["question_X"], dataset["Y"], dataset["question_ids"]):
-        item = {}
-        item["context"] = c
-        item["qas"] = [
-            {
-                # "id": "%d"%(len(reformatted_data)+1),
-                "id": qid,
-                "is_impossible": False,
-                "question": q,
-                "answers": [{"text": c[a[0]:a[1]], "answer_start": a[0]}],
-            }
-        ]
-        reformatted_data.append(item)
-    return reformatted_data[:cut_off]

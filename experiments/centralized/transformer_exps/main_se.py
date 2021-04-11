@@ -83,15 +83,15 @@ if __name__ == "__main__":
     
     train_examples, test_examples, train_dl, test_dl = dm.load_centralized_data()
 
-    # Create a ClassificationModel and start train
-    # trainer = SpanExtractionTrainer(model_args, device, model, train_dl, test_dl, test_examples)
-    # trainer.train_model()
+    # Create a SpanExtractionModel and start train
+    trainer = SpanExtractionTrainer(model_args, device, model, train_dl, test_dl, test_examples, tokenizer)
+    trainer.train_model()
 
 ''' Example Usage:
 
-export CUDA_VISIBLE_DEVICES=0
+export CUDA_VISIBLE_DEVICES=7
 DATA_NAME=squad_1.1
-CUDA_VISIBLE_DEVICES=0 python -m experiments.centralized.transformer_exps.main_se \
+CUDA_VISIBLE_DEVICES=7 python -m experiments.centralized.transformer_exps.main_se \
     --dataset ${DATA_NAME} \
     --data_file ./data/fednlp_data/data_files/${DATA_NAME}_data.h5 \
     --partition_file ./data/fednlp_data/partition_files/${DATA_NAME}_partition.h5 \

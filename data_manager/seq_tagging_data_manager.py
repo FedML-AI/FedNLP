@@ -3,6 +3,7 @@ import h5py
 from torch.utils.data import DataLoader
 import logging
 import numpy as np
+from tqdm import tqdm
 
 class SequenceTaggingDataManager(BaseDataManager):
     """Data manager for sequence tagging tasks."""
@@ -20,6 +21,9 @@ class SequenceTaggingDataManager(BaseDataManager):
 
 
     def read_instance_from_h5(self, data_file, index_list):
-        X = [[s.decode("utf-8") for s in data_file["X"][str(idx)][()]] for idx in index_list]
-        y = [[s.decode("utf-8") for s in data_file["Y"][str(idx)][()]] for idx in index_list]
+        X = list()
+        y = list()
+        for idx in tqdm(index_list, desc="Loading data from h5 file."):
+            X.append([s.decode("utf-8") for s in data_file["X"][str(idx)][()]])
+            y.append([s.decode("utf-8") for s in data_file["Y"][str(idx)][()]])
         return {"X": X, "y": y}
