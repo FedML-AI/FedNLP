@@ -62,7 +62,7 @@ class TLMPreprocessor(BasePreprocessor):
             dataset = TensorDataset(all_guid, all_input_ids, all_input_mask, all_segment_ids, all_label_ids, all_bboxes)
         else:
             dataset = TensorDataset(all_guid, all_input_ids, all_input_mask, all_segment_ids, all_label_ids)
-        return examples, dataset
+        return examples, features, dataset
 
     def transform_examples(self, X, y, index_list):
         data = list()

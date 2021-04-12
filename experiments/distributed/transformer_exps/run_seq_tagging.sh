@@ -13,7 +13,7 @@ hostname > mpi_host_file
 mpirun -np $PROCESS_NUM -hostfile mpi_host_file \
 python -m fedavg_main_st \
   --gpu_mapping_file "gpu_mapping.yaml" \
-  --gpu_mapping_key "mapping_ink-ron" \
+  --gpu_mapping_key "mapping_lambda-server2" \
   --client_num_per_round $WORKER_NUM \
   --comm_round $ROUND \
   --ci $CI \

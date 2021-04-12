@@ -51,13 +51,14 @@ def fedavg_main(process_id, worker_number, device, args):
     # dataset attributes
     attributes = BaseDataManager.load_attributes(
         args.data_file_path)
+    num_labels = len(attributes["label_vocab"])
 
     # model init
     model_args = SeqTaggingArgs()
     model_args.model_name = args.model_name
     model_args.model_type = args.model_type
     model_args.load(model_args.model_name)
-    model_args.num_labels = len(attributes["label_vocab"])
+    model_args.num_labels = num_labels
     model_args.update_from_dict({"epochs": args.epochs,
                                  "learning_rate": args.learning_rate,
                                  "gradient_accumulation_steps": args.gradient_accumulation_steps,
@@ -79,7 +80,7 @@ def fedavg_main(process_id, worker_number, device, args):
                                  "output_dir": args.output_dir,
                                  "is_debug_mode": args.is_debug_mode
                                  })
-
+    model_args.config["num_labels"] = num_labels
     model_config, client_model, tokenizer = create_model(
         model_args, formulation="seq_tagging")
 
@@ -92,7 +93,7 @@ def fedavg_main(process_id, worker_number, device, args):
     num_workers = args.client_num_per_round
 
     client_trainer = SeqTaggingTrainer(
-        model_args, device, client_model, None, None, None, tokenizer)
+        model_args, device, client_model, None, None, tokenizer)
     fed_trainer = FedTransformerTrainer(
         client_trainer, client_model, task_formulation="seq_tagging")
     dm = SequenceTaggingDataManager(args, model_args, preprocessor, process_id, num_workers)

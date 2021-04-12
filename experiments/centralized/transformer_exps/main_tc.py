@@ -84,17 +84,17 @@ if __name__ == "__main__":
     # data manager
     dm = TextClassificationDataManager(args, model_args, preprocessor)
     
-    train_examples, test_examples, train_dl, test_dl = dm.load_centralized_data()
+    train_dl, test_dl = dm.load_centralized_data()
 
     # Create a ClassificationModel and start train
-    trainer = TextClassificationTrainer(model_args, device, model, train_dl, test_dl, test_examples)
+    trainer = TextClassificationTrainer(model_args, device, model, train_dl, test_dl)
     trainer.train_model()
 
 ''' Example Usage:
 
-export CUDA_VISIBLE_DEVICES=0
+export CUDA_VISIBLE_DEVICES=7
 DATA_NAME=agnews
-CUDA_VISIBLE_DEVICES=0 python -m experiments.centralized.transformer_exps.main_tc \
+CUDA_VISIBLE_DEVICES=7 python -m experiments.centralized.transformer_exps.main_tc \
     --dataset ${DATA_NAME} \
     --data_file ./data/fednlp_data/data_files/${DATA_NAME}_data.h5 \
     --partition_file ./data/fednlp_data/partition_files/${DATA_NAME}_partition.h5 \

@@ -38,13 +38,13 @@ from data_preprocessing.utils.span_extraction_utils import (
 
 
 class SpanExtractionTrainer:
-    def __init__(self, args, device, model, train_dl=None, test_dl=None, test_examples=None, tokenizer=None):
+    def __init__(self, args, device, model, train_dl=None, test_dl=None, tokenizer=None):
         self.args = args
         self.device = device
         self.tokenizer = tokenizer
 
         # set data
-        self.set_data(train_dl, test_dl, test_examples)
+        self.set_data(train_dl, test_dl)
 
         # model
         self.model = model
@@ -52,11 +52,10 @@ class SpanExtractionTrainer:
         # training results
         self.results = {}
 
-    def set_data(self, train_dl=None, test_dl=None, test_examples=None):
+    def set_data(self, train_dl=None, test_dl=None):
         # Used for fedtrainer
         self.train_dl = train_dl
         self.test_dl = test_dl
-        self.test_examples = test_examples
 
 
     def train_model(self, device=None):
@@ -187,7 +186,7 @@ class SpanExtractionTrainer:
                 tr_loss += loss.item()
 
                 logging.info("epoch = %d, batch_idx = %d/%d, loss = %s" % (epoch, batch_idx,
-                                                                           len(self.train_dl), loss))
+                                                                           len(self.train_dl), loss.item()))
 
                 if (batch_idx + 1) % args.gradient_accumulation_steps == 0:
                     if args.fp16:
@@ -216,10 +215,10 @@ class SpanExtractionTrainer:
                         training_progress_scores["train_loss"].append(current_loss)
                         for key in results:
                             training_progress_scores[key].append(results[key])
-                        report = pd.DataFrame(training_progress_scores)
-                        report.to_csv(
-                            os.path.join(args.output_dir, "training_progress_scores.csv"), index=False,
-                        )
+                        # report = pd.DataFrame(training_progress_scores)
+                        # report.to_csv(
+                        #     os.path.join(args.output_dir, "training_progress_scores.csv"), index=False,
+                        # )
 
                         if not best_eval_metric:
                             best_eval_metric = results[args.early_stopping_metric]
@@ -333,160 +332,10 @@ class SpanExtractionTrainer:
         return global_step, tr_loss / global_step
 
     def eval_model(self, epoch=0, global_step=0, device=None):
-        if not device:
-            device = self.device
-
-        args = self.args
-
-        results = {}
-
-        eval_loss = 0.0
-        nb_eval_steps = 0
-        n_batches = len(self.test_dl)
-
-
-        self.model.to(device)
-        self.model.eval()
-
-        if args.n_gpu > 1:
-            self.model = torch.nn.DataParallel(self.model)
-
-        if args.fp16:
-            from torch.cuda import amp
-
-        all_results = []
-        logging.info("len(test_dl) = %d, n_batches = %d" % (len(self.test_dl), n_batches))
-        for i, batch in enumerate(self.test_dl):
-            with torch.no_grad():
-                batch = tuple(t.to(device) for t in batch)
-                # dataset = TensorDataset(all_guid, all_input_ids, all_attention_masks, all_token_type_ids, all_cls_index, 
-                # all_p_mask, all_is_impossible)
-                inputs = {
-                    "input_ids": batch[1],
-                    "attention_mask": batch[2],
-                    "token_type_ids": batch[3],
-                }
-
-                if args.model_type in [
-                    "xlm",
-                    "roberta",
-                    "distilbert",
-                    "camembert",
-                    "electra",
-                    "xlmroberta",
-                    "bart",
-                ]:
-                    del inputs["token_type_ids"]
-
-                example_indices = batch[4]
-
-                if args.model_type in ["xlnet", "xlm"]:
-                    inputs.update({"cls_index": batch[5], "p_mask": batch[6]})
-
-                if args.fp16:
-                    with amp.autocast():
-                        outputs = self.model(**inputs)
-                        eval_loss += outputs[0].mean().item()
-                else:
-                    outputs = self.model(**inputs)
-                    eval_loss += outputs[0].mean().item()
-                
-                for i, guid in enumerate(batch[0]):
-                    unique_id = guid.item()
-                    if args.model_type in ["xlnet", "xlm"]:
-                        # XLNet uses a more complex post-processing procedure
-                        result = RawResultExtended(
-                            unique_id=unique_id,
-                            start_top_log_probs=to_list(outputs[0][i]),
-                            start_top_index=to_list(outputs[1][i]),
-                            end_top_log_probs=to_list(outputs[2][i]),
-                            end_top_index=to_list(outputs[3][i]),
-                            cls_logits=to_list(outputs[4][i]),
-                        )
-                    else:
-                        result = RawResult(
-                            unique_id=unique_id,
-                            start_logits=to_list(outputs[0][i]),
-                            end_logits=to_list(outputs[1][i]),
-                        )
-                    all_results.append(result)
-
-            nb_eval_steps += 1
-
-        eval_loss = eval_loss / nb_eval_steps
-
-        output_dir = args.output_dir
-        prefix = "test"
-        os.makedirs(output_dir, exist_ok=True)
-
-        output_prediction_file = os.path.join(output_dir, "predictions_{}.json".format(prefix))
-        output_nbest_file = os.path.join(output_dir, "nbest_predictions_{}.json".format(prefix))
-        output_null_log_odds_file = os.path.join(output_dir, "null_odds_{}.json".format(prefix))
-
-        if args.model_type in ["xlnet", "xlm"]:
-            # XLNet uses a more complex post-processing procedure
-            (all_predictions, all_nbest_json, scores_diff_json, out_eval) = write_predictions_extended(
-                self.test_examples,
-                self.test_dl.dataset,
-                all_results,
-                args.n_best_size,
-                args.max_answer_length,
-                output_prediction_file,
-                output_nbest_file,
-                output_null_log_odds_file,
-                self.test_examples,
-                self.model.config.start_n_top,
-                self.model.config.end_n_top,
-                True,
-                self.tokenizer,
-                True,
-            )
-        else:
-            all_predictions, all_nbest_json, scores_diff_json = write_predictions(
-                self.test_examples,
-                self.test_dl.dataset,
-                all_results,
-                args.n_best_size,
-                args.max_answer_length,
-                False,
-                output_prediction_file,
-                output_nbest_file,
-                output_null_log_odds_file,
-                True,
-                True,
-                args.null_score_diff_threshold,
-            )
-
-        all_predictions, all_nbest_json, scores_diff_json, eval_loss
-                
-        print(all_predictions)
-
-        self.results.update(result)
-        logging.info(self.results)
-
-        wrong = None
-
-        return result, all_predictions, wrong
+        return {}, None, None
 
     def compute_metrics(self, preds, truth, eval_examples=None):
-        assert len(preds) == len(labels)
-
-        extra_metrics = {}
-        extra_metrics["acc"] = sklearn.metrics.accuracy_score(labels, preds)
-        mismatched = labels != preds
-
-        if eval_examples:
-            wrong = [i for (i, v) in zip(eval_examples, mismatched) if v.any()]
-        else:
-            wrong = ["NA"]
-
-        mcc = matthews_corrcoef(labels, preds)
-
-        tn, fp, fn, tp = confusion_matrix(labels, preds, labels=[0, 1]).ravel()
-        return (
-            {**{"mcc": mcc, "tp": tp, "tn": tn, "fp": fp, "fn": fn}, **extra_metrics},
-            wrong,
-        )
+        pass
 
     def build_optimizer(self, model, iteration_in_total):
         warmup_steps = math.ceil(iteration_in_total * self.args.warmup_ratio)

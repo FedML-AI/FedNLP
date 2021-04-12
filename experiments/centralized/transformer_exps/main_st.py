@@ -84,18 +84,18 @@ if __name__ == "__main__":
     process_id = 0
     num_workers = 1
     dm = SequenceTaggingDataManager(args, model_args, preprocessor)
-    train_examples, test_examples, train_dl, test_dl = dm.load_centralized_data()
+    train_dl, test_dl = dm.load_centralized_data()
 
     # Create a SeqTaggingModel and start train
-    trainer = SeqTaggingTrainer(model_args, device, model, train_dl, test_dl, test_examples, tokenizer)
+    trainer = SeqTaggingTrainer(model_args, device, model, train_dl, test_dl, tokenizer)
     trainer.train_model()
 
 
 ''' Example Usage:
 
-export CUDA_VISIBLE_DEVICES=0
+export CUDA_VISIBLE_DEVICES=7
 DATA_NAME=w_nut
-CUDA_VISIBLE_DEVICES=0 python -m experiments.centralized.transformer_exps.main_st \
+CUDA_VISIBLE_DEVICES=7 python -m experiments.centralized.transformer_exps.main_st \
     --dataset ${DATA_NAME} \
     --data_file ./data/fednlp_data/data_files/${DATA_NAME}_data.h5 \
     --partition_file ./data/fednlp_data/partition_files/${DATA_NAME}_partition.h5 \

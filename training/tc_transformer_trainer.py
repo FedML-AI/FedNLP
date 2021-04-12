@@ -24,13 +24,13 @@ from transformers import (
 
 
 class TextClassificationTrainer:
-    def __init__(self, args, device, model, train_dl=None, test_dl=None, test_examples=None):
+    def __init__(self, args, device, model, train_dl=None, test_dl=None):
         self.args = args
         self.device = device
 
         # set data
         self.num_labels = args.num_labels
-        self.set_data(train_dl, test_dl, test_examples)
+        self.set_data(train_dl, test_dl)
 
         # model
         self.model = model
@@ -40,11 +40,10 @@ class TextClassificationTrainer:
         self.results = {}
         self.best_accuracy = 0.0
 
-    def set_data(self, train_dl=None, test_dl=None, test_examples=None):
+    def set_data(self, train_dl=None, test_dl=None):
         # Used for fedtrainer
         self.train_dl = train_dl
         self.test_dl = test_dl
-        self.test_examples = test_examples
 
 
     def train_model(self, device=None):
@@ -53,6 +52,7 @@ class TextClassificationTrainer:
 
         logging.info("train_model self.device: " + str(device))
         self.model.to(device)
+
         # build optimizer and scheduler
         iteration_in_total = len(
             self.train_dl) // self.args.gradient_accumulation_steps * self.args.num_train_epochs
@@ -75,6 +75,7 @@ class TextClassificationTrainer:
                 # (loss), logits, (hidden_states), (attentions)
                 output = self.model(x)
                 logits = output[0]
+
                 loss_fct = CrossEntropyLoss()
                 loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
 
@@ -146,7 +147,7 @@ class TextClassificationTrainer:
             start_index = self.args.eval_batch_size * i
 
             end_index = start_index + self.args.eval_batch_size if i != (n_batches - 1) else test_sample_len
-            logging.info("batch index = %d, start_index = %d, end_index = %d" % (i, start_index, end_index))
+            # logging.info("batch index = %d, start_index = %d, end_index = %d" % (i, start_index, end_index))
             preds[start_index:end_index] = logits.detach().cpu().numpy()
             out_label_ids[start_index:end_index] = labels.detach().cpu().numpy()
 
@@ -158,7 +159,7 @@ class TextClassificationTrainer:
         preds = np.argmax(preds, axis=1)
         # logging.info("preds = " + str(preds))
         # logging.info("out_label_ids = " + str(out_label_ids))
-        result, wrong = self.compute_metrics(preds, out_label_ids, self.test_examples)
+        result, wrong = self.compute_metrics(preds, out_label_ids, self.test_dl.examples)
         result["eval_loss"] = eval_loss
         results.update(result)
 

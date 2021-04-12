@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import h5py
 import json
-from torch.utils.data import DataLoader
+from data_preprocessing.base.base_data_loader import BaseDataLoader
 from tqdm import tqdm
 import logging
 import h5py
@@ -106,22 +106,22 @@ class BaseDataManager(ABC):
         test_data = self.read_instance_from_h5(data_file, test_index_list)
         data_file.close()
         partition_file.close()
-        train_examples, train_dataset = self.preprocessor.transform(
+        train_examples, train_features, train_dataset = self.preprocessor.transform(
             **train_data, index_list=train_index_list)
-        test_examples, test_dataset = self.preprocessor.transform(
+        test_examples, test_features, test_dataset = self.preprocessor.transform(
             **test_data, index_list=test_index_list, evaluate=True)
-        train_dl = DataLoader(train_dataset,
+        train_dl = BaseDataLoader(train_examples, train_features, train_dataset,
                               batch_size=self.train_batch_size,
                               num_workers=0,
                               pin_memory=True,
                               drop_last=False)
 
-        test_dl = DataLoader(test_dataset,
+        test_dl = BaseDataLoader(test_examples, test_features, test_dataset,
                              batch_size=self.eval_batch_size,
                              num_workers=0,
                              pin_memory=True,
                              drop_last=False)
-        return train_examples, test_examples, train_dl, test_dl
+        return train_dl, test_dl
 
     def load_federated_data(self, process_id):
         if process_id == 0:
@@ -151,9 +151,9 @@ class BaseDataManager(ABC):
             # local_test_y = [data_file["Y"][str(idx)][()].decode("utf-8") for idx in local_test_index_list]
             local_test_data = self.read_instance_from_h5(
                 data_file, local_test_index_list)
-            _, local_test_dataset = self.preprocessor.transform(
+            local_test_examples, local_test_features, local_test_dataset = self.preprocessor.transform(
                 **local_test_data, index_list=local_test_index_list, evaluate=True)
-            local_test_data = DataLoader(local_test_dataset,
+            local_test_data = BaseDataLoader(local_test_examples, local_test_features, local_test_dataset,
                                          batch_size=self.eval_batch_size,
                                          num_workers=0,
                                          pin_memory=True,
@@ -169,17 +169,17 @@ class BaseDataManager(ABC):
         data_file.close()
         partition_file.close()
 
-        train_examples, train_dataset = self.preprocessor.transform(
+        train_examples, train_features, train_dataset = self.preprocessor.transform(
             **train_data, index_list=train_index_list)
-        test_examples, test_dataset = self.preprocessor.transform(
+        test_examples, test_features, test_dataset = self.preprocessor.transform(
             **test_data, index_list=test_index_list, evaluate=True)
-        train_data_global = DataLoader(train_dataset,
+        train_data_global = BaseDataLoader(train_examples, train_features, train_dataset,
                                        batch_size=self.train_batch_size,
                                        num_workers=0,
                                        pin_memory=True,
                                        drop_last=False)
 
-        test_data_global = DataLoader(test_dataset,
+        test_data_global = BaseDataLoader(test_examples, test_features, test_dataset,
                                       batch_size=self.eval_batch_size,
                                       num_workers=0,
                                       pin_memory=True,
@@ -222,18 +222,18 @@ class BaseDataManager(ABC):
                 data_file, test_index_list)
             # test_X = [data_file["X"][str(idx)][()].decode("utf-8") for idx in test_index_list]
             # test_y = [data_file["Y"][str(idx)][()].decode("utf-8") for idx in test_index_list]
-            train_examples, train_dataset = self.preprocessor.transform(
+            train_examples, train_features, train_dataset = self.preprocessor.transform(
                 **train_data, index_list=train_index_list)
-            test_examples, test_dataset = self.preprocessor.transform(
+            test_examples, test_features, test_dataset = self.preprocessor.transform(
                 **test_data, index_list=test_index_list, evaluate=True)
 
-            train_loader = DataLoader(train_dataset,
+            train_loader = BaseDataLoader(train_examples, train_features, train_dataset,
                                       batch_size=self.train_batch_size,
                                       num_workers=0,
                                       pin_memory=True,
                                       drop_last=False)
 
-            test_loader = DataLoader(test_dataset,
+            test_loader = BaseDataLoader(test_examples, test_features, test_dataset,
                                      batch_size=self.eval_batch_size,
                                      num_workers=0,
                                      pin_memory=True,

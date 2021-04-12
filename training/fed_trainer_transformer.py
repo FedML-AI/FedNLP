@@ -7,11 +7,11 @@ from model.fed_transformers.classification.classification_utils import (
     InputExample,
     LazyClassificationDataset
 )
-from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
+from torch.utils.data import RandomSampler, SequentialSampler, TensorDataset
 import warnings
 import os
 import sklearn
-import data_preprocessing.base.utils
+from data_preprocessing.base.base_data_loader import BaseDataLoader
 # import data_preprocessing.SQuAD_1_1.data_loader
 
 class FedTransformerTrainer(ModelTrainer):
@@ -40,10 +40,16 @@ class FedTransformerTrainer(ModelTrainer):
 
     def test_on_the_server(self, train_data_local_dict, test_data_local_dict, device, args=None):
         global_test_data = []
+        global_test_examples = []
+        global_test_features = []
         for idx, local_test_dl in test_data_local_dict.items():
             local_data = local_test_dl.dataset
+            local_examples = local_test_dl.examples
+            local_features = local_test_dl.features
             global_test_data += local_data
-        global_test_dl = DataLoader(global_test_data,
+            global_test_examples += local_examples
+            global_test_features += local_features
+        global_test_dl = BaseDataLoader(global_test_examples, global_test_features, global_test_data,
                                 batch_size=local_test_dl.batch_size,
                                 num_workers=0,
                                 pin_memory=True,

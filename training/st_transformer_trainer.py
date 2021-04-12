@@ -29,13 +29,13 @@ from transformers import (
 
 
 class SeqTaggingTrainer:
-    def __init__(self, args, device, model, train_dl=None, test_dl=None, test_examples=None, tokenizer=None):
+    def __init__(self, args, device, model, train_dl=None, test_dl=None, tokenizer=None):
         self.args = args
         self.device = device
 
         # set data
         self.num_labels = args.num_labels
-        self.set_data(train_dl, test_dl, test_examples)
+        self.set_data(train_dl, test_dl)
 
         # model
         self.model = model
@@ -48,11 +48,10 @@ class SeqTaggingTrainer:
         self.tokenizer = tokenizer
         self.pad_token_label_id = self.args.pad_token_label_id
 
-    def set_data(self, train_dl, test_dl=None, test_examples=None):
+    def set_data(self, train_dl, test_dl=None):
         # Used for fedtrainer
         self.train_dl = train_dl
         self.test_dl = test_dl
-        self.test_examples = test_examples
 
     def train_model(self, device=None):
         if not device:
@@ -124,10 +123,9 @@ class SeqTaggingTrainer:
 
         eval_loss = 0.0
         nb_eval_steps = 0
-        logging.info("len test_dl")
-        logging.info(self.test_dl)
+
         n_batches = len(self.test_dl)
-        # TODO: check the value of len(self.test_examples)
+
         logging.info("len test_dl.dataset")
         test_sample_len = len(self.test_dl.dataset)
         logging.info("pad token label id")
@@ -212,7 +210,7 @@ class SeqTaggingTrainer:
         flattern_preds = np.array(flattern_preds)
         flattern_out_labels = np.array(flattern_out_labels)
 
-        result, wrong = self.compute_metrics(flattern_preds, flattern_out_labels, self.test_examples)
+        result, wrong = self.compute_metrics(flattern_preds, flattern_out_labels, self.test_dl.examples)
         result["eval_loss"] = eval_loss
         results.update(result)
 

@@ -75,7 +75,7 @@ class TLMPreprocessor(BasePreprocessor):
                 all_p_mask,
                 all_is_impossible,
             )
-        return examples, dataset
+        return examples, features, dataset
 
     def transform_examples(self, context_X, question_X, y, index_list):
         examples = list()

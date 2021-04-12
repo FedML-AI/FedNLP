@@ -81,10 +81,10 @@ if __name__ == "__main__":
     # data manager
     dm = SpanExtractionDataManager(args, model_args, preprocessor)
     
-    train_examples, test_examples, train_dl, test_dl = dm.load_centralized_data()
+    train_dl, test_dl = dm.load_centralized_data()
 
     # Create a SpanExtractionModel and start train
-    trainer = SpanExtractionTrainer(model_args, device, model, train_dl, test_dl, test_examples, tokenizer)
+    trainer = SpanExtractionTrainer(model_args, device, model, train_dl, test_dl, tokenizer)
     trainer.train_model()
 
 ''' Example Usage:
