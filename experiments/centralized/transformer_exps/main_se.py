@@ -80,6 +80,8 @@ if __name__ == "__main__":
 
     # data manager
     dm = SpanExtractionDataManager(args, model_args, preprocessor)
+
+    # dm._load_federated_data_server()
     
     train_dl, test_dl = dm.load_centralized_data()
 

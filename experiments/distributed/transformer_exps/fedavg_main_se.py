@@ -15,11 +15,11 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "../../../")))
 
 from training.fed_trainer_transformer import FedTransformerTrainer
 from experiments.utils.general import set_seed, create_model, add_federated_args
-from data_preprocessing.seq_tagging_preprocessor import TLMPreprocessor
-from training.st_transformer_trainer import SeqTaggingTrainer
-from model.transformer.model_args import SeqTaggingArgs
+from data_preprocessing.span_extraction_preprocessor import TLMPreprocessor
+from training.se_transformer_trainer import SpanExtractionTrainer
+from model.transformer.model_args import SpanExtractionArgs
+from data_manager.span_extraction_data_manager import SpanExtractionDataManager
 from data_manager.base_data_manager import BaseDataManager
-from data_manager.seq_tagging_data_manager import SequenceTaggingDataManager
 from FedML.fedml_api.distributed.utils.gpu_mapping import mapping_processes_to_gpu_device_from_yaml_file
 from FedML.fedml_api.distributed.fedavg.FedAvgAPI import FedML_init, FedML_FedAvg_distributed
 import argparse
@@ -27,7 +27,7 @@ import logging
  
 
 def post_complete_message(tc_args):
-    pipe_path = "/tmp/fednlp_st"
+    pipe_path = "/tmp/fednlp_se"
     if not os.path.exists(pipe_path):
         os.mkfifo(pipe_path)
     pipe_fd = os.open(pipe_path, os.O_WRONLY)
@@ -51,14 +51,12 @@ def fedavg_main(process_id, worker_number, device, args):
     # dataset attributes
     attributes = BaseDataManager.load_attributes(
         args.data_file_path)
-    num_labels = len(attributes["label_vocab"])
 
     # model init
-    model_args = SeqTaggingArgs()
+    model_args = SpanExtractionArgs()
     model_args.model_name = args.model_name
     model_args.model_type = args.model_type
     model_args.load(model_args.model_name)
-    model_args.num_labels = num_labels
     model_args.update_from_dict({"epochs": args.epochs,
                                  "learning_rate": args.learning_rate,
                                  "gradient_accumulation_steps": args.gradient_accumulation_steps,
@@ -80,23 +78,21 @@ def fedavg_main(process_id, worker_number, device, args):
                                  "output_dir": args.output_dir,
                                  "is_debug_mode": args.is_debug_mode
                                  })
-    model_args.config["num_labels"] = num_labels
+
     model_config, client_model, tokenizer = create_model(
-        model_args, formulation="seq_tagging")
+        model_args, formulation="span_extraction")
 
     # data preprocessor
-    preprocessor = TLMPreprocessor(
-        args=model_args, label_vocab=attributes["label_vocab"],
-        tokenizer=tokenizer)
+    preprocessor = TLMPreprocessor(args=model_args, tokenizer=tokenizer)
 
     # data manager
     num_workers = args.client_num_per_round
 
-    client_trainer = SeqTaggingTrainer(
+    client_trainer = SpanExtractionTrainer(
         model_args, device, client_model, None, None, tokenizer)
     fed_trainer = FedTransformerTrainer(
-        client_trainer, client_model, task_formulation="seq_tagging")
-    dm = SequenceTaggingDataManager(args, model_args, preprocessor, process_id, num_workers)
+        client_trainer, client_model, task_formulation="span_extraction")
+    dm = SpanExtractionDataManager(args, model_args, preprocessor, process_id, num_workers)
     train_data_num, train_data_global, test_data_global, train_data_local_num_dict, \
         train_data_local_dict, test_data_local_dict, num_clients = dm.load_federated_data(process_id=process_id)
     # start FedAvg algorithm
@@ -138,7 +134,7 @@ if __name__ == "__main__":
         # initialize the wandb machine learning experimental tracking platform (https://wandb.ai/automl/fednlp).
         wandb.init(
             project="fednlp", entity="automl", name="FedNLP-FedAVG-Transformer" +
-                                                    "-ST-" + str(args.dataset) + "-" + str(args.model_name),
+                                                    "-SE-" + str(args.dataset) + "-" + str(args.model_name),
             config=args)
 
     # device: check "gpu_mapping.yaml" to see how to define the topology

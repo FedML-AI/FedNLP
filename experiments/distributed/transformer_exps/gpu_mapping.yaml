@@ -7,6 +7,9 @@
 #     host_name_node_m: [num_of_processes_on_GPU0, num_of_processes_on_GPU1, num_of_processes_on_GPU2, num_of_processes_on_GPU3, ..., num_of_processes_on_GPU_n]
 
 
+mapping_lambda-server2:
+    lambda-server2: [1, 1, 1, 1, 1, 2, 2, 2]
+
 # this is used for 10 clients and 1 server training within a single machine which has 4 GPUs
 mapping_default:
     ChaoyangHe-GPU-RTX2080Tix4: [2, 1, 1, 1]
@@ -31,5 +34,3 @@ mapping_config4_5:
 mapping_ink-ron:
     ink-ron: [3, 3, 3, 2]
 
-mapping_lambda-server2:
-    lambda-server2: [1, 1, 1, 1, 1, 2, 2, 2]

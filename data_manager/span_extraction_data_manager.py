@@ -15,8 +15,11 @@ class SpanExtractionDataManager(BaseDataManager):
         context_X = list()
         question_X = list()
         y = list()
+        qas_ids = list()
         for idx in tqdm(index_list, desc="Loading data from h5 file."):
             context_X.append(data_file["context_X"][str(idx)][()].decode("utf-8"))
             question_X.append(data_file["question_X"][str(idx)][()].decode("utf-8"))
-            y.append(data_file["Y"][str(idx)][()] )
-        return {"context_X": context_X, "question_X": question_X, "y": y}
+            y.append(data_file["Y"][str(idx)][()])
+            if "question_ids" in data_file:
+                qas_ids.append(data_file["question_ids"][str(idx)][()].decode("utf-8"))
+        return {"context_X": context_X, "question_X": question_X, "y": y, "qas_ids": qas_ids if qas_ids else None}

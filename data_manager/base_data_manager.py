@@ -164,7 +164,7 @@ class BaseDataManager(ABC):
             data_file, train_index_list)
         
         test_data = self.read_instance_from_h5(
-            data_file, train_index_list)
+            data_file, test_index_list)
 
         data_file.close()
         partition_file.close()
@@ -220,8 +220,7 @@ class BaseDataManager(ABC):
                 data_file, train_index_list)
             test_data = self.read_instance_from_h5(
                 data_file, test_index_list)
-            # test_X = [data_file["X"][str(idx)][()].decode("utf-8") for idx in test_index_list]
-            # test_y = [data_file["Y"][str(idx)][()].decode("utf-8") for idx in test_index_list]
+            
             train_examples, train_features, train_dataset = self.preprocessor.transform(
                 **train_data, index_list=train_index_list)
             test_examples, test_features, test_dataset = self.preprocessor.transform(

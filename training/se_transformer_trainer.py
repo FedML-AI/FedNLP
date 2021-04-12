@@ -35,6 +35,8 @@ from data_preprocessing.utils.span_extraction_utils import (
     write_predictions_extended,
 )
 
+from tqdm import tqdm
+
 
 
 class SpanExtractionTrainer:
@@ -186,7 +188,7 @@ class SpanExtractionTrainer:
                 tr_loss += loss.item()
 
                 logging.info("epoch = %d, batch_idx = %d/%d, loss = %s" % (epoch, batch_idx,
-                                                                           len(self.train_dl), loss.item()))
+                                                                           len(self.train_dl), current_loss))
 
                 if (batch_idx + 1) % args.gradient_accumulation_steps == 0:
                     if args.fp16:
@@ -201,141 +203,212 @@ class SpanExtractionTrainer:
                     scheduler.step()  # Update learning rate schedule
                     self.model.zero_grad()
                     global_step += 1
-
-                if args.evaluate_during_training and (
-                        args.evaluate_during_training_steps > 0
-                        and global_step % args.evaluate_during_training_steps == 0
-                    ):
-                        # Only evaluate when single GPU otherwise metrics may not average well
+                
+                if self.args.evaluate_during_training and (self.args.evaluate_during_training_steps > 0
+                                                               and global_step % self.args.evaluate_during_training_steps == 0):
                         results, _, _ = self.eval_model(epoch, global_step)
-                        # for key, value in results.items():
-                        #     tb_writer.add_scalar("eval_{}".format(key), value, global_step)
-
-                        training_progress_scores["global_step"].append(global_step)
-                        training_progress_scores["train_loss"].append(current_loss)
-                        for key in results:
-                            training_progress_scores[key].append(results[key])
-                        # report = pd.DataFrame(training_progress_scores)
-                        # report.to_csv(
-                        #     os.path.join(args.output_dir, "training_progress_scores.csv"), index=False,
-                        # )
-
-                        if not best_eval_metric:
-                            best_eval_metric = results[args.early_stopping_metric]
-                            # self.save_model(args.best_model_dir, optimizer, scheduler, model=model, results=results)
-                        if best_eval_metric and args.early_stopping_metric_minimize:
-                            if results[args.early_stopping_metric] - best_eval_metric < args.early_stopping_delta:
-                                best_eval_metric = results[args.early_stopping_metric]
-                                # self.save_model(
-                                #     args.best_model_dir, optimizer, scheduler, model=model, results=results
-                                # )
-                                early_stopping_counter = 0
-                            else:
-                                if args.use_early_stopping:
-                                    if early_stopping_counter < args.early_stopping_patience:
-                                        early_stopping_counter += 1
-                                        logging.info(f" No improvement in {args.early_stopping_metric}")
-                                        logging.info(f" Current step: {early_stopping_counter}")
-                                        logging.info(f" Early stopping patience: {args.early_stopping_patience}")
-                                    else:
-                                        logging.info(f" Patience of {args.early_stopping_patience} steps reached")
-                                        logging.info(" Training terminated.")
-                                        return (
-                                            global_step,
-                                            tr_loss / global_step
-                                        )
-                        else:
-                            if results[args.early_stopping_metric] - best_eval_metric > args.early_stopping_delta:
-                                best_eval_metric = results[args.early_stopping_metric]
-                                # self.save_model(
-                                #     args.best_model_dir, optimizer, scheduler, model=model, results=results
-                                # )
-                                early_stopping_counter = 0
-                            else:
-                                if args.use_early_stopping:
-                                    if early_stopping_counter < args.early_stopping_patience:
-                                        early_stopping_counter += 1
-                                        logging.info(f" No improvement in {args.early_stopping_metric}")
-                                        logging.info(f" Current step: {early_stopping_counter}")
-                                        logging.info(f" Early stopping patience: {args.early_stopping_patience}")
-                                    else:
-                                        logging.info(f" Patience of {args.early_stopping_patience} steps reached")
-                                        logging.info(" Training terminated.")
-                                        return (
-                                            global_step,
-                                            tr_loss / global_step
-                                        )
-
-            # if args.save_model_every_epoch or args.evaluate_during_training:
-            #     os.makedirs(output_dir_current, exist_ok=True)
-
-            # if args.save_model_every_epoch:
-            #     self.save_model(output_dir_current, optimizer, scheduler, model=model)
-
-            if args.evaluate_during_training and args.evaluate_each_epoch:
-                results, _, _ = self.eval_model(epoch, global_step)
-
-                # self.save_model(output_dir_current, optimizer, scheduler, results=results)
-
-                training_progress_scores["global_step"].append(global_step)
-                training_progress_scores["train_loss"].append(current_loss)
-                for key in results:
-                    training_progress_scores[key].append(results[key])
-                report = pd.DataFrame(training_progress_scores)
-                report.to_csv(os.path.join(args.output_dir, "training_progress_scores.csv"), index=False)
-
-                if not best_eval_metric:
-                    best_eval_metric = results[args.early_stopping_metric]
-                    # self.save_model(args.best_model_dir, optimizer, scheduler, model=model, results=results)
-                if best_eval_metric and args.early_stopping_metric_minimize:
-                    if results[args.early_stopping_metric] - best_eval_metric < args.early_stopping_delta:
-                        best_eval_metric = results[args.early_stopping_metric]
-                        # self.save_model(args.best_model_dir, optimizer, scheduler, model=model, results=results)
-                        early_stopping_counter = 0
-                    else:
-                        if args.use_early_stopping and args.early_stopping_consider_epochs:
-                            if early_stopping_counter < args.early_stopping_patience:
-                                early_stopping_counter += 1
-                                logging.info(f" No improvement in {args.early_stopping_metric}")
-                                logging.info(f" Current step: {early_stopping_counter}")
-                                logging.info(f" Early stopping patience: {args.early_stopping_patience}")
-                            else:
-                                logging.info(f" Patience of {args.early_stopping_patience} steps reached")
-                                logging.info(" Training terminated.")
-                                return (
-                                    global_step,
-                                    tr_loss / global_step
-                                )
-                else:
-                    if results[args.early_stopping_metric] - best_eval_metric > args.early_stopping_delta:
-                        best_eval_metric = results[args.early_stopping_metric]
-                        # self.save_model(args.best_model_dir, optimizer, scheduler, model=model, results=results)
-                        early_stopping_counter = 0
-                    else:
-                        if args.use_early_stopping and args.early_stopping_consider_epochs:
-                            if early_stopping_counter < args.early_stopping_patience:
-                                early_stopping_counter += 1
-                                logging.info(f" No improvement in {args.early_stopping_metric}")
-                                logging.info(f" Current step: {early_stopping_counter}")
-                                logging.info(f" Early stopping patience: {args.early_stopping_patience}")
-                            else:
-                                logging.info(f" Patience of {args.early_stopping_patience} steps reached")
-                                logging.info(" Training terminated.")
-                                return (
-                                    global_step,
-                                    tr_loss / global_step
-                                    if not args.evaluate_during_training
-                                    else training_progress_scores,
-                                )
+                        logging.info(results)
 
 
         return global_step, tr_loss / global_step
 
     def eval_model(self, epoch=0, global_step=0, device=None):
-        return {}, None, None
+        output_dir = self.args.output_dir
 
-    def compute_metrics(self, preds, truth, eval_examples=None):
-        pass
+        if not device:
+            device = self.device
+
+        logging.info("train_model self.device: " + str(device))
+        self.model.to(device)
+
+        all_predictions, all_nbest_json, scores_diff_json, eval_loss = self.evaluate(output_dir, verbose_logging=True)
+
+        result, texts = self.calculate_results(all_predictions)
+        result["eval_loss"] = eval_loss
+
+        self.results.update(result)
+        logging.info(self.results)
+
+        return result, all_predictions, texts["incorrect_text"]
+
+    def evaluate(self, output_dir, verbose_logging=False):
+        """
+        Evaluates the model on eval_data.
+
+        Utility function to be used by the eval_model() method. Not intended to be used directly.
+        """
+        tokenizer = self.tokenizer
+        device = self.device
+        model = self.model
+        args = self.args
+
+        examples = self.test_dl.examples
+        features = self.test_dl.features
+
+        eval_loss = 0.0
+        nb_eval_steps = 0
+        model.eval()
+
+        if args.n_gpu > 1:
+            model = torch.nn.DataParallel(model)
+
+        if self.args.fp16:
+            from torch.cuda import amp
+
+        all_results = []
+        for batch in tqdm(self.test_dl, disable=args.silent, desc="Running Evaluation"):
+            batch = tuple(t.to(device) for t in batch)
+
+            with torch.no_grad():
+                inputs = {
+                    "input_ids": batch[1],
+                    "attention_mask": batch[2],
+                    "token_type_ids": batch[3],
+                }
+
+                if self.args.model_type in [
+                    "xlm",
+                    "roberta",
+                    "distilbert",
+                    "camembert",
+                    "electra",
+                    "xlmroberta",
+                    "bart",
+                ]:
+                    del inputs["token_type_ids"]
+
+                example_indices = batch[4]
+
+                if args.model_type in ["xlnet", "xlm"]:
+                    inputs.update({"cls_index": batch[5], "p_mask": batch[6]})
+
+                if self.args.fp16:
+                    with amp.autocast():
+                        outputs = model(**inputs)
+                        eval_loss += outputs[0].mean().item()
+                else:
+                    outputs = model(**inputs)
+                    eval_loss += outputs[0].mean().item()
+
+                for i, example_index in enumerate(example_indices):
+                    eval_feature = features[example_index.item()]
+                    unique_id = int(eval_feature.unique_id)
+                    if args.model_type in ["xlnet", "xlm"]:
+                        # XLNet uses a more complex post-processing procedure
+                        result = RawResultExtended(
+                            unique_id=unique_id,
+                            start_top_log_probs=to_list(outputs[0][i]),
+                            start_top_index=to_list(outputs[1][i]),
+                            end_top_log_probs=to_list(outputs[2][i]),
+                            end_top_index=to_list(outputs[3][i]),
+                            cls_logits=to_list(outputs[4][i]),
+                        )
+                    else:
+                        result = RawResult(
+                            unique_id=unique_id,
+                            start_logits=to_list(outputs[0][i]),
+                            end_logits=to_list(outputs[1][i]),
+                        )
+                    all_results.append(result)
+
+            nb_eval_steps += 1
+
+        eval_loss = eval_loss / nb_eval_steps
+
+        prefix = "test"
+        os.makedirs(output_dir, exist_ok=True)
+
+        output_prediction_file = os.path.join(output_dir, "predictions_{}.json".format(prefix))
+        output_nbest_file = os.path.join(output_dir, "nbest_predictions_{}.json".format(prefix))
+        output_null_log_odds_file = os.path.join(output_dir, "null_odds_{}.json".format(prefix))
+
+        if args.model_type in ["xlnet", "xlm"]:
+            # XLNet uses a more complex post-processing procedure
+            (all_predictions, all_nbest_json, scores_diff_json, out_eval) = write_predictions_extended(
+                examples,
+                features,
+                all_results,
+                args.n_best_size,
+                args.max_answer_length,
+                output_prediction_file,
+                output_nbest_file,
+                output_null_log_odds_file,
+                None,
+                model.config.start_n_top,
+                model.config.end_n_top,
+                True,
+                tokenizer,
+                verbose_logging,
+            )
+        else:
+            all_predictions, all_nbest_json, scores_diff_json = write_predictions(
+                examples,
+                features,
+                all_results,
+                args.n_best_size,
+                args.max_answer_length,
+                args.do_lower_case,
+                output_prediction_file,
+                output_nbest_file,
+                output_null_log_odds_file,
+                verbose_logging,
+                True,
+                args.null_score_diff_threshold,
+            )
+
+        return all_predictions, all_nbest_json, scores_diff_json, eval_loss
+
+    def calculate_results(self, predictions, **kwargs):
+        truth_dict = {}
+        questions_dict = {}
+        all_examples = self.test_dl.examples
+        for example in all_examples:
+            truth_dict[example.guid] = example.answer_text
+            questions_dict[example.guid] = example.question_text
+
+        correct = 0
+        incorrect = 0
+        similar = 0
+        correct_text = {}
+        incorrect_text = {}
+        similar_text = {}
+        predicted_answers = []
+        true_answers = []
+
+        for q_id, answer in truth_dict.items():
+            predicted_answers.append(predictions[q_id])
+            true_answers.append(answer)
+            if predictions[q_id].strip() == answer.strip():
+                correct += 1
+                correct_text[q_id] = answer
+            elif predictions[q_id].strip() in answer.strip() or answer.strip() in predictions[q_id].strip():
+                similar += 1
+                similar_text[q_id] = {
+                    "truth": answer,
+                    "predicted": predictions[q_id],
+                    "question": questions_dict[q_id],
+                }
+            else:
+                incorrect += 1
+                incorrect_text[q_id] = {
+                    "truth": answer,
+                    "predicted": predictions[q_id],
+                    "question": questions_dict[q_id],
+                }
+
+        extra_metrics = {}
+        for metric, func in kwargs.items():
+            extra_metrics[metric] = func(true_answers, predicted_answers)
+
+        result = {"correct": correct, "similar": similar, "incorrect": incorrect, **extra_metrics}
+
+        texts = {
+            "correct_text": correct_text,
+            "similar_text": similar_text,
+            "incorrect_text": incorrect_text,
+        }
+
+        return result, texts
 
     def build_optimizer(self, model, iteration_in_total):
         warmup_steps = math.ceil(iteration_in_total * self.args.warmup_ratio)

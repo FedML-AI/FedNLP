@@ -905,14 +905,15 @@ def write_predictions_extended(
         with open(output_null_log_odds_file, "w") as writer:
             writer.write(json.dumps(scores_diff_json, indent=4) + "\n")
 
-    if isinstance(orig_data_file, str):
-        with open(orig_data_file, "r", encoding="utf-8") as reader:
-            orig_data = json.load(reader)
-    else:
-        orig_data = orig_data_file
+    # FedNLP modify here, using examples instead of orig_data
+    # if isinstance(orig_data_file, str):
+    #     with open(orig_data_file, "r", encoding="utf-8") as reader:
+    #         orig_data = json.load(reader)
+    # else:
+    #     orig_data = orig_data_file
 
-    qid_to_has_ans = make_qid_to_has_ans(orig_data)
-    exact_raw, f1_raw = get_raw_scores(orig_data, all_predictions)
+    qid_to_has_ans = make_qid_to_has_ans(all_examples)
+    exact_raw, f1_raw = get_raw_scores(all_examples, all_predictions)
     out_eval = {}
 
     find_all_best_thresh_v2(out_eval, all_predictions, exact_raw, f1_raw, scores_diff_json, qid_to_has_ans)
@@ -1337,29 +1338,44 @@ def find_best_thresh_v2(preds, scores, na_probs, qid_to_has_ans):
 
 def make_qid_to_has_ans(dataset):
     qid_to_has_ans = {}
-    for p in dataset:
-        for qa in p["qas"]:
-            qid_to_has_ans[qa["id"]] = bool(qa["answers"])
+    # FedNLP modify here
+    # for p in dataset:
+    #     for qa in p["qas"]:
+    #         qid_to_has_ans[qa["id"]] = bool(qa["answers"])
+    for example in dataset:
+        qid_to_has_ans[example.guid] = True
     return qid_to_has_ans
 
 
 def get_raw_scores(dataset, preds):
     exact_scores = {}
     f1_scores = {}
-    for p in dataset:
-        for qa in p["qas"]:
-            qid = qa["id"]
-            gold_answers = [a["text"] for a in qa["answers"] if normalize_answer(a["text"])]
-            if not gold_answers:
-                # For unanswerable questions, only correct answer is empty string
-                gold_answers = [""]
-            if qid not in preds:
-                logger.warning("Missing prediction for %s" % qid)
-                continue
+    # FedNLP modify here
+    # for p in dataset:
+    #     for qa in p["qas"]:
+    #         qid = qa["id"]
+    #         gold_answers = [a["text"] for a in qa["answers"] if normalize_answer(a["text"])]
+    #         if not gold_answers:
+    #             # For unanswerable questions, only correct answer is empty string
+    #             gold_answers = [""]
+    #         if qid not in preds:
+    #             logger.warning("Missing prediction for %s" % qid)
+    #             continue
+    #         a_pred = preds[qid]
+    #         # Take max over all gold answers
+    #         exact_scores[qid] = max(compute_exact(a, a_pred) for a in gold_answers)
+    #         f1_scores[qid] = max(compute_f1(a, a_pred) for a in gold_answers)
+    for example in dataset:
+        qid = example.guid
+        gold_answers = example.answers
+        if not gold_answers:
+            gold_answers = [""]
+        if qid not in preds:
+            logger.warning("Missing prediction for %s" % qid)
             a_pred = preds[qid]
-            # Take max over all gold answers
-            exact_scores[qid] = max(compute_exact(a, a_pred) for a in gold_answers)
-            f1_scores[qid] = max(compute_f1(a, a_pred) for a in gold_answers)
+        # Take max over all gold answers
+        exact_scores[qid] = max(compute_exact(a, a_pred) for a in gold_answers)
+        f1_scores[qid] = max(compute_f1(a, a_pred) for a in gold_answers)
     return exact_scores, f1_scores
 
 

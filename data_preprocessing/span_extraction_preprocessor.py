@@ -40,15 +40,24 @@ class TLMPreprocessor(BasePreprocessor):
         super(TLMPreprocessor, self).__init__(**kwargs)
         self.text_cleaner = customized_cleaner_dict.get(self.args.dataset, None)
 
-    def transform(self, context_X, question_X, y, index_list=None, evaluate=False):
+    def transform(self, context_X, question_X, y, qas_ids=None, index_list=None, evaluate=False):
         if index_list is None:
             index_list = [i for i in range(len(context_X))]
-
-        examples = self.transform_examples(context_X, question_X, y, index_list)
+        
+        if qas_ids:
+            qas_to_idx_dict = {qid: index_list[i] for i, qid in enumerate(qas_ids)}
+        
+        logging.info(len(qas_ids))
+        logging.info("transform start")
+        examples = self.transform_examples(context_X, question_X, y, qas_ids if qas_ids else index_list)
         features = self.transform_features(examples, evaluate=evaluate)
+        logging.info("transform end")
 
         # Convert to Tensors and build dataset
-        all_guid = torch.tensor([f.guid for f in features], dtype=torch.long)
+        if qas_ids:
+            all_guid = torch.tensor([qas_to_idx_dict[f.guid] for f in features], dtype=torch.long)
+        else:
+            all_guid = torch.tensor([f.guid for f in features], dtype=torch.long)
         all_input_ids = torch.tensor([f.input_ids for f in features], dtype=torch.long)
         all_attention_masks = torch.tensor([f.attention_mask for f in features], dtype=torch.long)
         all_token_type_ids = torch.tensor([f.token_type_ids for f in features], dtype=torch.long)
