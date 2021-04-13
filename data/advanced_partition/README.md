@@ -18,7 +18,7 @@ We first use sentence transformer to compute the embedding of the data and then 
 
 DATA_DIR=~/fednlp_data/
 
-export CUDA_VISIBLE_DEVICES=0 \
+CUDA_VISIBLE_DEVICES=0 \
 python -m data.advanced_partition.kmeans  \
     --client_number 10 \
     --data_file ${DATA_DIR}/data_files/wikiner_data.h5 \
@@ -28,7 +28,7 @@ python -m data.advanced_partition.kmeans  \
     --task_type name_entity_recognition \
     --overwrite  
     
-export CUDA_VISIBLE_DEVICES=0 \
+CUDA_VISIBLE_DEVICES=0 \
 python -m data.advanced_partition.kmeans  \
     --client_number 30 \
     --data_file ${DATA_DIR}/data_files/squad_1.1_data.h5 \
@@ -38,7 +38,7 @@ python -m data.advanced_partition.kmeans  \
     --task_type reading_comprehension \
     --overwrite
 
-export CUDA_VISIBLE_DEVICES=0 \
+CUDA_VISIBLE_DEVICES=0 \
 python -m data.advanced_partition.kmeans  \
     python kmeans_ex.py  \
     --client_number 50 \
@@ -69,7 +69,8 @@ We already provide clusters data for datasets excluding **20news**, **agnews**, 
 
 ```bash
 DATA_DIR=~/fednlp_data/
-export CUDA_VISIBLE_DEVICES=0 \
+
+CUDA_VISIBLE_DEVICES=0 \
 python -m data.advanced_partition.lda  \
 --client_number 100 \
 --data_file ${DATA_DIR}/data_files/20news_data.h5 \
@@ -79,7 +80,7 @@ python -m data.advanced_partition.lda  \
 --min_size 10 \
 --alpha 1.0
 
-export CUDA_VISIBLE_DEVICES=0 \
+CUDA_VISIBLE_DEVICES=0 \
 python -m data.advanced_partition.lda  \
 --client_number 100 \
 --data_file ${DATA_DIR}/data_files/wikiner_data.h5 \
@@ -89,7 +90,7 @@ python -m data.advanced_partition.lda  \
 --min_size 10 \
 --alpha 1.0
 
-export CUDA_VISIBLE_DEVICES=0 \
+CUDA_VISIBLE_DEVICES=0 \
 python -m data.advanced_partition.lda  \
 --client_number 100 \
 --data_file ${DATA_DIR}/data_files/squad_1.1_data.h5 \
@@ -99,7 +100,7 @@ python -m data.advanced_partition.lda  \
 --min_size 10 \
 --alpha 1.0
 
-export CUDA_VISIBLE_DEVICES=0 \
+CUDA_VISIBLE_DEVICES=0 \
 python -m data.advanced_partition.lda  \
 --client_number 100 \
 --data_file ${DATA_DIR}/data_files/cornell_movie_dialogue_data.h5 \
