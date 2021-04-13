@@ -13,8 +13,12 @@ We first use sentence transformer to compute the embedding of the data and then 
 ```bash
 # overwrite switch stores False the default value is True
 # use overwrite only if you want to create a new embedding file and not use or do not have an exisiting embedding file 
+# for example the current avaliable gpu is the first GPU use the export CUDA_VISIBLE_DEVICES=0 \ if the current avaliable 
+# GPU is the fourth one use the export CUDA_VISIBLE_DEVICES=3 \
+
 DATA_DIR=~/fednlp_data/
 
+export CUDA_VISIBLE_DEVICES=0 \
 python -m data.advanced_partition.kmeans  \
     --client_number 10 \
     --data_file ${DATA_DIR}/data_files/wikiner_data.h5 \
