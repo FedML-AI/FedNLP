@@ -1,5 +1,6 @@
 from data_manager.base_data_manager import BaseDataManager
 from tqdm import tqdm
+import logging
 
 class SpanExtractionDataManager(BaseDataManager):
     """Data manager for reading comprehension (span-based QA).""" 

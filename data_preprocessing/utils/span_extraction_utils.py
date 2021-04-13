@@ -185,7 +185,7 @@ def squad_convert_example_to_features(
         )
 
     spans = []
-
+    logging.info(example.question_text)
     truncated_query = tokenizer.encode(
         example.question_text, add_special_tokens=False, truncation=True, max_length=max_query_length
     )
@@ -428,6 +428,7 @@ def squad_convert_examples_to_features(
     new_features = []
     unique_id = 1000000000
     example_index = 0
+    logging.info("features(%d)" % len(features))
     for example_features in tqdm(
         features, total=len(features), desc="add example index and unique id", disable=not tqdm_enabled
     ):

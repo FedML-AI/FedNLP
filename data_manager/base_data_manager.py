@@ -140,7 +140,7 @@ class BaseDataManager(ABC):
         for client_idx in tqdm(
             partition_file[partition_method]
             ["partition_data"].keys(),
-                desc="Loading data from h5 file."):
+                desc="Loading index from h5 file."):
             train_index_list.extend(
                 partition_file[partition_method]["partition_data"]
                 [client_idx]["train"][()])
@@ -153,12 +153,12 @@ class BaseDataManager(ABC):
                 data_file, local_test_index_list)
             local_test_examples, local_test_features, local_test_dataset = self.preprocessor.transform(
                 **local_test_data, index_list=local_test_index_list, evaluate=True)
-            local_test_data = BaseDataLoader(local_test_examples, local_test_features, local_test_dataset,
+            local_test_dl = BaseDataLoader(local_test_examples, local_test_features, local_test_dataset,
                                          batch_size=self.eval_batch_size,
                                          num_workers=0,
                                          pin_memory=True,
                                          drop_last=False)
-            test_data_local_dict[int(client_idx)] = local_test_data
+            test_data_local_dict[int(client_idx)] = local_test_dl
 
         train_data = self.read_instance_from_h5(
             data_file, train_index_list)
@@ -225,6 +225,7 @@ class BaseDataManager(ABC):
                 **train_data, index_list=train_index_list)
             test_examples, test_features, test_dataset = self.preprocessor.transform(
                 **test_data, index_list=test_index_list, evaluate=True)
+
 
             train_loader = BaseDataLoader(train_examples, train_features, train_dataset,
                                       batch_size=self.train_batch_size,

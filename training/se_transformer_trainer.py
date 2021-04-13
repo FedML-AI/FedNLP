@@ -221,7 +221,7 @@ class SpanExtractionTrainer:
         logging.info("train_model self.device: " + str(device))
         self.model.to(device)
 
-        all_predictions, all_nbest_json, scores_diff_json, eval_loss = self.evaluate(output_dir, verbose_logging=True)
+        all_predictions, all_nbest_json, scores_diff_json, eval_loss = self.evaluate(output_dir)
 
         result, texts = self.calculate_results(all_predictions)
         result["eval_loss"] = eval_loss

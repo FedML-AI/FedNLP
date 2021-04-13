@@ -47,11 +47,9 @@ class TLMPreprocessor(BasePreprocessor):
         if qas_ids:
             qas_to_idx_dict = {qid: index_list[i] for i, qid in enumerate(qas_ids)}
         
-        logging.info(len(qas_ids))
-        logging.info("transform start")
         examples = self.transform_examples(context_X, question_X, y, qas_ids if qas_ids else index_list)
         features = self.transform_features(examples, evaluate=evaluate)
-        logging.info("transform end")
+        logging.info("examples(%d) features(%d)" % (len(examples), len(features)))
 
         # Convert to Tensors and build dataset
         if qas_ids:
@@ -143,6 +141,6 @@ class TLMPreprocessor(BasePreprocessor):
                 threads=args.process_count,
                 args=args,
             )
-
+        logging.info("examples(%d) features(%d)" % (len(examples), len(features)))
         return features
 

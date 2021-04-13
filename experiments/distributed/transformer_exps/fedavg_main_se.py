@@ -24,6 +24,9 @@ from FedML.fedml_api.distributed.utils.gpu_mapping import mapping_processes_to_g
 from FedML.fedml_api.distributed.fedavg.FedAvgAPI import FedML_init, FedML_FedAvg_distributed
 import argparse
 import logging
+
+import faulthandler
+faulthandler.enable()
  
 
 def post_complete_message(tc_args):

@@ -49,6 +49,7 @@ class FedTransformerTrainer(ModelTrainer):
             global_test_data += local_data
             global_test_examples += local_examples
             global_test_features += local_features
+            logging.info("client idx(%d) len data(%d) len examples(%d) len features(%d)" % (idx, len(local_data), len(local_examples), len(local_features)))
         global_test_dl = BaseDataLoader(global_test_examples, global_test_features, global_test_data,
                                 batch_size=local_test_dl.batch_size,
                                 num_workers=0,
@@ -57,6 +58,8 @@ class FedTransformerTrainer(ModelTrainer):
         # global_test_dl.to(device)
 
         logging.info("Client(%d)"%self.id + ":| Global Test Data Size = %d" % (len(global_test_data)))
+        logging.info(len(global_test_examples))
+        logging.info(len(global_test_features))
         self.client_trainer.test_dl = global_test_dl
         self.client_trainer.eval_model(device=device)
         return True
