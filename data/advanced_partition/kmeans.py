@@ -30,7 +30,7 @@ def main():
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--client_number', type=int, default='100', metavar='CN',
+    parser.add_argument('--cluster_number', type=int, default='100', metavar='CN',
                         help='client number for lda partition')
 
     parser.add_argument('--bsz', type=int, default='16', metavar='CN',
@@ -99,12 +99,14 @@ def main():
     print("store kmeans partition to file")
     partition = ""
     partition = h5py.File(args.partition_file,"a")
+    if partition['/kmeans_%d'%args.cluter_number]:
+        del partition['/kmeans_%d'%args.cluter_number]
 
     partition['/kmeans_%d'%args.client_number+'/n_clients'] = args.client_number
     partition['/kmeans_%d'%args.client_number+'/client_assignment'] = cluster_assignment
 
     for i in sorted(partition_pkl.keys()):
-        train, test = train_test_split(partition_pkl[i], test_size=0.4, train_size = 0.6, random_state=42)
+        train, test = train_test_split(partition_pkl[i], test_size=0.2, train_size = 0.8, random_state=42)
         train_path = '/kmeans_%d'%args.client_number+'/partition_data/'+str(i)+'/train/'
         test_path = '/kmeans_%d'%args.client_number+'/partition_data/'+str(i)+'/test/'
         partition[train_path] = train

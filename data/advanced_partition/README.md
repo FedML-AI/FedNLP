@@ -20,7 +20,7 @@ DATA_DIR=~/fednlp_data/
 
 CUDA_VISIBLE_DEVICES=0 \
 python -m data.advanced_partition.kmeans  \
-    --client_number 10 \
+    --cluster_number 10 \
     --data_file ${DATA_DIR}/data_files/wikiner_data.h5 \
     --bsz 16 \
     --partition_file ${DATA_DIR}/partition_files/wikiner_partition.h5 \
@@ -30,7 +30,7 @@ python -m data.advanced_partition.kmeans  \
     
 CUDA_VISIBLE_DEVICES=0 \
 python -m data.advanced_partition.kmeans  \
-    --client_number 30 \
+    --cluster_number 30 \
     --data_file ${DATA_DIR}/data_files/squad_1.1_data.h5 \
     --bsz 16 \
     --partition_file ${DATA_DIR}/partition_files/squad_1.1_partition.h5 \
@@ -41,7 +41,7 @@ python -m data.advanced_partition.kmeans  \
 CUDA_VISIBLE_DEVICES=0 \
 python -m data.advanced_partition.kmeans  \
     python kmeans_ex.py  \
-    --client_number 50 \
+    --cluster_number 50 \
     --data_file ${DATA_DIR}/data_files/cornell_movie_dialogue_data.h5 \
     --bsz 16 \
     --partition_file ${DATA_DIR}/partition_files/cornell_movie_dialogue_partition.h5 \

@@ -108,7 +108,7 @@ def main():
     partition['lda/n_clients'] = client_num
     partition['lda/alpha'] = alpha
     for i, data in enumerate(partition_pkl):
-        train, test = train_test_split(partition_pkl[i], test_size=0.4, train_size = 0.6, random_state=42)
+        train, test = train_test_split(partition_pkl[i], test_size=0.2, train_size = 0.8, random_state=42)
         train_path = '/lda/partition_data/'+str(i)+'/train/'
         test_path = '/lda/partition_data/'+str(i)+'/test/'
         partition[train_path] = train
