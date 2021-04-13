@@ -12,34 +12,42 @@ We first use sentence transformer to compute the embedding of the data and then 
 
 ```bash
 # overwrite switch stores False the default value is True
+# use overwrite only if you want to create a new embedding file and not use or do not have an exisiting embedding file 
+# for example the current avaliable gpu is the first GPU use the export CUDA_VISIBLE_DEVICES=0 \ if the current avaliable 
+# GPU is the fourth one use the export CUDA_VISIBLE_DEVICES=3 \
+
 DATA_DIR=~/fednlp_data/
 
+CUDA_VISIBLE_DEVICES=0 \
 python -m data.advanced_partition.kmeans  \
-    --client_number 10 \
-    --data_file '${DATA_DIR}/data_files/wikiner_data.h5' \
+    --cluster_number 10 \
+    --data_file ${DATA_DIR}/data_files/wikiner_data.h5 \
     --bsz 16 \
-    --partition_file '${DATA_DIR}/partition_files/wikiner_partition.h5' \
-    --embedding_file '${DATA_DIR}/embedding_files/wikiner_embedding.pkl'  \
+    --partition_file ${DATA_DIR}/partition_files/wikiner_partition.h5 \
+    --embedding_file ${DATA_DIR}/embedding_files/wikiner_embedding.pkl  \
     --task_type name_entity_recognition \
     --overwrite  
-
+    
+CUDA_VISIBLE_DEVICES=0 \
 python -m data.advanced_partition.kmeans  \
-    --client_number 30 \
-    --data_file '${DATA_DIR}/data_files/squad_1.1_data.h5' \
+    --cluster_number 30 \
+    --data_file ${DATA_DIR}/data_files/squad_1.1_data.h5 \
     --bsz 16 \
-    --partition_file '${DATA_DIR}/partition_files/squad_1.1_partition.h5' \
-    --embedding_file '${DATA_DIR}/embedding_files/squad_1.1_embedding.pkl'  \
-    --task_type reading_comprehension
+    --partition_file ${DATA_DIR}/partition_files/squad_1.1_partition.h5 \
+    --embedding_file ${DATA_DIR}/embedding_files/squad_1.1_embedding.pkl  \
+    --task_type reading_comprehension \
+    --overwrite
 
-
+CUDA_VISIBLE_DEVICES=0 \
 python -m data.advanced_partition.kmeans  \
     python kmeans_ex.py  \
-    --client_number 50 \
-    --data_file '${DATA_DIR}/data_files/cornell_movie_dialogue_data.h5' \
+    --cluster_number 50 \
+    --data_file ${DATA_DIR}/data_files/cornell_movie_dialogue_data.h5 \
     --bsz 16 \
-    --partition_file '${DATA_DIR}/partition_files/cornell_movie_dialogue_partition.h5' \
-    --embedding_file '${DATA_DIR}/embedding_files/cornell_movie_dialogue_embedding.pkl'  \
-    --task_type seq2seq
+    --partition_file ${DATA_DIR}/partition_files/cornell_movie_dialogue_partition.h5 \
+    --embedding_file ${DATA_DIR}/embedding_files/cornell_movie_dialogue_embedding.pkl  \
+    --task_type seq2seq \
+    --overwrite
 
 ```
 <!-- ```sh
@@ -48,7 +56,8 @@ python -m data_preprocessing.advanced_partition.kmeans_ex  \
     --data_file 'data/data_files/20news_data.h5' \
     --partition_file 'data/partition_files/20news_partition.h5' \
     --embedding_file 'data/embedding_files/20news_embedding.h5'  \
-    --task_type text_classification
+    --task_type text_classification \
+    --overwrite
 ``` -->
 ## LDA
 we first kmeans to classify data in to {10,30,50} clusters and then apply LDA to distribute data in to different number of groups as defined in client number
@@ -60,37 +69,42 @@ We already provide clusters data for datasets excluding **20news**, **agnews**, 
 
 ```bash
 DATA_DIR=~/fednlp_data/
+
+CUDA_VISIBLE_DEVICES=0 \
 python -m data.advanced_partition.lda  \
 --client_number 100 \
---data_file '${DATA_DIR}/data_files/20news_data.h5' \
---partition_file '${DATA_DIR}/partition_files/20news_partition.h5' \
+--data_file ${DATA_DIR}/data_files/20news_data.h5 \
+--partition_file ${DATA_DIR}/partition_files/20news_partition.h5 \
 --task_type text_classification \
 --kmeans_num 0 \
 --min_size 10 \
 --alpha 1.0
 
+CUDA_VISIBLE_DEVICES=0 \
 python -m data.advanced_partition.lda  \
 --client_number 100 \
---data_file '${DATA_DIR}/data_files/wikiner_data.h5' \
---partition_file '${DATA_DIR}/partition_files/wikiner_partition.h5' \
+--data_file ${DATA_DIR}/data_files/wikiner_data.h5 \
+--partition_file ${DATA_DIR}/partition_files/wikiner_partition.h5 \
 --task_type name_entity_recognition \
 --kmeans_num 10 \
 --min_size 10 \
 --alpha 1.0
 
+CUDA_VISIBLE_DEVICES=0 \
 python -m data.advanced_partition.lda  \
 --client_number 100 \
---data_file '${DATA_DIR}/data_files/squad_1.1_data.h5' \
---partition_file '${DATA_DIR}/partition_files/squad_1,1_partition.h5' \
+--data_file ${DATA_DIR}/data_files/squad_1.1_data.h5 \
+--partition_file ${DATA_DIR}/partition_files/squad_1,1_partition.h5 \
 --task_type reading_comprehension \
 --kmeans_num 30 \
 --min_size 10 \
 --alpha 1.0
 
+CUDA_VISIBLE_DEVICES=0 \
 python -m data.advanced_partition.lda  \
 --client_number 100 \
---data_file '${DATA_DIR}/data_files/cornell_movie_dialogue_data.h5' \
---partition_file '${DATA_DIR}/partition_files/cornell_movie_dialogue_partition.h5' \
+--data_file ${DATA_DIR}/data_files/cornell_movie_dialogue_data.h5 \
+--partition_file ${DATA_DIR}/partition_files/cornell_movie_dialogue_partition.h5 \
 --task_type seq_to_seq \
 --kmeans_num 50 \
 --min_size 10 \
