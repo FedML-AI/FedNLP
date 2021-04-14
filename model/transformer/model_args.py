@@ -8,7 +8,7 @@ from torch.nn import CrossEntropyLoss
 
 
 def get_default_process_count():
-    process_count = cpu_count() - 2 if cpu_count() > 2 else 1
+    process_count = int(cpu_count() / 2) if cpu_count() > 2 else 1
     if sys.platform == "win32":
         process_count = min(process_count, 61)
 

@@ -185,7 +185,6 @@ def squad_convert_example_to_features(
         )
 
     spans = []
-    logging.info(example.question_text)
     truncated_query = tokenizer.encode(
         example.question_text, add_special_tokens=False, truncation=True, max_length=max_query_length
     )
@@ -428,7 +427,6 @@ def squad_convert_examples_to_features(
     new_features = []
     unique_id = 1000000000
     example_index = 0
-    logging.info("features(%d)" % len(features))
     for example_features in tqdm(
         features, total=len(features), desc="add example index and unique id", disable=not tqdm_enabled
     ):
@@ -543,11 +541,9 @@ def write_predictions(
     example_index_to_features = collections.defaultdict(list)
     for feature in all_features:
         example_index_to_features[feature.example_index].append(feature)
-
     unique_id_to_result = {}
     for result in all_results:
         unique_id_to_result[result.unique_id] = result
-
     _PrelimPrediction = collections.namedtuple(  # pylint: disable=invalid-name
         "PrelimPrediction", ["feature_index", "start_index", "end_index", "start_logit", "end_logit"],
     )
