@@ -24,6 +24,7 @@ from FedML.fedml_api.distributed.utils.gpu_mapping import mapping_processes_to_g
 from FedML.fedml_api.distributed.fedavg.FedAvgAPI import FedML_init, FedML_FedAvg_distributed
 import argparse
 import logging
+from multiprocessing import cpu_count
 
 import faulthandler
 faulthandler.enable()
@@ -113,6 +114,8 @@ if __name__ == "__main__":
     parser = add_federated_args(parser)
     # TODO: add more customized args.
     args = parser.parse_args()
+
+    args.process_count = int(cpu_count() / args.client_num_per_round) if cpu_count() > args.client_num_per_round else 1
 
     # customize the log format
     logging.basicConfig(

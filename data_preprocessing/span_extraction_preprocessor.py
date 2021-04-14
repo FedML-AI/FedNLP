@@ -44,18 +44,14 @@ class TLMPreprocessor(BasePreprocessor):
         if index_list is None:
             index_list = [i for i in range(len(context_X))]
         
-        if qas_ids:
-            qas_to_idx_dict = {qid: index_list[i] for i, qid in enumerate(qas_ids)}
+        if qas_ids is None:
+            qas_ids = index_list
         
-        examples = self.transform_examples(context_X, question_X, y, qas_ids if qas_ids else index_list)
+        examples = self.transform_examples(context_X, question_X, y, qas_ids, index_list)
         features = self.transform_features(examples, evaluate=evaluate)
-        logging.info("examples(%d) features(%d)" % (len(examples), len(features)))
 
         # Convert to Tensors and build dataset
-        if qas_ids:
-            all_guid = torch.tensor([qas_to_idx_dict[f.guid] for f in features], dtype=torch.long)
-        else:
-            all_guid = torch.tensor([f.guid for f in features], dtype=torch.long)
+        all_guid = torch.tensor([f.guid for f in features], dtype=torch.long)
         all_input_ids = torch.tensor([f.input_ids for f in features], dtype=torch.long)
         all_attention_masks = torch.tensor([f.attention_mask for f in features], dtype=torch.long)
         all_token_type_ids = torch.tensor([f.token_type_ids for f in features], dtype=torch.long)
@@ -85,12 +81,13 @@ class TLMPreprocessor(BasePreprocessor):
             )
         return examples, features, dataset
 
-    def transform_examples(self, context_X, question_X, y, index_list):
+    def transform_examples(self, context_X, question_X, y, qas_ids, index_list):
         examples = list()
-        for c, q, a, idx in zip(context_X, question_X, y, index_list):
+        for c, q, a, qas_id, idx in zip(context_X, question_X, y, qas_ids, index_list):
             answers = [{"text": c[a[0]:a[1]], "answer_start": a[0]}]
             example = SpanExtractionInputExample(
                 guid=idx,
+                qas_id = qas_id,
                 question_text=q,
                 context_text=c,
                 answer_text=c[a[0]:a[1]],

@@ -255,7 +255,6 @@ class SpanExtractionTrainer:
             from torch.cuda import amp
 
         all_results = []
-        indices_counter = set()
         for batch in tqdm(self.test_dl, disable=args.silent, desc="Running Evaluation"):
             batch = tuple(t.to(device) for t in batch)
 
@@ -289,12 +288,8 @@ class SpanExtractionTrainer:
                 else:
                     outputs = model(**inputs)
                     eval_loss += outputs[0].mean().item()
-                for i, example_index in enumerate(example_indices):
-                    if example_index.item() in indices_counter:
-                        print(example_index.item())
-                    else:
-                        indices_counter.add(example_index.item())
-                    eval_feature = features[example_index.item()]
+                for i, _ in enumerate(example_indices):
+                    eval_feature = features[i]
                     unique_id = int(eval_feature.unique_id)
                     if args.model_type in ["xlnet", "xlm"]:
                         # XLNet uses a more complex post-processing procedure

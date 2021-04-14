@@ -91,7 +91,6 @@ if __name__ == "__main__":
 
 ''' Example Usage:
 
-export CUDA_VISIBLE_DEVICES=7
 DATA_NAME=squad_1.1
 CUDA_VISIBLE_DEVICES=7 python -m experiments.centralized.transformer_exps.main_se \
     --dataset ${DATA_NAME} \

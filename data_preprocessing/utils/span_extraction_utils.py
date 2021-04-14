@@ -425,7 +425,7 @@ def squad_convert_examples_to_features(
         )
         features = [annotate_(example) for example in tqdm(examples, disable=not tqdm_enabled)]
     new_features = []
-    unique_id = 1000000000
+    # unique_id = 1000000000
     example_index = 0
     for example_features in tqdm(
         features, total=len(features), desc="add example index and unique id", disable=not tqdm_enabled
@@ -434,9 +434,9 @@ def squad_convert_examples_to_features(
             continue
         for example_feature in example_features:
             example_feature.example_index = example_index
-            example_feature.unique_id = unique_id
+            example_feature.unique_id = example_feature.guid
             new_features.append(example_feature)
-            unique_id += 1
+            # unique_id += 1
         example_index += 1
     features = new_features
     del new_features
@@ -689,16 +689,16 @@ def write_predictions(
         assert len(nbest_json) >= 1
 
         if not version_2_with_negative:
-            all_predictions[example.guid] = nbest_json[0]["text"]
+            all_predictions[example.qas_id] = nbest_json[0]["text"]
         else:
             # predict "" iff the null score - the score of best non-null > threshold
             score_diff = score_null - best_non_null_entry.start_logit - (best_non_null_entry.end_logit)
-            scores_diff_json[example.guid] = score_diff
+            scores_diff_json[example.qas_id] = score_diff
             if score_diff > null_score_diff_threshold:
-                all_predictions[example.guid] = ""
+                all_predictions[example.qas_id] = ""
             else:
-                all_predictions[example.guid] = best_non_null_entry.text
-        all_nbest_json[example.guid] = nbest_json
+                all_predictions[example.qas_id] = best_non_null_entry.text
+        all_nbest_json[example.qas_id] = nbest_json
 
     with open(output_prediction_file, "w") as writer:
         writer.write(json.dumps(all_predictions, indent=4) + "\n")
@@ -885,12 +885,12 @@ def write_predictions_extended(
         assert best_non_null_entry is not None
 
         score_diff = score_null
-        scores_diff_json[example.guid] = score_diff
+        scores_diff_json[example.qas_id] = score_diff
         # note(zhiliny): always predict best_non_null_entry
         # and the evaluation script will search for the best threshold
-        all_predictions[example.guid] = best_non_null_entry.text
+        all_predictions[example.qas_id] = best_non_null_entry.text
 
-        all_nbest_json[example.guid] = nbest_json
+        all_nbest_json[example.qas_id] = nbest_json
 
     with open(output_prediction_file, "w") as writer:
         writer.write(json.dumps(all_predictions, indent=4) + "\n")
@@ -1083,16 +1083,16 @@ def get_best_predictions(
         assert len(nbest_json) >= 1
 
         if not version_2_with_negative:
-            all_predictions[example.guid] = nbest_json[0]["text"]
+            all_predictions[example.qas_id] = nbest_json[0]["text"]
         else:
             # predict "" iff the null score - the score of best non-null > threshold
             score_diff = score_null - best_non_null_entry.start_logit - (best_non_null_entry.end_logit)
-            scores_diff_json[example.guid] = score_diff
+            scores_diff_json[example.qas_id] = score_diff
             if score_diff > null_score_diff_threshold:
-                all_predictions[example.guid] = ""
+                all_predictions[example.qas_id] = ""
             else:
-                all_predictions[example.guid] = best_non_null_entry.text
-        all_nbest_json[example.guid] = nbest_json
+                all_predictions[example.qas_id] = best_non_null_entry.text
+        all_nbest_json[example.qas_id] = nbest_json
 
     all_best = [
         {
@@ -1266,12 +1266,12 @@ def get_best_predictions_extended(
         assert best_non_null_entry is not None
 
         score_diff = score_null
-        scores_diff_json[example.guid] = score_diff
+        scores_diff_json[example.qas_id] = score_diff
         # note(zhiliny): always predict best_non_null_entry
         # and the evaluation script will search for the best threshold
-        all_predictions[example.guid] = best_non_null_entry.text
+        all_predictions[example.qas_id] = best_non_null_entry.text
 
-        all_nbest_json[example.guid] = nbest_json
+        all_nbest_json[example.qas_id] = nbest_json
 
         all_best = [
             {
@@ -1340,7 +1340,7 @@ def make_qid_to_has_ans(dataset):
     #     for qa in p["qas"]:
     #         qid_to_has_ans[qa["id"]] = bool(qa["answers"])
     for example in dataset:
-        qid_to_has_ans[example.guid] = True
+        qid_to_has_ans[example.qas_id] = True
     return qid_to_has_ans
 
 
@@ -1362,8 +1362,9 @@ def get_raw_scores(dataset, preds):
     #         # Take max over all gold answers
     #         exact_scores[qid] = max(compute_exact(a, a_pred) for a in gold_answers)
     #         f1_scores[qid] = max(compute_f1(a, a_pred) for a in gold_answers)
+    all_gold_answers = {}
     for example in dataset:
-        qid = example.guid
+        qid = example.qas_id
         gold_answers = example.answers
         if not gold_answers:
             gold_answers = [""]

@@ -137,6 +137,9 @@ class BaseDataManager(ABC):
         train_index_list = []
         test_index_list = []
         test_data_local_dict = {}
+        test_examples = []
+        test_features = []
+        test_dataset = []
         for client_idx in tqdm(
             partition_file[partition_method]
             ["partition_data"].keys(),
@@ -159,20 +162,18 @@ class BaseDataManager(ABC):
                                          pin_memory=True,
                                          drop_last=False)
             test_data_local_dict[int(client_idx)] = local_test_dl
+            test_examples += local_test_examples
+            test_features += local_test_features
+            test_dataset += local_test_dataset
 
         train_data = self.read_instance_from_h5(
             data_file, train_index_list)
-        
-        test_data = self.read_instance_from_h5(
-            data_file, test_index_list)
 
         data_file.close()
         partition_file.close()
 
         train_examples, train_features, train_dataset = self.preprocessor.transform(
             **train_data, index_list=train_index_list)
-        test_examples, test_features, test_dataset = self.preprocessor.transform(
-            **test_data, index_list=test_index_list, evaluate=True)
         train_data_global = BaseDataLoader(train_examples, train_features, train_dataset,
                                        batch_size=self.train_batch_size,
                                        num_workers=0,

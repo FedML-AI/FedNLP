@@ -54,13 +54,14 @@ class SeqTaggingInputExample(InputExample):
 class SpanExtractionInputExample(InputExample):
     """A single training/test example for simple span extraction."""
 
-    def __init__(self, guid, question_text, context_text, answer_text, start_position_character, title, 
+    def __init__(self, guid, qas_id, question_text, context_text, answer_text, start_position_character, title, 
                 answers=[], 
-                is_impossible=False,):
+                is_impossible=False):
         """
         Constructs a InputExample.
         """
         super().__init__(guid)
+        self.qas_id = qas_id
         self.question_text = question_text
         self.context_text = context_text
         self.answer_text = answer_text
