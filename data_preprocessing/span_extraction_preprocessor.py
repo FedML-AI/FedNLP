@@ -5,6 +5,7 @@ import string
 
 import pandas as pd
 import torch
+from collections import defaultdict
 from torch.utils.data import TensorDataset
 
 from data_preprocessing.base.base_example import SpanExtractionInputExample
@@ -17,7 +18,7 @@ customized_cleaner_dict = {}
 class TrivialPreprocessor(BasePreprocessor):
     # Used for models such as LSTM, CNN, etc.
     def __init__(self, **kwargs):
-        super(TrivialPreprocessor, self).__init__(kwargs)
+        super(TrivialPreprocessor, self).__init__(**kwargs)
         self.text_cleaner = customized_cleaner_dict.get(self.args.dataset, None)
 
     def transform(self, X, y):
@@ -139,6 +140,5 @@ class TLMPreprocessor(BasePreprocessor):
                 threads=args.process_count,
                 args=args,
             )
-        logging.info("examples(%d) features(%d)" % (len(examples), len(features)))
         return features
 

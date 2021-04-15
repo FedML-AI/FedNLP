@@ -3,17 +3,17 @@ WORKER_NUM=10
 ROUND=10  # 50 to test the simulated sampling
 CI=0
 
-DATA_DIR=../../../data/fednlp_data/
+DATA_DIR=~/fednlp_data/
 DATA_NAME=squad_1.1
 PROCESS_NUM=`expr $WORKER_NUM + 1`
 echo $PROCESS_NUM
 
 hostname > mpi_host_file
 
-mpirun -np $PROCESS_NUM -hostfile mpi_host_file \
+/home/bill/anaconda3/envs/fednlp/bin/mpirun -np $PROCESS_NUM -hostfile mpi_host_file \
 python -m fedavg_main_se \
   --gpu_mapping_file "gpu_mapping.yaml" \
-  --gpu_mapping_key "mapping_lambda-server2" \
+  --gpu_mapping_key "mapping_ink-lucy" \
   --client_num_per_round $WORKER_NUM \
   --comm_round $ROUND \
   --ci $CI \

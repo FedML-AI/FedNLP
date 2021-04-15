@@ -33,6 +33,7 @@ from data_preprocessing.utils.span_extraction_utils import (
     to_list,
     write_predictions,
     write_predictions_extended,
+    get_raw_scores,
 )
 
 from tqdm import tqdm
@@ -241,6 +242,12 @@ class SpanExtractionTrainer:
         model = self.model
         args = self.args
 
+        # reassgin unique_id for features to keep order for federated learning situation
+        unique_id = 1000000000
+        for feature in self.test_dl.features:
+            feature.unique_id = unique_id
+            unique_id += 1
+
         examples = self.test_dl.examples
         features = self.test_dl.features
 
@@ -288,8 +295,9 @@ class SpanExtractionTrainer:
                 else:
                     outputs = model(**inputs)
                     eval_loss += outputs[0].mean().item()
+                begin_idx = len(all_results)
                 for i, _ in enumerate(example_indices):
-                    eval_feature = features[i]
+                    eval_feature = features[begin_idx+i]
                     unique_id = int(eval_feature.unique_id)
                     if args.model_type in ["xlnet", "xlm"]:
                         # XLNet uses a more complex post-processing procedure
@@ -361,8 +369,8 @@ class SpanExtractionTrainer:
         questions_dict = {}
         all_examples = self.test_dl.examples
         for example in all_examples:
-            truth_dict[example.guid] = example.answer_text
-            questions_dict[example.guid] = example.question_text
+            truth_dict[example.qas_id] = example.answer_text
+            questions_dict[example.qas_id] = example.question_text
 
         correct = 0
         incorrect = 0
@@ -398,7 +406,13 @@ class SpanExtractionTrainer:
         for metric, func in kwargs.items():
             extra_metrics[metric] = func(true_answers, predicted_answers)
 
-        result = {"correct": correct, "similar": similar, "incorrect": incorrect, **extra_metrics}
+        exact_raw, f1_raw = get_raw_scores(all_examples, predictions)
+        standard_metrics = {
+            "exact_match": sum(exact_raw.values()) / len(exact_raw),
+            "f1_score": sum(f1_raw.values()) / len(f1_raw)
+            }
+
+        result = {"correct": correct, "similar": similar, "incorrect": incorrect, **extra_metrics, **standard_metrics}
 
         texts = {
             "correct_text": correct_text,

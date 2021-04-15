@@ -76,7 +76,7 @@ class SquadFeatures:
         start_position,
         end_position,
         is_impossible,
-        guid: str = None,
+        guid = None,
         encoding: BatchEncoding = None,
     ):
         self.input_ids = input_ids
@@ -425,19 +425,19 @@ def squad_convert_examples_to_features(
         )
         features = [annotate_(example) for example in tqdm(examples, disable=not tqdm_enabled)]
     new_features = []
-    # unique_id = 1000000000
-    example_index = 0
+    unique_id = 1000000000
+    # example_index = 0
     for example_features in tqdm(
         features, total=len(features), desc="add example index and unique id", disable=not tqdm_enabled
     ):
         if not example_features:
             continue
         for example_feature in example_features:
-            example_feature.example_index = example_index
-            example_feature.unique_id = example_feature.guid
+            example_feature.example_index = example_feature.guid
+            example_feature.unique_id = unique_id
             new_features.append(example_feature)
-            # unique_id += 1
-        example_index += 1
+            unique_id += 1
+        # example_index += 1
     features = new_features
     del new_features
 
@@ -553,8 +553,7 @@ def write_predictions(
     scores_diff_json = collections.OrderedDict()
 
     for (example_index, example) in enumerate(all_examples):
-        features = example_index_to_features[example_index]
-
+        features = example_index_to_features[example.guid]
         prelim_predictions = []
         # keep track of the minimum score of null start+end of position 0
         score_null = 1000000  # large and positive
@@ -630,7 +629,7 @@ def write_predictions(
                 orig_doc_end = feature.token_to_orig_map[pred.end_index]
                 orig_tokens = example.doc_tokens[orig_doc_start : (orig_doc_end + 1)]
                 tok_text = " ".join(tok_tokens)
-
+                
                 # De-tokenize WordPieces that have been split off.
                 tok_text = tok_text.replace(" ##", "")
                 tok_text = tok_text.replace("##", "")
@@ -639,7 +638,6 @@ def write_predictions(
                 tok_text = tok_text.strip()
                 tok_text = " ".join(tok_text.split())
                 orig_text = " ".join(orig_tokens)
-
                 final_text = get_final_text(tok_text, orig_text, do_lower_case, verbose_logging)
                 if final_text in seen_predictions:
                     continue
@@ -1365,12 +1363,17 @@ def get_raw_scores(dataset, preds):
     all_gold_answers = {}
     for example in dataset:
         qid = example.qas_id
-        gold_answers = example.answers
+        gold_answers = [a["text"] for a in example.answers if normalize_answer(a["text"])]
         if not gold_answers:
             gold_answers = [""]
+        if qid not in all_gold_answers:
+            all_gold_answers[qid] = []
+        all_gold_answers[qid] += gold_answers
+    for qid, gold_answers in all_gold_answers.items():
         if qid not in preds:
             logger.warning("Missing prediction for %s" % qid)
-            a_pred = preds[qid]
+            continue
+        a_pred = preds[qid]
         # Take max over all gold answers
         exact_scores[qid] = max(compute_exact(a, a_pred) for a in gold_answers)
         f1_scores[qid] = max(compute_f1(a, a_pred) for a in gold_answers)
