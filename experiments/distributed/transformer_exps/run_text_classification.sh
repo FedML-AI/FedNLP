@@ -1,10 +1,10 @@
 LOG_FILE="fedavg_transformer_tc.log"
 WORKER_NUM=10
-ROUND=200  # 50 to test the simulated sampling
+ROUND=30  # 50 to test the simulated sampling
 CI=0
 
 DATA_DIR=~/fednlp_data/
-DATA_NAME=agnews
+DATA_NAME=20news
 PROCESS_NUM=`expr $WORKER_NUM + 1`
 echo $PROCESS_NUM
 
@@ -20,14 +20,14 @@ python -m fedavg_main_tc \
   --dataset "${DATA_NAME}" \
   --data_file "${DATA_DIR}/data_files/${DATA_NAME}_data.h5" \
   --partition_file "${DATA_DIR}/partition_files/${DATA_NAME}_partition.h5" \
-  --partition_method niid_label_alpha=5.0 \
+  --partition_method "niid_label_clients=100.0_alpha=5.0" \
   --model_type distilbert \
   --model_name distilbert-base-uncased \
   --do_lower_case True \
   --train_batch_size 8 \
   --eval_batch_size 8 \
   --max_seq_length 128 \
-  --learning_rate 1e-5 \
+  --learning_rate 5e-5 \
   --epochs 1 \
   --output_dir "/tmp/fedavg_${DATA_NAME}_output/" \
   --fp16

@@ -117,7 +117,7 @@ CUDA_VISIBLE_DEVICES=3 python -m experiments.centralized.transformer_exps.main_t
     --dataset ${DATA_NAME} \
     --data_file ~/fednlp_data/data_files/${DATA_NAME}_data.h5 \
     --partition_file ~/fednlp_data/partition_files/${DATA_NAME}_partition.h5 \
-    --partition_method niid_label_alpha=5.0 \
+    --partition_method niid_label_clients=100.0_alpha=5.0 \
     --model_type distilbert \
     --model_name distilbert-base-uncased  \
     --do_lower_case True \
