@@ -52,7 +52,7 @@ class BaseDataManager(ABC):
         return num_clients
 
     @abstractmethod
-    def read_instance_from_h5(self, data_file, index_list):
+    def read_instance_from_h5(self, data_file, index_list, desc):
         pass
 
     def sample_client_index(self, process_id, num_workers):

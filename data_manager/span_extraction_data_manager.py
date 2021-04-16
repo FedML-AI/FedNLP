@@ -12,12 +12,12 @@ class SpanExtractionDataManager(BaseDataManager):
         self.preprocessor = preprocessor
 
         
-    def read_instance_from_h5(self, data_file, index_list):
+    def read_instance_from_h5(self, data_file, index_list, desc=""):
         context_X = list()
         question_X = list()
         y = list()
         qas_ids = list()
-        for idx in tqdm(index_list, desc="Loading data from h5 file."):
+        for idx in tqdm(index_list, desc="Loading data from h5 file." + desc):
             context_X.append(data_file["context_X"][str(idx)][()].decode("utf-8"))
             question_X.append(data_file["question_X"][str(idx)][()].decode("utf-8"))
             y.append(data_file["Y"][str(idx)][()])

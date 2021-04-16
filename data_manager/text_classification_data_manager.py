@@ -17,10 +17,10 @@ class TextClassificationDataManager(BaseDataManager):
         self.preprocessor = preprocessor
 
         
-    def read_instance_from_h5(self, data_file, index_list):
+    def read_instance_from_h5(self, data_file, index_list, desc=""):
         X = list()
         y = list()
-        for idx in tqdm(index_list, desc="Loading data from h5 file."):
+        for idx in tqdm(index_list, desc="Loading data from h5 file." + desc):
             X.append(data_file["X"][str(idx)][()].decode("utf-8"))
             y.append(data_file["Y"][str(idx)][()].decode("utf-8"))
         return {"X": X, "y": y}
