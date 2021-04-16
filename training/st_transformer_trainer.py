@@ -11,16 +11,14 @@ import numpy as np
 import sklearn
 import torch
 import wandb
-from sklearn.metrics import (
-    accuracy_score,
-    classification_report, 
-    f1_score, 
-    precision_score, 
-    recall_score,
-    classification_report,
-    matthews_corrcoef
-)
 from torch.nn import CrossEntropyLoss
+from seqeval.metrics import (
+    accuracy_score,
+    f1_score,
+    precision_score,
+    recall_score,
+    classification_report
+)
 
 from transformers import (
     AdamW,
@@ -187,16 +185,12 @@ class SeqTaggingTrainer:
 
         out_label_list = [[] for _ in range(out_label_ids.shape[0])]
         preds_list = [[] for _ in range(out_label_ids.shape[0])]
-        flattern_preds = []
-        flattern_out_labels = []
 
         for i in range(out_label_ids.shape[0]):
             for j in range(out_label_ids.shape[1]):
                 if out_label_ids[i, j] != pad_token_label_id:
                     out_label_list[i].append(label_map[out_label_ids[i][j]])
                     preds_list[i].append(label_map[preds[i][j]])
-                    flattern_preds.append(preds[i][j])
-                    flattern_out_labels.append(out_label_ids[i][j])
 
         word_tokens = []
         for i in range(len(preds_list)):
@@ -207,25 +201,24 @@ class SeqTaggingTrainer:
 
         model_outputs = [[word_tokens[i][j] for j in range(len(preds_list[i]))] for i in range(len(preds_list))]
 
-        flattern_preds = np.array(flattern_preds)
-        flattern_out_labels = np.array(flattern_out_labels)
-
-        result, wrong = self.compute_metrics(flattern_preds, flattern_out_labels, self.test_dl.examples)
+        result = {
+            "eval_loss": eval_loss,
+            "precision": precision_score(out_label_list, preds_list),
+            "recall": recall_score(out_label_list, preds_list),
+            "f1_score": f1_score(out_label_list, preds_list),
+        }
         result["eval_loss"] = eval_loss
+        wandb.log(result)
         results.update(result)
 
         os.makedirs(eval_output_dir, exist_ok=True)
         output_eval_file = os.path.join(eval_output_dir, "eval_results.txt")
         with open(output_eval_file, "w") as writer:
             if self.args.classification_report:
-                cls_report = classification_report(flattern_out_labels, flattern_preds, labels=list(range(len(self.args.labels_list))))
+                cls_report = classification_report(out_label_list, preds_list)
                 writer.write("{}\n".format(cls_report))
             for key in sorted(result.keys()):
                 writer.write("{} = {}\n".format(key, str(result[key])))
-
-        if result["acc"] > self.best_accuracy:
-            self.best_accuracy = result["acc"]
-        logging.info("best_accuracy = %f" % self.best_accuracy)
 
         # TODO: only do when wandb is enabled
         # wandb.log({"Evaluation Accuracy (best)": self.best_accuracy, "step": global_step})

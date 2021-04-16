@@ -1,10 +1,10 @@
 LOG_FILE="fedavg_transformer_tc.log"
 WORKER_NUM=10
-ROUND=200  # 50 to test the simulated sampling
+ROUND=50  # 50 to test the simulated sampling
 CI=0
 
 DATA_DIR=~/fednlp_data/
-DATA_NAME=agnews
+DATA_NAME=20news
 PROCESS_NUM=`expr $WORKER_NUM + 1`
 echo $PROCESS_NUM
 
@@ -29,6 +29,4 @@ python -m fedavg_main_tc \
   --max_seq_length 128 \
   --learning_rate 1e-5 \
   --epochs 1 \
-  --output_dir "/tmp/fedavg_${DATA_NAME}_output/" \
-  --fp16
-  # 2> ${LOG_FILE} &
+  --output_dir "/tmp/fedavg_${DATA_NAME}_output/"
