@@ -99,6 +99,8 @@ def fedavg_main(process_id, worker_number, device, args):
     dm = SpanExtractionDataManager(args, model_args, preprocessor, process_id, num_workers)
     train_data_num, train_data_global, test_data_global, train_data_local_num_dict, \
         train_data_local_dict, test_data_local_dict, num_clients = dm.load_federated_data(process_id=process_id)
+    if process_id == 0:
+        client_trainer.test_dl = test_data_global
     # start FedAvg algorithm
     # for distributed algorithm, train_data_gloabl and test_data_global are required
     args.client_num_in_total = num_clients

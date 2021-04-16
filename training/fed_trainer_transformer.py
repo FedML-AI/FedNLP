@@ -39,25 +39,25 @@ class FedTransformerTrainer(ModelTrainer):
         self.client_trainer.eval_model(device=device)
 
     def test_on_the_server(self, train_data_local_dict, test_data_local_dict, device, args=None):
-        global_test_data = []
-        global_test_examples = []
-        global_test_features = []
-        for idx, local_test_dl in test_data_local_dict.items():
-            local_data = local_test_dl.dataset
-            local_examples = local_test_dl.examples
-            local_features = local_test_dl.features
-            global_test_data += local_data
-            global_test_examples += local_examples
-            global_test_features += local_features
-        global_test_dl = BaseDataLoader(global_test_examples, global_test_features, global_test_data,
-                                batch_size=local_test_dl.batch_size,
-                                num_workers=0,
-                                pin_memory=True,
-                                drop_last=False)
-        # global_test_dl.to(device)
+        # global_test_data = []
+        # global_test_examples = []
+        # global_test_features = []
+        # for idx, local_test_dl in test_data_local_dict.items():
+        #     local_data = local_test_dl.dataset
+        #     local_examples = local_test_dl.examples
+        #     local_features = local_test_dl.features
+        #     global_test_data += local_data
+        #     global_test_examples += local_examples
+        #     global_test_features += local_features
+        # global_test_dl = BaseDataLoader(global_test_examples, global_test_features, global_test_data,
+        #                         batch_size=local_test_dl.batch_size,
+        #                         num_workers=0,
+        #                         pin_memory=True,
+        #                         drop_last=False)
+        # # global_test_dl.to(device)
 
-        logging.info("Client(%d)"%self.id + ":| Global Test Data Size = %d" % (len(global_test_data)))
-        self.client_trainer.test_dl = global_test_dl
+        # logging.info("Client(%d)"%self.id + ":| Global Test Data Size = %d" % (len(global_test_data)))
+        # self.client_trainer.test_dl = global_test_dl
         self.client_trainer.eval_model(device=device)
         return True
 

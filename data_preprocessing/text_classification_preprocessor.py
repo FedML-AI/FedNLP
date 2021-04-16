@@ -102,6 +102,7 @@ class TLMPreprocessor(BasePreprocessor):
                 (not args.reprocess_input_data and not no_cache)
                 or (mode == "dev" and args.use_cached_eval_features and not no_cache)
         ):
+            logging.info(cached_features_file)
             features = torch.load(cached_features_file)
             logging.debug(f" Features loaded from cache at {cached_features_file}")
         else:

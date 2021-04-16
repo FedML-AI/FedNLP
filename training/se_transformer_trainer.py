@@ -242,11 +242,11 @@ class SpanExtractionTrainer:
         model = self.model
         args = self.args
 
-        # reassgin unique_id for features to keep order for federated learning situation
-        unique_id = 1000000000
-        for feature in self.test_dl.features:
-            feature.unique_id = unique_id
-            unique_id += 1
+        # # reassgin unique_id for features to keep order for federated learning situation
+        # unique_id = 1000000000
+        # for feature in self.test_dl.features:
+        #     feature.unique_id = unique_id
+        #     unique_id += 1
 
         examples = self.test_dl.examples
         features = self.test_dl.features
