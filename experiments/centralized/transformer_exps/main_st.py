@@ -89,17 +89,18 @@ if __name__ == "__main__":
     # Create a SeqTaggingModel and start train
     trainer = SeqTaggingTrainer(model_args, device, model, train_dl, test_dl, tokenizer)
     trainer.train_model()
+    trainer.eval_model()
 
 
 ''' Example Usage:
 
-export CUDA_VISIBLE_DEVICES=7
-DATA_NAME=w_nut
-CUDA_VISIBLE_DEVICES=7 python -m experiments.centralized.transformer_exps.main_st \
+export CUDA_VISIBLE_DEVICES=2
+DATA_NAME=wikiner
+CUDA_VISIBLE_DEVICES=2 python -m experiments.centralized.transformer_exps.main_st \
     --dataset ${DATA_NAME} \
-    --data_file ./data/fednlp_data/data_files/${DATA_NAME}_data.h5 \
-    --partition_file ./data/fednlp_data/partition_files/${DATA_NAME}_partition.h5 \
-    --partition_method uniform \
+    --data_file ~/fednlp_data/data_files/${DATA_NAME}_data.h5 \
+    --partition_file ~/fednlp_data/partition_files/${DATA_NAME}_partition.h5 \
+    --partition_method niid_cluster_alpha=5.0 \
     --model_type distilbert \
     --model_name distilbert-base-uncased  \
     --do_lower_case True \
@@ -107,8 +108,8 @@ CUDA_VISIBLE_DEVICES=7 python -m experiments.centralized.transformer_exps.main_s
     --eval_batch_size 8 \
     --max_seq_length 256 \
     --learning_rate 5e-5 \
-    --num_train_epochs 5 \
-    --evaluate_during_training_steps 10 \
+    --num_train_epochs 15 \
+    --evaluate_during_training_steps 500 \
     --output_dir /tmp/${DATA_NAME}_fed/ \
     --n_gpu 1
 '''

@@ -89,6 +89,7 @@ if __name__ == "__main__":
     # Create a ClassificationModel and start train
     trainer = TextClassificationTrainer(model_args, device, model, train_dl, test_dl)
     trainer.train_model()
+    trainer.eval_model()
 
 ''' Example Usage:
 
@@ -113,7 +114,7 @@ CUDA_VISIBLE_DEVICES=0 python -m experiments.centralized.transformer_exps.main_t
 
 
 DATA_NAME=20news
-CUDA_VISIBLE_DEVICES=3 python -m experiments.centralized.transformer_exps.main_tc \
+CUDA_VISIBLE_DEVICES=1 python -m experiments.centralized.transformer_exps.main_tc \
     --dataset ${DATA_NAME} \
     --data_file ~/fednlp_data/data_files/${DATA_NAME}_data.h5 \
     --partition_file ~/fednlp_data/partition_files/${DATA_NAME}_partition.h5 \
@@ -125,7 +126,7 @@ CUDA_VISIBLE_DEVICES=3 python -m experiments.centralized.transformer_exps.main_t
     --eval_batch_size 8 \
     --max_seq_length 256 \
     --learning_rate 5e-5 \
-    --num_train_epochs 10 \
+    --num_train_epochs 20 \
     --evaluate_during_training_steps 500 \
     --output_dir /tmp/${DATA_NAME}_fed/ \
     --n_gpu 1

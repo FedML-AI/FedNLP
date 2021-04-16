@@ -171,6 +171,7 @@ class TextClassificationTrainer:
         if result["acc"] > self.best_accuracy:
             self.best_accuracy = result["acc"]
         logging.info("best_accuracy = %f" % self.best_accuracy)
+        wandb.log(result)
 
         # TODO: only do when wandb is enabled
         # wandb.log({"Evaluation Accuracy (best)": self.best_accuracy, "step": global_step})

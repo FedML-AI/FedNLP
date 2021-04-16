@@ -413,6 +413,7 @@ class SpanExtractionTrainer:
             }
 
         result = {"correct": correct, "similar": similar, "incorrect": incorrect, **extra_metrics, **standard_metrics}
+        wandb.log(result)
 
         texts = {
             "correct_text": correct_text,

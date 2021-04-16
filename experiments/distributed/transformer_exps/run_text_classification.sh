@@ -29,6 +29,4 @@ python -m fedavg_main_tc \
   --max_seq_length 128 \
   --learning_rate 5e-5 \
   --epochs 1 \
-  --output_dir "/tmp/fedavg_${DATA_NAME}_output/" \
-  --fp16
-  # 2> ${LOG_FILE} &
+  --output_dir "/tmp/fedavg_${DATA_NAME}_output/"
