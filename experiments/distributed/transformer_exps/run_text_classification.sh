@@ -30,3 +30,6 @@ python -m fedavg_main_tc \
   --learning_rate 5e-5 \
   --epochs 1 \
   --output_dir "/tmp/fedavg_${DATA_NAME}_output/"
+
+
+  # niid_label_clients=100.0_alpha=5.0

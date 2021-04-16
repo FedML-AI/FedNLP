@@ -222,9 +222,9 @@ class BaseDataManager(ABC):
                 str(client_idx)]["test"][
                 ()]
             train_data = self.read_instance_from_h5(
-                data_file, train_index_list)
+                data_file, train_index_list, desc=" train data of client_id=%d [_load_federated_data_local] "%client_idx)
             test_data = self.read_instance_from_h5(
-                data_file, test_index_list)
+                data_file, test_index_list, desc=" test data of client_id=%d [_load_federated_data_local] "%client_idx)
             
             train_examples, train_features, train_dataset = self.preprocessor.transform(
                 **train_data, index_list=train_index_list)
