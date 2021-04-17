@@ -49,7 +49,7 @@ hps = [
     'FedAvg "niid_cluster_clients=30_alpha=0.1" 1e-2 1 0.5 5',
     'FedAvg "niid_cluster_clients=30_alpha=0.1" 1e-3 1 0.5 5',
     'FedAvg "niid_cluster_clients=30_alpha=0.1" 1e-4 1 0.5 5',
-    
+
     'FedProx "niid_cluster_clients=30_alpha=0.1" 5e-5 1 0.5 30',
     'FedOPT "niid_cluster_clients=30_alpha=0.1" 5e-5 1 0.5 30',
 ]

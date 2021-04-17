@@ -60,9 +60,6 @@ os.system("kill $(ps aux | grep \"fedavg_main_tc.py\" | grep -v grep | awk '{pri
 hps = [
     'FedAvg "niid_label_clients=100_alpha=10.0" 1e-1 1 0.5 5',
     'FedAvg "niid_label_clients=100_alpha=10.0" 1e-2 1 0.5 5',
-    'FedAvg "niid_label_clients=100_alpha=10.0" 1e-3 1 0.5 5',
-    'FedAvg "niid_label_clients=100_alpha=10.0" 1e-4 1 0.5 5',
-    'FedAvg "niid_label_clients=100_alpha=10.0" 1e-5 1 0.5 5',
 
     'FedAvg "niid_label_clients=100_alpha=1.0" 5e-5 1 0.5 25',
     'FedAvg "niid_quantity_clients=100_beta=5.0" 5e-5 1 0.5 25',
