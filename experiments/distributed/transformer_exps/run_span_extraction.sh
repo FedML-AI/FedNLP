@@ -2,7 +2,8 @@ FL_ALG=$1
 PARTITION_METHOD=$2
 C_LR=$3
 S_LR=$4
-ROUND=$5
+MU=$5
+ROUND=$6
 
 LOG_FILE="fedavg_transformer_se.log"
 WORKER_NUM=10
@@ -35,14 +36,15 @@ python -m fedavg_main_se \
   --max_seq_length 128 \
   --lr $C_LR \
   --server_lr $S_LR \
+  --fedprox_mu $MU \
   --epochs 1 \
   --output_dir "/tmp/fedavg_${DATA_NAME}_output/" \
   --fp16
   2> ${LOG_FILE} &
 
 
-# sh run_span_extraction.sh FedAvg "niid_cluster_clients=10_alpha=5.0" 1e-5 0.1 50
+# sh run_span_extraction.sh FedAvg "niid_cluster_clients=10_alpha=5.0" 1e-5 0.1 0.5 30
 
-# sh run_span_extraction.sh FedProx "niid_cluster_clients=10_alpha=5.0" 1e-5 0.1 50
+# sh run_span_extraction.sh FedProx "niid_cluster_clients=10_alpha=5.0" 1e-5 0.1 0.5 30
 
-# sh run_span_extraction.sh FedOPT "niid_cluster_clients=10_alpha=5.0" 1e-5 0.1 50
+# sh run_span_extraction.sh FedOPT "niid_cluster_clients=10_alpha=5.0" 1e-5 0.1 0.5 30

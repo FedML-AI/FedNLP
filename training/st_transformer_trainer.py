@@ -157,7 +157,7 @@ class SeqTaggingTrainer:
 
                 if self.args.fl_algorithm == "FedProx":
                     fed_prox_reg = 0.0
-                    mu = 1
+                    mu = self.args.fedprox_mu
                     for (p, g_p) in zip(self.model.parameters(),
                                         global_model.parameters()):
                         fed_prox_reg += ((mu / 2) * torch.norm((p - g_p.data)) ** 2)

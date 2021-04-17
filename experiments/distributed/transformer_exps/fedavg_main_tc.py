@@ -91,6 +91,7 @@ if __name__ == "__main__":
     model_args.num_labels = num_labels
     model_args.update_from_dict({"fl_algorithm": args.fl_algorithm,
                                  "epochs": args.epochs,
+                                 "fed_prox_mu": args.fedprox_mu,
                                  "learning_rate": args.lr,
                                  "gradient_accumulation_steps": args.gradient_accumulation_steps,
                                  "do_lower_case": args.do_lower_case,

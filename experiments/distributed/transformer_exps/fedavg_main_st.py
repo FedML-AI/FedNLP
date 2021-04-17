@@ -88,6 +88,7 @@ if __name__ == "__main__":
     model_args.update_from_dict({"fl_algorithm": args.fl_algorithm,
                                  "epochs": args.epochs,
                                  "learning_rate": args.lr,
+                                 "fed_prox_mu": args.fedprox_mu,
                                  "gradient_accumulation_steps": args.gradient_accumulation_steps,
                                  "do_lower_case": args.do_lower_case,
                                  "manual_seed": args.manual_seed,
