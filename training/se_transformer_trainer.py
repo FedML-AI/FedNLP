@@ -8,18 +8,9 @@ import logging
 import math
 import os
 
-import numpy as np
-import sklearn
 import torch
 import wandb
-import pandas as pd
-from sklearn.metrics import (
-    confusion_matrix,
-    matthews_corrcoef,
-)
-from torch.nn import CrossEntropyLoss
-from torch.cuda import amp
-
+from tqdm import tqdm
 from transformers import (
     AdamW,
     get_linear_schedule_with_warmup,
@@ -28,17 +19,11 @@ from transformers import (
 from data_preprocessing.utils.span_extraction_utils import (
     RawResult,
     RawResultExtended,
-    build_examples,
-    get_best_predictions,
-    get_best_predictions_extended,
     to_list,
     write_predictions,
     write_predictions_extended,
     get_raw_scores,
 )
-
-from tqdm import tqdm
-
 
 
 class SpanExtractionTrainer:
@@ -52,7 +37,7 @@ class SpanExtractionTrainer:
 
         # model
         self.model = model
-    
+
         # training results
         self.results = {}
 
@@ -60,7 +45,6 @@ class SpanExtractionTrainer:
         # Used for fedtrainer
         self.train_dl = train_dl
         self.test_dl = test_dl
-
 
     def train_model(self, device=None):
         if not device:
@@ -70,7 +54,6 @@ class SpanExtractionTrainer:
         self.model.to(device)
 
         args = self.args
-
 
         no_decay = ["bias", "LayerNorm.weight"]
 
@@ -146,7 +129,7 @@ class SpanExtractionTrainer:
 
         if args.evaluate_during_training:
             training_progress_scores = self._create_training_progress_scores()
-        
+
         if args.fp16:
             from torch.cuda import amp
 
@@ -216,12 +199,11 @@ class SpanExtractionTrainer:
                     scheduler.step()  # Update learning rate schedule
                     self.model.zero_grad()
                     global_step += 1
-                
-                if self.args.evaluate_during_training and (self.args.evaluate_during_training_steps > 0
-                                                               and global_step % self.args.evaluate_during_training_steps == 0):
-                        results, _, _ = self.eval_model(epoch, global_step)
-                        logging.info(results)
 
+                if self.args.evaluate_during_training and (self.args.evaluate_during_training_steps > 0
+                                                           and global_step % self.args.evaluate_during_training_steps == 0):
+                    results, _, _ = self.eval_model(epoch, global_step)
+                    logging.info(results)
 
         return global_step, tr_loss / global_step
 
@@ -309,7 +291,7 @@ class SpanExtractionTrainer:
                     eval_loss += outputs[0].mean().item()
                 begin_idx = len(all_results)
                 for i, _ in enumerate(example_indices):
-                    eval_feature = features[begin_idx+i]
+                    eval_feature = features[begin_idx + i]
                     unique_id = int(eval_feature.unique_id)
                     if args.model_type in ["xlnet", "xlm"]:
                         # XLNet uses a more complex post-processing procedure
@@ -422,7 +404,7 @@ class SpanExtractionTrainer:
         standard_metrics = {
             "exact_match": sum(exact_raw.values()) / len(exact_raw),
             "f1_score": sum(f1_raw.values()) / len(f1_raw)
-            }
+        }
 
         result = {"correct": correct, "similar": similar, "incorrect": incorrect, **extra_metrics, **standard_metrics}
         wandb.log(result)
@@ -460,7 +442,7 @@ class SpanExtractionTrainer:
         }
 
         return training_progress_scores
-    
+
     def _get_inputs_dict(self, batch):
         inputs = {
             "input_ids": batch[1],

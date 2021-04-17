@@ -9,18 +9,15 @@ import math
 import os
 
 import numpy as np
-import sklearn
 import torch
 import wandb
-from torch.nn import CrossEntropyLoss
 from seqeval.metrics import (
-    accuracy_score,
     f1_score,
     precision_score,
     recall_score,
     classification_report
 )
-
+from torch.nn import CrossEntropyLoss
 from transformers import (
     AdamW,
     get_linear_schedule_with_warmup,
@@ -57,7 +54,7 @@ class SeqTaggingTrainer:
             device = self.device
 
         self.model.to(device)
-        
+
         # build optimizer and scheduler
         iteration_in_total = len(
             self.train_dl) // self.args.gradient_accumulation_steps * self.args.epochs
@@ -131,7 +128,6 @@ class SeqTaggingTrainer:
         pad_token_label_id = self.pad_token_label_id
         logging.info("output dir")
         eval_output_dir = self.args.output_dir
-        
 
         preds = None
         out_label_ids = None
@@ -189,7 +185,6 @@ class SeqTaggingTrainer:
                     out_attention_mask, batch[2].detach().cpu().numpy(), axis=0,
                 )
 
-
         eval_loss = eval_loss / nb_eval_steps
 
         token_logits = preds
@@ -234,39 +229,14 @@ class SeqTaggingTrainer:
             for key in sorted(result.keys()):
                 writer.write("{} = {}\n".format(key, str(result[key])))
 
-        # TODO: only do when wandb is enabled
-        # wandb.log({"Evaluation Accuracy (best)": self.best_accuracy, "step": global_step})
-        # wandb.log({"Evaluation Accuracy": result["acc"], "step": global_step})
-        # wandb.log({"Evaluation Loss": result["eval_loss"], "step": global_step})
+        wandb.log({"Evaluation Accuracy (best)": self.best_accuracy, "step": global_step})
+        wandb.log({"Evaluation Accuracy": result["acc"], "step": global_step})
+        wandb.log({"Evaluation Loss": result["eval_loss"], "step": global_step})
 
         self.results.update(result)
         logging.info(self.results)
 
-        return result, model_outputs, wrong
-
-    def compute_metrics(self, preds, labels, eval_examples=None):
-        assert len(preds) == len(labels)
-
-        extra_metrics = {}
-        extra_metrics["acc"] = sklearn.metrics.accuracy_score(labels, preds)
-        mismatched = labels != preds
-
-
-        if eval_examples:
-            wrong = [i for (i, v) in zip(eval_examples, mismatched) if v.any()]
-        else:
-            wrong = ["NA"]
-
-        mcc = matthews_corrcoef(labels, preds)
-
-        precision = precision_score(labels, preds, average="micro")
-        recall = recall_score(labels, preds, average="micro")
-        f1 = f1_score(labels, preds, average="micro")
-
-        return (
-            {**{"mcc": mcc, "precision": precision, "recall": recall, "f1": f1}, **extra_metrics},
-            wrong,
-        )
+        return result, model_outputs, None
 
     def build_optimizer(self, model, iteration_in_total):
         warmup_steps = math.ceil(iteration_in_total * self.args.warmup_ratio)
