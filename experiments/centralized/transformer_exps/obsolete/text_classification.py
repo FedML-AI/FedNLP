@@ -14,7 +14,7 @@ python -m experiments.centralized.transformer_exps.text_classification \
     --eval_batch_size 8 \
     --max_seq_length 128 \
     --learning_rate 1e-5 \
-    --num_train_epochs 3 \
+    --epochs 3 \
     --output_dir /tmp/20news_fed/ \
     --fp16
 """
@@ -74,7 +74,7 @@ def add_args(parser):
     parser.add_argument('--weight_decay', type=float, default=0, metavar='N',
                         help='L2 penalty')
 
-    parser.add_argument('--num_train_epochs', type=int, default=3, metavar='EP',
+    parser.add_argument('--epochs', type=int, default=3, metavar='EP',
                         help='how many epochs will be trained locally')
     parser.add_argument('--gradient_accumulation_steps', type=int, default=1, metavar='EP',
                         help='how many steps for accumulate the loss.')
@@ -137,7 +137,7 @@ def main(args):
     # Create a ClassificationModel.
     model = ClassificationModel(
         args.model_type, args.model_name, num_labels=num_labels,
-        args={"num_train_epochs": args.num_train_epochs,
+        args={"epochs": args.epochs,
               "learning_rate": args.learning_rate,
               "gradient_accumulation_steps": args.gradient_accumulation_steps,
               "do_lower_case": args.do_lower_case,

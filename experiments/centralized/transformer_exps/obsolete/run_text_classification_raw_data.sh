@@ -8,6 +8,6 @@ python -m text_classification_raw_data \
     --eval_batch_size 32 \
     --max_seq_length 256 \
     --learning_rate 5e-5 \
-    --num_train_epochs 3 \
+    --epochs 3 \
     --output_dir "./output" \
     --n_gpu 1 --fp16

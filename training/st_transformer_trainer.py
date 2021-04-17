@@ -57,13 +57,13 @@ class SeqTaggingTrainer:
 
         # build optimizer and scheduler
         iteration_in_total = len(
-            self.train_dl) // self.args.gradient_accumulation_steps * self.args.num_train_epochs
+            self.train_dl) // self.args.gradient_accumulation_steps * self.args.epochs
         optimizer, scheduler = self.build_optimizer(self.model, iteration_in_total)
 
         # training result
         global_step = 0
         tr_loss, logging_loss = 0.0, 0.0
-        for epoch in range(0, self.args.num_train_epochs):
+        for epoch in range(0, self.args.epochs):
 
             self.model.train()
 
@@ -107,7 +107,7 @@ class SeqTaggingTrainer:
 
                 if self.args.is_debug_mode == 1 and global_step > 3:
                     break
-        # results, _, _ = self.eval_model(self.args.num_train_epochs-1, global_step)
+        # results, _, _ = self.eval_model(self.args.epochs-1, global_step)
         # logging.info(results)
         return global_step, tr_loss / global_step
 

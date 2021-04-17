@@ -14,7 +14,7 @@ CUDA_VISIBLE_DEVICES=2 python -m experiments.centralized.transformer_exps.named_
     --eval_batch_size 32 \
     --max_seq_length 128 \
     --learning_rate 4e-5 \
-    --num_train_epochs 2 \
+    --epochs 2 \
     --output_dir /tmp/wikigold/ \
     --fp16
 """
@@ -70,7 +70,7 @@ def add_args(parser):
     parser.add_argument('--weight_decay', type=float, default=0, metavar='N',
                         help='L2 penalty')
 
-    parser.add_argument('--num_train_epochs', type=int, default=3, metavar='EP',
+    parser.add_argument('--epochs', type=int, default=3, metavar='EP',
                         help='how many epochs will be trained locally')
     parser.add_argument('--gradient_accumulation_steps', type=int, default=1, metavar='EP',
                         help='how many steps for accumulate the loss.')
@@ -123,7 +123,7 @@ def main(args):
     # Create a ClassificationModel.
     model = NERModel(
         args.model_type, args.model_name, 
-        args={"num_train_epochs": args.num_train_epochs,
+        args={"epochs": args.epochs,
               "learning_rate": args.learning_rate,
               "gradient_accumulation_steps": args.gradient_accumulation_steps,
               "do_lower_case": args.do_lower_case,

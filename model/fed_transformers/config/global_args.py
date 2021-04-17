@@ -30,7 +30,7 @@ global_args = {
     "n_gpu": 1,
     "no_cache": False,
     "no_save": False,
-    "num_train_epochs": 1,
+    "epochs": 1,
     "output_dir": "outputs/",
     "overwrite_output_dir": False,
     "process_count": cpu_count() - 2 if cpu_count() > 2 else 1,

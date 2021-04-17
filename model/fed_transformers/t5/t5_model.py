@@ -214,9 +214,9 @@ class T5Model:
 
         if args.max_steps > 0:
             t_total = args.max_steps
-            args.num_train_epochs = args.max_steps // (len(train_dataloader) // args.gradient_accumulation_steps) + 1
+            args.epochs = args.max_steps // (len(train_dataloader) // args.gradient_accumulation_steps) + 1
         else:
-            t_total = len(train_dataloader) // args.gradient_accumulation_steps * args.num_train_epochs
+            t_total = len(train_dataloader) // args.gradient_accumulation_steps * args.epochs
 
         no_decay = ["bias", "LayerNorm.weight"]
 
@@ -298,7 +298,7 @@ class T5Model:
         training_progress_scores = None
         tr_loss, logging_loss = 0.0, 0.0
         model.zero_grad()
-        train_iterator = trange(int(args.num_train_epochs), desc="Epoch", disable=args.silent, mininterval=0)
+        train_iterator = trange(int(args.epochs), desc="Epoch", disable=args.silent, mininterval=0)
         epoch_number = 0
         best_eval_metric = None
         early_stopping_counter = 0
@@ -343,10 +343,10 @@ class T5Model:
             if epochs_trained > 0:
                 epochs_trained -= 1
                 continue
-            train_iterator.set_description(f"Epoch {epoch_number + 1} of {args.num_train_epochs}")
+            train_iterator.set_description(f"Epoch {epoch_number + 1} of {args.epochs}")
             batch_iterator = tqdm(
                 train_dataloader,
-                desc=f"Running Epoch {epoch_number} of {args.num_train_epochs}",
+                desc=f"Running Epoch {epoch_number} of {args.epochs}",
                 disable=args.silent,
                 mininterval=0,
             )
@@ -374,7 +374,7 @@ class T5Model:
 
                 if show_running_loss:
                     batch_iterator.set_description(
-                        f"Epochs {epoch_number}/{args.num_train_epochs}. Running Loss: {current_loss:9.4f}"
+                        f"Epochs {epoch_number}/{args.epochs}. Running Loss: {current_loss:9.4f}"
                     )
 
                 if args.gradient_accumulation_steps > 1:

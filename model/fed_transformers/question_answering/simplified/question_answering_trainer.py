@@ -140,7 +140,7 @@ class QuestionAnsweringTrainer:
             num_workers=self.args.dataloader_num_workers,
         )
 
-        t_total = len(train_dataloader) // args.gradient_accumulation_steps * args.num_train_epochs
+        t_total = len(train_dataloader) // args.gradient_accumulation_steps * args.epochs
 
         warmup_steps = math.ceil(t_total * args.warmup_ratio)
         args.warmup_steps = warmup_steps if args.warmup_steps == 0 else args.warmup_steps
@@ -153,7 +153,7 @@ class QuestionAnsweringTrainer:
         global_step = 0
         tr_loss, logging_loss = 0.0, 0.0
         model.zero_grad()
-        for epoch in range(self.args.num_train_epochs):
+        for epoch in range(self.args.epochs):
             model.train()
             for batch_idx, batch in enumerate(train_dataloader):
                 model.train()

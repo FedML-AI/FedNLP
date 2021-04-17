@@ -24,7 +24,7 @@ do
       --eval_batch_size 32 \
       --max_seq_length 256 \
       --learning_rate 1e-5 \
-      --num_train_epochs 5 \
+      --epochs 5 \
       --output_dir /tmp/${DATA_NAME}_fed/ \
       --n_gpu 1 --fp16
 done
@@ -46,7 +46,7 @@ python -m experiments.centralized.transformer_exps.question_answering \
     --eval_batch_size 64 \
     --max_seq_length 256 \
     --learning_rate 1e-5 \
-    --num_train_epochs 2 \
+    --epochs 2 \
     --output_dir /tmp/squad_1.1/ \
     --fp16
 ```
@@ -66,7 +66,7 @@ CUDA_VISIBLE_DEVICES=0 python -m experiments.centralized.transformer_exps.named_
     --eval_batch_size 32 \
     --max_seq_length 128 \
     --learning_rate 4e-5 \
-    --num_train_epochs 2 \
+    --epochs 2 \
     --output_dir /tmp/wikigold/ \
     --fp16
 ```

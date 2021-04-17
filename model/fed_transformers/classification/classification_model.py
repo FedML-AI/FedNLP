@@ -424,7 +424,7 @@ class ClassificationModel:
 
         # tb_writer = SummaryWriter(logdir=args.tensorboard_dir)
 
-        t_total = len(train_dataloader) // args.gradient_accumulation_steps * args.num_train_epochs
+        t_total = len(train_dataloader) // args.gradient_accumulation_steps * args.epochs
 
         no_decay = ["bias", "LayerNorm.weight"]
 
@@ -495,7 +495,7 @@ class ClassificationModel:
         training_progress_scores = None
         tr_loss, logging_loss = 0.0, 0.0
         model.zero_grad()
-        train_iterator = trange(int(args.num_train_epochs), desc=kwargs["client_desc"] + "|: Epoch ", disable=args.silent, mininterval=0)
+        train_iterator = trange(int(args.epochs), desc=kwargs["client_desc"] + "|: Epoch ", disable=args.silent, mininterval=0)
         epoch_number = 0
         best_eval_metric = None
         early_stopping_counter = 0
@@ -543,10 +543,10 @@ class ClassificationModel:
             if epochs_trained > 0:
                 epochs_trained -= 1
                 continue
-            train_iterator.set_description(f"{kwargs['client_desc']} |: Epoch {epoch_number + 1} of {args.num_train_epochs}")
+            train_iterator.set_description(f"{kwargs['client_desc']} |: Epoch {epoch_number + 1} of {args.epochs}")
             batch_iterator = tqdm(
                 train_dataloader,
-                desc=f"{kwargs['client_desc']} |: Running Epoch {epoch_number} of {args.num_train_epochs}",
+                desc=f"{kwargs['client_desc']} |: Running Epoch {epoch_number} of {args.epochs}",
                 disable=args.silent,
                 mininterval=0,
             )
@@ -573,7 +573,7 @@ class ClassificationModel:
 
                 if show_running_loss:
                     batch_iterator.set_description(
-                        f"{kwargs['client_desc']} |: Epochs {epoch_number}/{args.num_train_epochs}. Running Loss: {current_loss:9.4f}"
+                        f"{kwargs['client_desc']} |: Epochs {epoch_number}/{args.epochs}. Running Loss: {current_loss:9.4f}"
                     )
 
                 if args.gradient_accumulation_steps > 1:

@@ -139,7 +139,7 @@ class ClassificationModel:
             "train_batch_size": 8,
             "gradient_accumulation_steps": 1,
             "eval_batch_size": 8,
-            "num_train_epochs": 1,
+            "epochs": 1,
             "weight_decay": 0,
             "learning_rate": 4e-5,
             "adam_epsilon": 1e-8,
@@ -259,7 +259,7 @@ class ClassificationModel:
         train_sampler = RandomSampler(train_dataset)
         train_dataloader = DataLoader(train_dataset, sampler=train_sampler, batch_size=args["train_batch_size"])
 
-        t_total = len(train_dataloader) // args["gradient_accumulation_steps"] * args["num_train_epochs"]
+        t_total = len(train_dataloader) // args["gradient_accumulation_steps"] * args["epochs"]
 
         no_decay = ["bias", "LayerNorm.weight"]
         optimizer_grouped_parameters = [
@@ -287,7 +287,7 @@ class ClassificationModel:
         global_step = 0
         tr_loss, logging_loss = 0.0, 0.0
         model.zero_grad()
-        train_iterator = trange(int(args["num_train_epochs"]), desc="Epoch", disable=args["silent"])
+        train_iterator = trange(int(args["epochs"]), desc="Epoch", disable=args["silent"])
 
         if args["fp16"]:
             from torch.cuda import amp

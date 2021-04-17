@@ -255,7 +255,7 @@ class ConvAIModel:
 
         tb_writer = SummaryWriter(logdir=args.tensorboard_dir)
 
-        t_total = len(train_dataloader) // args.gradient_accumulation_steps * args.num_train_epochs
+        t_total = len(train_dataloader) // args.gradient_accumulation_steps * args.epochs
 
         no_decay = ["bias", "LayerNorm.weight"]
 
@@ -326,7 +326,7 @@ class ConvAIModel:
         training_progress_scores = None
         tr_loss, logging_loss = 0.0, 0.0
         model.zero_grad()
-        train_iterator = trange(int(args.num_train_epochs), desc="Epoch", disable=args.silent)
+        train_iterator = trange(int(args.epochs), desc="Epoch", disable=args.silent)
         epoch_number = 0
         best_eval_metric = None
         early_stopping_counter = 0
@@ -345,10 +345,10 @@ class ConvAIModel:
 
         for _ in train_iterator:
             model.train()
-            train_iterator.set_description(f"Epoch {epoch_number + 1} of {args.num_train_epochs}")
+            train_iterator.set_description(f"Epoch {epoch_number + 1} of {args.epochs}")
             batch_iterator = tqdm(
                 train_dataloader,
-                desc=f"Running Epoch {epoch_number} of {args.num_train_epochs}",
+                desc=f"Running Epoch {epoch_number} of {args.epochs}",
                 disable=args.silent,
                 mininterval=0,
             )

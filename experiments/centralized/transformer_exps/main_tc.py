@@ -51,7 +51,7 @@ if __name__ == "__main__":
     model_args.model_type = args.model_type
     model_args.load(model_args.model_name)
     model_args.num_labels = num_labels
-    model_args.update_from_dict({"num_train_epochs": args.epochs,
+    model_args.update_from_dict({"epochs": args.epochs,
                                  "learning_rate": args.learning_rate,
                                  "gradient_accumulation_steps": args.gradient_accumulation_steps,
                                  "do_lower_case": args.do_lower_case,
@@ -102,7 +102,7 @@ CUDA_VISIBLE_DEVICES=0 python -m experiments.centralized.transformer_exps.main_t
     --eval_batch_size 8 \
     --max_seq_length 256 \
     --learning_rate 5e-5 \
-    --num_train_epochs 10 \
+    --epochs 10 \
     --evaluate_during_training_steps 250 \
     --output_dir /tmp/${DATA_NAME}_fed/ \
     --n_gpu 1
@@ -122,7 +122,7 @@ CUDA_VISIBLE_DEVICES=1 python -m experiments.centralized.transformer_exps.main_t
     --eval_batch_size 8 \
     --max_seq_length 256 \
     --learning_rate 5e-5 \
-    --num_train_epochs 20 \
+    --epochs 20 \
     --evaluate_during_training_steps 500 \
     --output_dir /tmp/${DATA_NAME}_fed/ \
     --n_gpu 1

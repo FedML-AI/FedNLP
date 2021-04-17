@@ -107,7 +107,7 @@ class TextClassificationTrainer:
                                       num_workers=self.args.dataloader_num_workers)
 
         # start the training loop
-        t_total = len(train_dataloader) // self.args.gradient_accumulation_steps * self.args.num_train_epochs
+        t_total = len(train_dataloader) // self.args.gradient_accumulation_steps * self.args.epochs
 
         warmup_steps = math.ceil(t_total * self.args.warmup_ratio)
         self.args.warmup_steps = warmup_steps if self.args.warmup_steps == 0 else self.args.warmup_steps
@@ -122,7 +122,7 @@ class TextClassificationTrainer:
 
         self.model.to(self.device)
         self.model.train()
-        for epoch in range(self.args.num_train_epochs):
+        for epoch in range(self.args.epochs):
 
             for batch_idx, batch in enumerate(train_dataloader):
                 self.model.train()

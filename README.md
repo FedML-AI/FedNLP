@@ -74,7 +74,7 @@ python -m experiments.centralized.transformer_exps.text_classification \
     --eval_batch_size 32 \
     --max_seq_length 128 \
     --learning_rate 1e-5 \
-    --num_train_epochs 3 \
+    --epochs 3 \
     --output_dir /tmp/20news_fed/ \
     --n_gpu 1 --fp16
 ```

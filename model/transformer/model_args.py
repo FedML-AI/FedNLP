@@ -56,7 +56,7 @@ class ModelArgs:
     no_cache: bool = False
     no_save: bool = False
     not_saved_args: list = field(default_factory=list)
-    num_train_epochs: int = 1
+    epochs: int = 1
     output_dir: str = "outputs/"
     overwrite_output_dir: bool = False
     process_count: int = field(default_factory=get_default_process_count)

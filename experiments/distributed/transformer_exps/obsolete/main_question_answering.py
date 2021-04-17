@@ -196,7 +196,7 @@ def main(process_id, worker_number, args):
     # Create a QuestinoAnsweringModel object.
     transformer_model = QuestionAnsweringModel(
         args.model_type, args.model_name,
-        args={"num_train_epochs": args.epochs,
+        args={"epochs": args.epochs,
               "learning_rate": args.learning_rate,
               "gradient_accumulation_steps": args.gradient_accumulation_steps,
               "do_lower_case": args.do_lower_case,
