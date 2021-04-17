@@ -18,6 +18,7 @@ from seqeval.metrics import (
     classification_report
 )
 from torch.nn import CrossEntropyLoss
+from torch.optim import SGD
 from transformers import (
     AdamW,
     get_linear_schedule_with_warmup,
@@ -235,9 +236,10 @@ class SeqTaggingTrainer:
         warmup_steps = math.ceil(iteration_in_total * self.args.warmup_ratio)
         self.args.warmup_steps = warmup_steps if self.args.warmup_steps == 0 else self.args.warmup_steps
         logging.info("warmup steps = %d" % self.args.warmup_steps)
-        # optimizer = torch.optim.Adam(self._get_optimizer_grouped_parameters(), lr=self.args.learning_rate, betas=(0.9, 0.999), weight_decay=0.01)
-        optimizer = AdamW(model.parameters(), lr=self.args.learning_rate,
-                          eps=self.args.adam_epsilon)
+        if self.args.fl_algorithm == "FedOPT":
+            optimizer = AdamW(model.parameters(), lr=self.args.learning_rate, eps=self.args.adam_epsilon)
+        else:
+            optimizer = SGD(model.parameters(), lr=self.args.learning_rate)
         scheduler = get_linear_schedule_with_warmup(
             optimizer, num_warmup_steps=self.args.warmup_steps, num_training_steps=iteration_in_total
         )
