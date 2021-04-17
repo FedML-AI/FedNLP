@@ -44,8 +44,8 @@ os.system("kill $(ps aux | grep \"fedavg_main_se.py\" | grep -v grep | awk '{pri
 # sh run_span_extraction.sh FedOPT "niid_cluster_clients=10_alpha=5.0" 1e-5 0.1 30
 
 hps = [
-    'FedAvg "niid_cluster_clients=30_alpha=0.1" 1e-1 1 0.5 5',
-    'FedProx "niid_cluster_clients=30_alpha=0.1" 1e-1 1 0.5 5',
+    'FedAvg "niid_cluster_clients=30_alpha=0.1" 1e-1 1 0.5 15',
+    'FedProx "niid_cluster_clients=30_alpha=0.1" 1e-1 1 0.5 15',
 ]
 
 run_id = 0
