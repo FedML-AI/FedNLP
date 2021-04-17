@@ -96,7 +96,7 @@ if __name__ == "__main__":
                                  "do_lower_case": args.do_lower_case,
                                  "manual_seed": args.manual_seed,
                                  # for ignoring the cache features.
-                                 "reprocess_input_data": False,
+                                 "reprocess_input_data": True,
                                  "overwrite_output_dir": True,
                                  "max_seq_length": args.max_seq_length,
                                  "train_batch_size": args.train_batch_size,
@@ -112,8 +112,7 @@ if __name__ == "__main__":
                                  "is_debug_mode": args.is_debug_mode
                                  })
 
-    model_config, client_model, tokenizer = create_model(
-        model_args, formulation="span_extraction")
+    model_config, client_model, tokenizer = create_model(model_args, formulation="span_extraction")
 
     client_trainer = SpanExtractionTrainer(
         model_args, device, client_model, None, None, tokenizer)
