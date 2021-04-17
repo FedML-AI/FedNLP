@@ -55,10 +55,10 @@ for hp in hps:
     args.run_id = run_id
 
     logging.info("hp = %s" % args.hp)
-    os.system("touch ./tmp/fedml")
+    os.system("mkdir ./tmp/; touch ./tmp/fedml")
     os.system('nohup sh run_span_extraction.sh '
               '{args.hp} '
-              '> ./fednlp_tc_{args.run_id}.log 2>&1 &'.format(args=args))
+              '> ./fednlp_se_{args.run_id}.log 2>&1 &'.format(args=args))
 
     wait_for_the_training_process()
 
