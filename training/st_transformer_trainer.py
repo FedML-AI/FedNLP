@@ -229,10 +229,6 @@ class SeqTaggingTrainer:
             for key in sorted(result.keys()):
                 writer.write("{} = {}\n".format(key, str(result[key])))
 
-        wandb.log({"Evaluation Accuracy (best)": self.best_accuracy})
-        wandb.log({"Evaluation Accuracy": result["acc"]})
-        wandb.log({"Evaluation Loss": result["eval_loss"]})
-
         self.results.update(result)
         logging.info(self.results)
 
