@@ -10,7 +10,7 @@ WORKER_NUM=10
 CI=0
 
 DATA_DIR=~/fednlp_data/
-DATA_NAME=wikiner
+DATA_NAME=ploner
 PROCESS_NUM=`expr $WORKER_NUM + 1`
 echo $PROCESS_NUM
 
