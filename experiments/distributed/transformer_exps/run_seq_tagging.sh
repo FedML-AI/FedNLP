@@ -5,7 +5,7 @@ S_LR=$4
 ROUND=$5
 
 LOG_FILE="fedavg_transformer_st.log"
-ROUND=50  # 50 to test the simulated sampling
+WORKER_NUM=10
 CI=0
 
 DATA_DIR=~/fednlp_data/
