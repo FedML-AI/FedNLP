@@ -85,7 +85,8 @@ if __name__ == "__main__":
     model_args.model_type = args.model_type
     model_args.load(model_args.model_name)
     model_args.num_labels = num_labels
-    model_args.update_from_dict({"epochs": args.epochs,
+    model_args.update_from_dict({"fl_algorithm": args.fl_algorithm,
+                                 "epochs": args.epochs,
                                  "learning_rate": args.lr,
                                  "gradient_accumulation_steps": args.gradient_accumulation_steps,
                                  "do_lower_case": args.do_lower_case,

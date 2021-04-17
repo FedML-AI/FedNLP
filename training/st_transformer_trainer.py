@@ -3,6 +3,7 @@
 
 from __future__ import absolute_import, division, print_function
 
+import copy
 import logging
 import math
 import os
@@ -137,6 +138,10 @@ class SeqTaggingTrainer:
 
         self.model.to(device)
         self.model.eval()
+
+        if self.args.fl_algorithm == "FedProx":
+            global_model = copy.deepcopy(self.model)
+
         logging.info("len(test_dl) = %d, n_batches = %d" % (len(self.test_dl), n_batches))
         for i, batch in enumerate(self.test_dl):
             batch = tuple(t for t in batch)
@@ -153,6 +158,15 @@ class SeqTaggingTrainer:
 
                 loss_fct = CrossEntropyLoss()
                 loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
+
+                if self.args.fl_algorithm == "FedProx":
+                    fed_prox_reg = 0.0
+                    mu = 1
+                    for (p, g_p) in zip(self.model.parameters(),
+                                        global_model.parameters()):
+                        fed_prox_reg += ((mu / 2) * torch.norm((p - g_p.data)) ** 2)
+                    loss += fed_prox_reg
+
                 eval_loss += loss.item()
                 # logging.info("test. batch index = %d, loss = %s" % (i, str(eval_loss)))
 

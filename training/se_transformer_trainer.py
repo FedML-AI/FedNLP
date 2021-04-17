@@ -3,6 +3,7 @@
 
 from __future__ import absolute_import, division, print_function
 
+import copy
 import logging
 import math
 import os
@@ -151,6 +152,9 @@ class SpanExtractionTrainer:
 
             scaler = amp.GradScaler()
 
+        if self.args.fl_algorithm == "FedProx":
+            global_model = copy.deepcopy(self.model)
+
         for epoch in range(0, args.epochs):
 
             self.model.train()
@@ -175,6 +179,14 @@ class SpanExtractionTrainer:
 
                 if args.n_gpu > 1:
                     loss = loss.mean()  # mean() to average on multi-gpu parallel training
+
+                if self.args.fl_algorithm == "FedProx":
+                    fed_prox_reg = 0.0
+                    mu = 1
+                    for (p, g_p) in zip(self.model.parameters(),
+                                        global_model.parameters()):
+                        fed_prox_reg += ((mu / 2) * torch.norm((p - g_p.data)) ** 2)
+                    loss += fed_prox_reg
 
                 current_loss = loss.item()
 

@@ -21,7 +21,7 @@ python -m fedavg_main_se \
   --data_file "${DATA_DIR}/data_files/${DATA_NAME}_data.h5" \
   --partition_file "${DATA_DIR}/partition_files/${DATA_NAME}_partition.h5" \
   --partition_method uniform \
-  --fl_algorithm "FedAvg" \
+  --fl_algorithm "FedProx" \
   --model_type distilbert \
   --model_name distilbert-base-uncased \
   --do_lower_case True \

@@ -20,7 +20,7 @@ from model.transformer.model_args import SpanExtractionArgs
 from data_manager.span_extraction_data_manager import SpanExtractionDataManager
 from data_manager.base_data_manager import BaseDataManager
 from FedML.fedml_api.distributed.utils.gpu_mapping import mapping_processes_to_gpu_device_from_yaml_file
-from FedML.fedml_api.distributed.fedavg.FedAvgAPI import FedML_init, FedML_FedAvg_distributed
+from FedML.fedml_api.distributed.fedavg.FedAvgAPI import FedML_init
 import argparse
 import logging
 from multiprocessing import cpu_count
@@ -90,7 +90,8 @@ if __name__ == "__main__":
     model_args.model_name = args.model_name
     model_args.model_type = args.model_type
     model_args.load(model_args.model_name)
-    model_args.update_from_dict({"epochs": args.epochs,
+    model_args.update_from_dict({"fl_algorithm": args.fl_algorithm,
+                                 "epochs": args.epochs,
                                  "learning_rate": args.lr,
                                  "gradient_accumulation_steps": args.gradient_accumulation_steps,
                                  "do_lower_case": args.do_lower_case,
@@ -133,8 +134,8 @@ if __name__ == "__main__":
 
     fl_algorithm = get_fl_algorithm_initializer(args.fl_algorithm)
     fl_algorithm(process_id, worker_number, device, comm, client_model, train_data_num,
-        train_data_global, test_data_global, train_data_local_num_dict,
-        train_data_local_dict, test_data_local_dict, args, fed_trainer)
+                 train_data_global, test_data_global, train_data_local_num_dict,
+                 train_data_local_dict, test_data_local_dict, args, fed_trainer)
 
     if args.local_rank == 0:
         post_complete_message(args)

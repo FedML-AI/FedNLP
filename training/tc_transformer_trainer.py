@@ -3,6 +3,7 @@
 
 from __future__ import absolute_import, division, print_function
 
+import copy
 import logging
 import math
 import os
@@ -58,12 +59,15 @@ class TextClassificationTrainer:
         # training result
         global_step = 0
         tr_loss, logging_loss = 0.0, 0.0
+
+        if self.args.fl_algorithm == "FedProx":
+            global_model = copy.deepcopy(self.model)
+
         for epoch in range(0, self.args.epochs):
 
             self.model.train()
 
             for batch_idx, batch in enumerate(self.train_dl):
-
                 batch = tuple(t for t in batch)
                 # dataset = TensorDataset(all_guid, all_input_ids, all_input_mask, all_segment_ids, all_label_ids)
                 x = batch[1].to(device)
@@ -75,6 +79,14 @@ class TextClassificationTrainer:
 
                 loss_fct = CrossEntropyLoss()
                 loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
+
+                if self.args.fl_algorithm == "FedProx":
+                    fed_prox_reg = 0.0
+                    mu = 1
+                    for (p, g_p) in zip(self.model.parameters(),
+                                        global_model.parameters()):
+                        fed_prox_reg += ((mu / 2) * torch.norm((p - g_p.data)) ** 2)
+                    loss += fed_prox_reg
 
                 # model outputs are always tuple in pytorch-transformers (see doc)
                 # loss = outputs[0]
