@@ -58,20 +58,20 @@ os.system("kill $(ps aux | grep \"fedavg_main_tc.py\" | grep -v grep | awk '{pri
 # sh run_text_classification.sh FedOPT "niid_quantity_clients=100_beta=5.0" 5e-5 0.1 30
 
 hps = [
-    # 'FedAvg "niid_label_clients=100_alpha=5.0" 5e-5 0.1 30', # finished by Zihang
-    'FedAvg "niid_label_clients=100_alpha=10.0" 5e-5 0.1 30',
-    'FedAvg "niid_label_clients=100_alpha=1.0" 5e-5 0.1 30',
-    'FedAvg "uniform" 5e-5 0.1 1',
-    'FedAvg "niid_quantity_clients=100_beta=5.0" 5e-5 0.1 30',
-    'FedProx "niid_label_clients=100_alpha=5.0" 5e-5 0.1 30',
-    'FedProx "niid_label_clients=100_alpha=10.0" 5e-5 0.1 30',
-    'FedProx "niid_label_clients=100_alpha=1.0" 5e-5 0.1 30',
-    'FedProx "uniform" 5e-5 0.1 30',
-    'FedOPT "niid_label_clients=100_alpha=5.0" 5e-5 0.1 30',
-    'FedOPT "niid_label_clients=100_alpha=10.0" 5e-5 0.1 30',
-    'FedOPT "niid_label_clients=100_alpha=1.0" 5e-5 0.1 30',
-    'FedOPT "uniform" 5e-5 0.1 30',
-    # 'FedOPT "niid_quantity_clients=100_beta=5.0" 5e-5 0.1 30', # finished by Chaoyang
+    # 'FedAvg "niid_label_clients=100_alpha=5.0" 5e-5 0.1 25', # finished by Zihang
+    'FedAvg "niid_label_clients=100_alpha=10.0" 5e-5 0.1 2',
+    'FedAvg "niid_label_clients=100_alpha=1.0" 5e-5 0.1 2',
+    # 'FedAvg "uniform" 5e-5 0.1 25',
+    # 'FedAvg "niid_quantity_clients=100_beta=5.0" 5e-5 0.1 25',
+    # 'FedProx "niid_label_clients=100_alpha=5.0" 5e-5 0.1 25',
+    # 'FedProx "niid_label_clients=100_alpha=10.0" 5e-5 0.1 25',
+    # 'FedProx "niid_label_clients=100_alpha=1.0" 5e-5 0.1 25',
+    # 'FedProx "uniform" 5e-5 0.1 25',
+    # 'FedOPT "niid_label_clients=100_alpha=5.0" 5e-5 0.1 25',
+    # 'FedOPT "niid_label_clients=100_alpha=10.0" 5e-5 0.1 25',
+    # 'FedOPT "niid_label_clients=100_alpha=1.0" 5e-5 0.1 25',
+    # 'FedOPT "uniform" 5e-5 0.1 25',
+    # 'FedOPT "niid_quantity_clients=100_beta=5.0" 5e-5 0.1 25', # finished by Chaoyang
 ]
 
 run_id = 0
@@ -80,6 +80,7 @@ for hp in hps:
     args.run_id = run_id
 
     logging.info("hp = %s" % args.hp)
+    os.system("touch ./tmp/fedml")
     os.system('nohup sh run_text_classification.sh '
               '{args.hp} '
               '> ./fednlp_tc_{args.run_id}.log 2>&1 &'.format(args=args))
