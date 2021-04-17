@@ -3,7 +3,6 @@ import logging
 import os
 import sys
 
-import numpy as np
 import torch
 # this is a temporal import, we will refactor FedML as a package installation
 import wandb
@@ -15,7 +14,6 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "../../")))
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "../../../")))
 
-
 from data_preprocessing.span_extraction_preprocessor import TLMPreprocessor
 from data_manager.span_extraction_data_manager import SpanExtractionDataManager
 
@@ -23,14 +21,12 @@ from model.transformer.model_args import SpanExtractionArgs
 
 from training.se_transformer_trainer import SpanExtractionTrainer
 
-from experiments.utils.general import set_seed, create_model, add_centralized_args
- 
-
+from experiments.centralized.transformer_exps.initializer import set_seed, add_centralized_args, create_model
 
 if __name__ == "__main__":
     # parse python script input parameters
     parser = argparse.ArgumentParser()
-    parser = add_centralized_args(parser) # add general args.
+    parser = add_centralized_args(parser)  # add general args.
     # TODO: you can add customized args here.
     args = parser.parse_args()
 
@@ -49,29 +45,29 @@ if __name__ == "__main__":
     attributes = SpanExtractionDataManager.load_attributes(args.data_file_path)
 
     # model
-    model_args = SpanExtractionArgs()    
+    model_args = SpanExtractionArgs()
     model_args.model_name = args.model_name
     model_args.model_type = args.model_type
     model_args.load(model_args.model_name)
     model_args.update_from_dict({"num_train_epochs": args.num_train_epochs,
-                              "learning_rate": args.learning_rate,
-                              "gradient_accumulation_steps": args.gradient_accumulation_steps,
-                              "do_lower_case": args.do_lower_case,
-                              "manual_seed": args.manual_seed,
-                              "reprocess_input_data": True, # for ignoring the cache features.
-                              "overwrite_output_dir": True,
-                              "max_seq_length": args.max_seq_length,
-                              "train_batch_size": args.train_batch_size,
-                              "eval_batch_size": args.eval_batch_size,
-                              "evaluate_during_training_steps": args.evaluate_during_training_steps,
-                              "fp16": args.fp16,
-                              "data_file_path": args.data_file_path,
-                              "partition_file_path": args.partition_file_path,
-                              "partition_method": args.partition_method,
-                              "dataset": args.dataset,
-                              "output_dir": args.output_dir,
-                              "is_debug_mode": args.is_debug_mode
-                              })
+                                 "learning_rate": args.learning_rate,
+                                 "gradient_accumulation_steps": args.gradient_accumulation_steps,
+                                 "do_lower_case": args.do_lower_case,
+                                 "manual_seed": args.manual_seed,
+                                 "reprocess_input_data": True,  # for ignoring the cache features.
+                                 "overwrite_output_dir": True,
+                                 "max_seq_length": args.max_seq_length,
+                                 "train_batch_size": args.train_batch_size,
+                                 "eval_batch_size": args.eval_batch_size,
+                                 "evaluate_during_training_steps": args.evaluate_during_training_steps,
+                                 "fp16": args.fp16,
+                                 "data_file_path": args.data_file_path,
+                                 "partition_file_path": args.partition_file_path,
+                                 "partition_method": args.partition_method,
+                                 "dataset": args.dataset,
+                                 "output_dir": args.output_dir,
+                                 "is_debug_mode": args.is_debug_mode
+                                 })
 
     model_config, model, tokenizer = create_model(model_args, formulation="span_extraction")
 
@@ -82,7 +78,7 @@ if __name__ == "__main__":
     dm = SpanExtractionDataManager(args, model_args, preprocessor)
 
     # dm._load_federated_data_server()
-    
+
     train_dl, test_dl = dm.load_centralized_data()
 
     # Create a SpanExtractionModel and start train

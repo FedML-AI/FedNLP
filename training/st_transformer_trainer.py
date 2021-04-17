@@ -59,13 +59,13 @@ class SeqTaggingTrainer:
         
         # build optimizer and scheduler
         iteration_in_total = len(
-            self.train_dl) // self.args.gradient_accumulation_steps * self.args.num_train_epochs
+            self.train_dl) // self.args.gradient_accumulation_steps * self.args.epochs
         optimizer, scheduler = self.build_optimizer(self.model, iteration_in_total)
 
         # training result
         global_step = 0
         tr_loss, logging_loss = 0.0, 0.0
-        for epoch in range(0, self.args.num_train_epochs):
+        for epoch in range(0, self.args.epochs):
 
             self.model.train()
 

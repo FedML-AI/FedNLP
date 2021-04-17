@@ -14,7 +14,7 @@ import wandb
 
 # this is a temporal import, we will refactor FedML as a package installation
 sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "")))
-sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "../../../")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "../../../../")))
 
 import data_preprocessing.AGNews.data_loader
 import data_preprocessing.SST_2.data_loader
@@ -22,7 +22,8 @@ import data_preprocessing.SemEval2010Task8.data_loader
 import data_preprocessing.Sentiment140.data_loader
 import data_preprocessing.news_20.data_loader
 
-from FedML.fedml_api.distributed.fedavg.FedAvgAPI import FedML_init, FedML_FedAvg_distributed
+from FedML.fedml_api.distributed.fedavg import FedAvgAPI
+from FedML.fedml_api.distributed.fedopt import FedOptAPI
 from FedML.fedml_api.distributed.utils.gpu_mapping import mapping_processes_to_gpu_device_from_yaml_file
 from data_preprocessing.base.utils import *
 from model.fed_transformers.classification import ClassificationModel
@@ -76,6 +77,19 @@ def add_args(parser):
     parser.add_argument(
         '--learning_rate', type=float, default=1e-5, metavar='LR',
         help='learning rate (default: 1e-5)')
+
+    parser.add_argument(
+        '--server_lr', type=float, default=1e-5, metavar='SLR',
+        help='learning rate for server end(default: 1e-5), only used in fedopt')
+
+    parser.add_argument(
+        '--server_optimizer', type=str, default="adam", metavar='SOPT',
+        help='optimizer for server end(default: 1e-5), only used in fedopt')
+
+    parser.add_argument(
+        '--fed_alg', type=str, default="fedavg", metavar='FA',
+        help='The training algorithm in federated learning')
+
     parser.add_argument('--weight_decay', type=float, default=0, metavar='N',
                         help='L2 penalty')
 
@@ -233,13 +247,20 @@ def main(process_id, worker_number, args):
 
     model_trainer = TransformerTrainer(transformer_model=transformer_model, task_formulation="classification")
 
-
-    # start FedAvg algorithm
+    # start federated algorithm
     # for distributed algorithm, train_data_gloabl and test_data_global are required
-    FedML_FedAvg_distributed(process_id, worker_number, device, comm,
-                             transformer_model, train_data_num, train_data_global, test_data_global,
-                             train_data_local_num_dict, train_data_local_dict, test_data_local_dict, args,
-                             model_trainer)
+    if args.fed_alg == "fedavg":
+        FedAvgAPI.FedML_FedAvg_distributed(process_id, worker_number, device, comm,
+                                 transformer_model, train_data_num, train_data_global, test_data_global,
+                                 train_data_local_num_dict, train_data_local_dict, test_data_local_dict, args,
+                                 model_trainer)
+    elif args.fed_alg == "fedopt":
+        FedOptAPI.FedML_FedOpt_distributed(process_id, worker_number, device, comm,
+                                           transformer_model, train_data_num, train_data_global, test_data_global,
+                                           train_data_local_num_dict, train_data_local_dict, test_data_local_dict, args,
+                                           model_trainer)
+    else:
+        raise Exception("No such federated algorithm")
 
     # # Evaluate the model
     # result, model_outputs, wrong_predictions = model.eval_model(
@@ -263,7 +284,12 @@ if __name__ == "__main__":
     torch.cuda.manual_seed_all(args.manual_seed)
 
     # initialize distributed computing (MPI)
-    comm, process_id, worker_number = FedML_init()
+    if args.fed_alg == "fedavg":
+        comm, process_id, worker_number = FedAvgAPI.FedML_init()
+    elif args.fed_alg == "fedopt":
+        comm, process_id, worker_number = FedOptAPI.FedML_init()
+    else:
+        raise Exception("No such federated algorithm")
 
     # customize the log format
     logging.basicConfig(level=logging.INFO,

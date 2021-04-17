@@ -18,7 +18,7 @@ Example usage:
 """
 import sys
 import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), ".")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "..")))
 
 import data_preprocessing.SQuAD_1_1.data_loader
 from data_preprocessing.base.utils import *

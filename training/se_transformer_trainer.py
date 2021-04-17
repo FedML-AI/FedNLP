@@ -127,7 +127,7 @@ class SpanExtractionTrainer:
 
         # build optimizer and scheduler
         iteration_in_total = len(
-            self.train_dl) // args.gradient_accumulation_steps * args.num_train_epochs
+            self.train_dl) // args.gradient_accumulation_steps * args.epochs
         optimizer, scheduler = self.build_optimizer(self.model, iteration_in_total)
 
         if args.n_gpu > 1:
@@ -151,7 +151,7 @@ class SpanExtractionTrainer:
 
             scaler = amp.GradScaler()
 
-        for epoch in range(0, args.num_train_epochs):
+        for epoch in range(0, args.epochs):
 
             self.model.train()
 

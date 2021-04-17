@@ -16,7 +16,6 @@ from sklearn.metrics import (
     matthews_corrcoef,
 )
 from torch.nn import CrossEntropyLoss
-
 from transformers import (
     AdamW,
     get_linear_schedule_with_warmup,
@@ -34,7 +33,6 @@ class TextClassificationTrainer:
 
         # model
         self.model = model
-        
 
         # training results
         self.results = {}
@@ -45,7 +43,6 @@ class TextClassificationTrainer:
         self.train_dl = train_dl
         self.test_dl = test_dl
 
-
     def train_model(self, device=None):
         if not device:
             device = self.device
@@ -55,13 +52,13 @@ class TextClassificationTrainer:
 
         # build optimizer and scheduler
         iteration_in_total = len(
-            self.train_dl) // self.args.gradient_accumulation_steps * self.args.num_train_epochs
+            self.train_dl) // self.args.gradient_accumulation_steps * self.args.epochs
         optimizer, scheduler = self.build_optimizer(self.model, iteration_in_total)
 
         # training result
         global_step = 0
         tr_loss, logging_loss = 0.0, 0.0
-        for epoch in range(0, self.args.num_train_epochs):
+        for epoch in range(0, self.args.epochs):
 
             self.model.train()
 
@@ -130,8 +127,8 @@ class TextClassificationTrainer:
             with torch.no_grad():
                 batch = tuple(t.to(device) for t in batch)
                 # sample_index_list = batch[0].cpu().numpy()
-                if i == len(self.test_dl) - 1:
-                    logging.info(batch)
+                # if i == len(self.test_dl) - 1:
+                #     logging.info(batch)
                 x = batch[1]
                 labels = batch[4]
 
@@ -153,8 +150,6 @@ class TextClassificationTrainer:
 
         eval_loss = eval_loss / nb_eval_steps
 
-        
-
         model_outputs = preds
         preds = np.argmax(preds, axis=1)
         # logging.info("preds = " + str(preds))
@@ -173,10 +168,9 @@ class TextClassificationTrainer:
         logging.info("best_accuracy = %f" % self.best_accuracy)
         wandb.log(result)
 
-        # TODO: only do when wandb is enabled
-        # wandb.log({"Evaluation Accuracy (best)": self.best_accuracy, "step": global_step})
-        # wandb.log({"Evaluation Accuracy": result["acc"], "step": global_step})
-        # wandb.log({"Evaluation Loss": result["eval_loss"], "step": global_step})
+        wandb.log({"Evaluation Accuracy (best)": self.best_accuracy, "step": global_step})
+        wandb.log({"Evaluation Accuracy": result["acc"], "step": global_step})
+        wandb.log({"Evaluation Loss": result["eval_loss"], "step": global_step})
 
         self.results.update(result)
         logging.info(self.results)
