@@ -180,9 +180,9 @@ class TextClassificationTrainer:
         logging.info("best_accuracy = %f" % self.best_accuracy)
         wandb.log(result)
 
-        wandb.log({"Evaluation Accuracy (best)": self.best_accuracy, "step": global_step})
-        wandb.log({"Evaluation Accuracy": result["acc"], "step": global_step})
-        wandb.log({"Evaluation Loss": result["eval_loss"], "step": global_step})
+        wandb.log({"Evaluation Accuracy (best)": self.best_accuracy})
+        wandb.log({"Evaluation Accuracy": result["acc"]})
+        wandb.log({"Evaluation Loss": result["eval_loss"]})
 
         self.results.update(result)
         logging.info(self.results)
