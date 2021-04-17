@@ -19,7 +19,7 @@ hostname > mpi_host_file
 mpirun -np $PROCESS_NUM -hostfile mpi_host_file \
 python -m fedavg_main_tc \
   --gpu_mapping_file "gpu_mapping.yaml" \
-  --gpu_mapping_key mapping_config2_11 \
+  --gpu_mapping_key "mapping_ink-lucy" \
   --client_num_per_round $WORKER_NUM \
   --comm_round $ROUND \
   --ci $CI \
