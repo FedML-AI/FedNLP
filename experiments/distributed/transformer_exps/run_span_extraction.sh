@@ -10,10 +10,10 @@ echo $PROCESS_NUM
 
 hostname > mpi_host_file
 
-/home/bill/anaconda3/envs/fednlp/bin/mpirun -np $PROCESS_NUM -hostfile mpi_host_file \
+mpirun -np $PROCESS_NUM -hostfile mpi_host_file \
 python -m fedavg_main_se \
   --gpu_mapping_file "gpu_mapping.yaml" \
-  --gpu_mapping_key "mapping_ink-lucy" \
+  --gpu_mapping_key mapping_config2_11 \
   --client_num_per_round $WORKER_NUM \
   --comm_round $ROUND \
   --ci $CI \
@@ -28,7 +28,7 @@ python -m fedavg_main_se \
   --train_batch_size 8 \
   --eval_batch_size 8 \
   --max_seq_length 128 \
-  --learning_rate 1e-5 \
+  --lr 1e-5 \
   --epochs 1 \
   --output_dir "/tmp/fedavg_${DATA_NAME}_output/" \
   --fp16
