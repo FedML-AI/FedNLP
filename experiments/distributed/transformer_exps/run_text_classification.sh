@@ -2,7 +2,8 @@ FL_ALG=$1
 PARTITION_METHOD=$2
 C_LR=$3
 S_LR=$4
-ROUND=$5
+MU=$5
+ROUND=$6
 
 
 LOG_FILE="fedavg_transformer_tc.log"
@@ -36,23 +37,24 @@ python -m fedavg_main_tc \
   --max_seq_length 128 \
   --lr $C_LR \
   --server_lr $S_LR \
+  --fedprox_mu $MU \
   --epochs 1 \
   --output_dir "/tmp/fedavg_${DATA_NAME}_output/"
 
-# sh run_text_classification.sh FedAvg "niid_label_clients=100_alpha=5.0" 5e-5 0.1 50
-# sh run_text_classification.sh FedAvg "niid_label_clients=100_alpha=10.0" 5e-5 0.1 50
-# sh run_text_classification.sh FedAvg "niid_label_clients=100_alpha=1.0" 5e-5 0.1 50
-# sh run_text_classification.sh FedAvg "uniform" 5e-5 0.1 50
-# sh run_text_classification.sh FedAvg "niid_quantity_clients=100_beta=5.0" 5e-5 0.1 50
+# sh run_text_classification.sh FedAvg "niid_label_clients=100_alpha=5.0" 5e-5 0.1 0.5 50
+# sh run_text_classification.sh FedAvg "niid_label_clients=100_alpha=10.0" 5e-5 0.1 0.5 50
+# sh run_text_classification.sh FedAvg "niid_label_clients=100_alpha=1.0" 5e-5 0.1 0.5 50
+# sh run_text_classification.sh FedAvg "uniform" 5e-5 0.1 0.5 50
+# sh run_text_classification.sh FedAvg "niid_quantity_clients=100_beta=5.0" 5e-5 0.1 0.5 50
 
-# sh run_text_classification.sh FedProx "niid_label_clients=100_alpha=5.0" 5e-5 0.1 50
-# sh run_text_classification.sh FedProx "niid_label_clients=100_alpha=10.0" 5e-5 0.1 50
-# sh run_text_classification.sh FedProx "niid_label_clients=100_alpha=1.0" 5e-5 0.1 50
-# sh run_text_classification.sh FedProx "uniform" 5e-5 0.1 50
-# sh run_text_classification.sh FedProx "niid_quantity_clients=100_beta=5.0" 5e-5 0.1 50
+# sh run_text_classification.sh FedProx "niid_label_clients=100_alpha=5.0" 5e-5 0.1 0.5 50
+# sh run_text_classification.sh FedProx "niid_label_clients=100_alpha=10.0" 5e-5 0.1 0.5 50
+# sh run_text_classification.sh FedProx "niid_label_clients=100_alpha=1.0" 5e-5 0.1 0.5 50
+# sh run_text_classification.sh FedProx "uniform" 5e-5 0.1 0.5 50
+# sh run_text_classification.sh FedProx "niid_quantity_clients=100_beta=5.0" 5e-5 0.1 0.5 50
 
-# sh run_text_classification.sh FedOPT "niid_label_clients=100_alpha=5.0" 5e-5 0.1 50
-# sh run_text_classification.sh FedOPT "niid_label_clients=100_alpha=10.0" 5e-5 0.1 50
-# sh run_text_classification.sh FedOPT "niid_label_clients=100_alpha=1.0" 5e-5 0.1 50
-# sh run_text_classification.sh FedOPT "uniform" 5e-5 0.1 50
-# sh run_text_classification.sh FedOPT "niid_quantity_clients=100_beta=5.0" 5e-5 0.1 50
+# sh run_text_classification.sh FedOPT "niid_label_clients=100_alpha=5.0" 5e-5 0.1 0.5 50
+# sh run_text_classification.sh FedOPT "niid_label_clients=100_alpha=10.0" 5e-5 0.1 0.5 50
+# sh run_text_classification.sh FedOPT "niid_label_clients=100_alpha=1.0" 5e-5 0.1 0.5 50
+# sh run_text_classification.sh FedOPT "uniform" 5e-5 0.1 0.5 50
+# sh run_text_classification.sh FedOPT "niid_quantity_clients=100_beta=5.0" 5e-5 0.1 0.5 50

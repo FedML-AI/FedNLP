@@ -37,29 +37,20 @@ logging.basicConfig(level=logging.INFO,
 parser = argparse.ArgumentParser()
 args = add_args(parser)
 
-os.system("kill $(ps aux | grep \"fedavg_main_se.py\" | grep -v grep | awk '{print $2}')")
+os.system("kill $(ps aux | grep \"fedavg_main_st.py\" | grep -v grep | awk '{print $2}')")
 
-# sh run_seq_tagging.sh FedAvg "niid_cluster_clients=100_alpha=5.0" 1e-5 0.1 50
-
-# sh run_seq_tagging.sh FedProx "niid_cluster_clients=100_alpha=5.0" 1e-5 0.1 50
-
-# sh run_seq_tagging.sh FedOPT "niid_cluster_clients=100_alpha=5.0" 1e-5 0.1 50
+# sh run_seq_tagging.sh FedAvg "niid_cluster_clients=100_alpha=5.0" 1e-5 0.1 20
+# sh run_seq_tagging.sh FedProx "niid_cluster_clients=100_alpha=5.0" 1e-5 0.1 20
+# sh run_seq_tagging.sh FedOPT "niid_cluster_clients=100_alpha=5.0" 1e-5 0.1 20
 
 hps = [
-    # 'FedAvg "niid_label_clients=100_alpha=5.0" 5e-5 0.1 25', # finished by Zihang
-    'FedAvg "niid_label_clients=100_alpha=10.0" 5e-5 0.1 2',
-    'FedAvg "niid_label_clients=100_alpha=1.0" 5e-5 0.1 2',
-    # 'FedAvg "uniform" 5e-5 0.1 25',
-    # 'FedAvg "niid_quantity_clients=100_beta=5.0" 5e-5 0.1 25',
-    # 'FedProx "niid_label_clients=100_alpha=5.0" 5e-5 0.1 25',
-    # 'FedProx "niid_label_clients=100_alpha=10.0" 5e-5 0.1 25',
-    # 'FedProx "niid_label_clients=100_alpha=1.0" 5e-5 0.1 25',
-    # 'FedProx "uniform" 5e-5 0.1 25',
-    # 'FedOPT "niid_label_clients=100_alpha=5.0" 5e-5 0.1 25',
-    # 'FedOPT "niid_label_clients=100_alpha=10.0" 5e-5 0.1 25',
-    # 'FedOPT "niid_label_clients=100_alpha=1.0" 5e-5 0.1 25',
-    # 'FedOPT "uniform" 5e-5 0.1 25',
-    # 'FedOPT "niid_quantity_clients=100_beta=5.0" 5e-5 0.1 25', # finished by Chaoyang
+    'FedProx "lite_niid_cluster_clients=100_alpha=1.0" 5e-5 0.1 0.5 30',
+    'FedProx "lite_niid_cluster_clients=100_alpha=1.0" 5e-5 0.1 0.1 30',
+    'FedProx "lite_niid_cluster_clients=100_alpha=1.0" 5e-5 0.1 0.05 30',
+    'FedProx "lite_niid_cluster_clients=100_alpha=1.0" 5e-5 0.1 0.01 30',
+    'FedAvg "lite_niid_cluster_clients=100_alpha=1.0" 5e-5 0.1 0.5 30',
+
+    'FedOPT "lite_niid_cluster_clients=100_alpha=1.0" 5e-5 0.1 0.5 30',
 ]
 
 run_id = 0
@@ -68,15 +59,17 @@ for hp in hps:
     args.run_id = run_id
 
     logging.info("hp = %s" % args.hp)
-    os.system("touch ./tmp/fedml")
-    os.system('nohup sh run_text_classification.sh '
+    os.system("mkdir ./tmp/; touch ./tmp/fedml")
+    os.system('nohup sh run_seq_tagging.sh '
               '{args.hp} '
-              '> ./fednlp_tc_{args.run_id}.log 2>&1 &'.format(args=args))
+              '> ./fednlp_st_{args.run_id}.log 2>&1 &'.format(args=args))
 
     wait_for_the_training_process()
 
     logging.info("cleaning the training...")
-    os.system("kill $(ps aux | grep \"fedavg_main_se.py\" | grep -v grep | awk '{print $2}')")
+
+    # kill $(ps aux | grep fedavg_main_st.py | grep -v grep | awk '{print $2}')
+    os.system("kill $(ps aux | grep \"fedavg_main_st.py\" | grep -v grep | awk '{print $2}')")
 
     sleep(5)
     run_id += 1

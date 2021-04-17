@@ -122,11 +122,8 @@ class SeqTaggingTrainer:
 
         n_batches = len(self.test_dl)
 
-        logging.info("len test_dl.dataset")
         test_sample_len = len(self.test_dl.dataset)
-        logging.info("pad token label id")
         pad_token_label_id = self.pad_token_label_id
-        logging.info("output dir")
         eval_output_dir = self.args.output_dir
 
         preds = None
@@ -157,7 +154,7 @@ class SeqTaggingTrainer:
 
                 if self.args.fl_algorithm == "FedProx":
                     fed_prox_reg = 0.0
-                    mu = 1
+                    mu = self.args.fedprox_mu
                     for (p, g_p) in zip(self.model.parameters(),
                                         global_model.parameters()):
                         fed_prox_reg += ((mu / 2) * torch.norm((p - g_p.data)) ** 2)
@@ -228,10 +225,6 @@ class SeqTaggingTrainer:
                 writer.write("{}\n".format(cls_report))
             for key in sorted(result.keys()):
                 writer.write("{} = {}\n".format(key, str(result[key])))
-
-        wandb.log({"Evaluation Accuracy (best)": self.best_accuracy})
-        wandb.log({"Evaluation Accuracy": result["acc"]})
-        wandb.log({"Evaluation Loss": result["eval_loss"]})
 
         self.results.update(result)
         logging.info(self.results)

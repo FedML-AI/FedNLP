@@ -28,20 +28,20 @@ sh run_text_classification.sh FedOPT "niid_quantity_clients=100_beta=5.0" 5e-5 0
 
 Span Extraction:
 ```
-sh run_span_extraction.sh FedAvg "niid_cluster_clients=10_alpha=5.0" 5e-5 0.1 30
+sh run_span_extraction.sh FedAvg "niid_cluster_clients=10_alpha=1.0" 5e-5 0.1 20
 
-sh run_span_extraction.sh FedProx "niid_cluster_clients=10_alpha=5.0" 5e-5 0.1 30
+sh run_span_extraction.sh FedProx "niid_cluster_clients=10_alpha=1.0" 5e-5 0.1 20
 
-sh run_span_extraction.sh FedOPT "niid_cluster_clients=10_alpha=5.0" 5e-5 0.1 30
+sh run_span_extraction.sh FedOPT "niid_cluster_clients=10_alpha=1.0" 5e-5 0.1 20
 
 ```
 Sequence Tagging:
 ```
-sh run_seq_tagging.sh FedAvg "niid_cluster_clients=100_alpha=5.0" 5e-5 0.1 30
+sh run_seq_tagging.sh FedAvg "niid_cluster_clients=100_alpha=5.0" 5e-5 0.1 20
 
-sh run_seq_tagging.sh FedProx "niid_cluster_clients=100_alpha=5.0" 5e-5 0.1 30
+sh run_seq_tagging.sh FedProx "niid_cluster_clients=100_alpha=5.0" 5e-5 0.1 20
 
-sh run_seq_tagging.sh FedOPT "niid_cluster_clients=100_alpha=5.0" 5e-5 0.1 30
+sh run_seq_tagging.sh FedOPT "niid_cluster_clients=100_alpha=5.0" 5e-5 0.1 20
 ```
 
 # FedAvg for Transformer-based Text Classifcation

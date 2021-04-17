@@ -55,6 +55,7 @@ if __name__ == "__main__":
     model_args.model_type = args.model_type
     model_args.load(model_args.model_name)
     model_args.num_labels = num_labels
+    model_args.fl_algorithm = ""
     model_args.update_from_dict({"epochs": args.epochs,
                               "learning_rate": args.learning_rate,
                               "gradient_accumulation_steps": args.gradient_accumulation_steps,
@@ -94,13 +95,13 @@ if __name__ == "__main__":
 
 ''' Example Usage:
 
-export CUDA_VISIBLE_DEVICES=2
-DATA_NAME=wikiner
-CUDA_VISIBLE_DEVICES=2 python -m experiments.centralized.transformer_exps.main_st \
+export CUDA_VISIBLE_DEVICES=1
+DATA_NAME=w_nut
+CUDA_VISIBLE_DEVICES=1 python -m experiments.centralized.transformer_exps.main_st \
     --dataset ${DATA_NAME} \
     --data_file ~/fednlp_data/data_files/${DATA_NAME}_data.h5 \
     --partition_file ~/fednlp_data/partition_files/${DATA_NAME}_partition.h5 \
-    --partition_method niid_cluster_clients=100_alpha=5.0 \
+    --partition_method uniform \
     --model_type distilbert \
     --model_name distilbert-base-uncased  \
     --do_lower_case True \
@@ -109,7 +110,7 @@ CUDA_VISIBLE_DEVICES=2 python -m experiments.centralized.transformer_exps.main_s
     --max_seq_length 256 \
     --learning_rate 5e-5 \
     --epochs 15 \
-    --evaluate_during_training_steps 3000 \
+    --evaluate_during_training_steps 100 \
     --output_dir /tmp/${DATA_NAME}_fed/ \
     --n_gpu 1
 '''

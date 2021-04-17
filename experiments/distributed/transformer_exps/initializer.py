@@ -173,6 +173,8 @@ def add_federated_args(parser):
     parser.add_argument('--server_momentum', type=float, default=0.9,
                         help='server momentum (default: 0.001)')
 
+    parser.add_argument('--fedprox_mu', type=float, default=1,
+                        help='server momentum (default: 1)')
     parser.add_argument(
         '--evaluate_during_training_steps', type=int, default=100, metavar='EP',
         help='the frequency of the evaluation during training')
