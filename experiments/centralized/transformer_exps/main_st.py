@@ -96,12 +96,12 @@ if __name__ == "__main__":
 ''' Example Usage:
 
 export CUDA_VISIBLE_DEVICES=1
-DATA_NAME=wikiner
+DATA_NAME=w_nut
 CUDA_VISIBLE_DEVICES=1 python -m experiments.centralized.transformer_exps.main_st \
     --dataset ${DATA_NAME} \
     --data_file ~/fednlp_data/data_files/${DATA_NAME}_data.h5 \
     --partition_file ~/fednlp_data/partition_files/${DATA_NAME}_partition.h5 \
-    --partition_method lite_niid_cluster_clients=100_alpha=1.0 \
+    --partition_method uniform \
     --model_type distilbert \
     --model_name distilbert-base-uncased  \
     --do_lower_case True \
