@@ -122,11 +122,8 @@ class SeqTaggingTrainer:
 
         n_batches = len(self.test_dl)
 
-        logging.info("len test_dl.dataset")
         test_sample_len = len(self.test_dl.dataset)
-        logging.info("pad token label id")
         pad_token_label_id = self.pad_token_label_id
-        logging.info("output dir")
         eval_output_dir = self.args.output_dir
 
         preds = None
@@ -209,6 +206,15 @@ class SeqTaggingTrainer:
             word_tokens.append(w_log)
 
         model_outputs = [[word_tokens[i][j] for j in range(len(preds_list[i]))] for i in range(len(preds_list))]
+
+        logging.info(out_label_list[:3])
+        logging.info(preds_list[:3])
+        temp = {
+            "precision": precision_score(out_label_list[:3], preds_list[:3]),
+            "recall": recall_score(out_label_list[:3], preds_list[:3]),
+            "f1_score": f1_score(out_label_list[:3], preds_list[:3]),
+        }
+        logging.info(temp)
 
         result = {
             "eval_loss": eval_loss,
