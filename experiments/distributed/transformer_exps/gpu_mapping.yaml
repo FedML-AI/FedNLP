@@ -10,6 +10,9 @@
 mapping_lambda-server2:
     lambda-server2: [0, 0, 0, 0, 3, 2, 3, 3]
 
+mapping_lambda-server3:
+    lambda-server3: [1, 2, 2, 2, 1, 1, 1, 1]
+
 # this is used for 10 clients and 1 server training within a single machine which has 4 GPUs
 mapping_default:
     ChaoyangHe-GPU-RTX2080Tix4: [2, 1, 1, 1]
