@@ -44,13 +44,9 @@ os.system("kill $(ps aux | grep \"fedavg_main_st.py\" | grep -v grep | awk '{pri
 # sh run_seq_tagging.sh FedOPT "niid_cluster_clients=100_alpha=5.0" 1e-5 0.1 20
 
 hps = [
-    'FedProx "lite_niid_cluster_clients=100_alpha=1.0" 5e-5 0.1 0.5 30',
-    'FedProx "lite_niid_cluster_clients=100_alpha=1.0" 5e-5 0.1 0.1 30',
-    'FedProx "lite_niid_cluster_clients=100_alpha=1.0" 5e-5 0.1 0.05 30',
-    'FedProx "lite_niid_cluster_clients=100_alpha=1.0" 5e-5 0.1 0.01 30',
-    'FedAvg "lite_niid_cluster_clients=100_alpha=1.0" 5e-5 0.1 0.5 30',
-
-    'FedOPT "lite_niid_cluster_clients=100_alpha=1.0" 5e-5 0.1 0.5 30',
+    'FedOPT "niid_cluster_clients=50_alpha=0.1" 5e-5 1 0.5 30',
+    'FedAvg "niid_cluster_clients=50_alpha=0.1" 5e-5 1 0.5 30',
+    'FedProx "niid_cluster_clients=50_alpha=0.1" 5e-5 1 0.5 30',
 ]
 
 run_id = 0
