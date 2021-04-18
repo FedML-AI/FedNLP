@@ -147,7 +147,8 @@ python -m data.advanced_partition.niid_quantity  \
 
 
 python -m data.advanced_partition.niid_quantity  \
---client_number 100 --data_file ${DATA_DIR}/data_files/wikiner_data.h5 \
+--client_number 100 \
+--data_file ${DATA_DIR}/data_files/wikiner_data.h5 \
 --partition_file ${DATA_DIR}/partition_files/wikiner_partition.h5 \
 --task_type name_entity_recognition \
 --kmeans_num 10 \
