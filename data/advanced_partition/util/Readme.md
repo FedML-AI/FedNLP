@@ -79,39 +79,39 @@ python -m data.advanced_partition.util.visualization_heatmap_label \
 
 
 python -m data.advanced_partition.util.visualization_distplot \
---client_num 100 
---partition_file ${DATA_DIR}/partition_files/20news_partition.h5
---data_file ${DATA_DIR}/data_files/20news_data.h5
---task_name 20news 
---cluster_num 0 
---figure_path ${DATA_DIR}/advanced_partition/dist_figure
+--client_num 100 \
+--partition_file ${DATA_DIR}/partition_files/20news_partition.h5\
+--data_file ${DATA_DIR}/data_files/20news_data.h5\
+--task_name 20news \
+--cluster_num 0 \
+--figure_path ${DATA_DIR}/advanced_partition/dist_figure\
 --task_type text_classification 
 
 python -m data.advanced_partition.util.visualization_distplot \
---client_num 100 
---partition_file ${DATA_DIR}/partition_files/wikiner_partition.h5
---data_file ${DATA_DIR}/data_files/wikiner_data.h5
---task_name wikiner 
---cluster_num 0 
---figure_path ${DATA_DIR}/advanced_partition/dist_figure
+--client_num 100 \
+--partition_file ${DATA_DIR}/partition_files/wikiner_partition.h5\
+--data_file ${DATA_DIR}/data_files/wikiner_data.h5\
+--task_name wikiner \
+--cluster_num 0 \
+--figure_path ${DATA_DIR}/advanced_partition/dist_figure\
 --task_type name_entity_recognition 
 
 python -m data.advanced_partition.util.visualization_quantity_distplot \
---client_num 100 
---partition_file ${DATA_DIR}/partition_files/20news_partition.h5
---data_file ${DATA_DIR}/data_files/20news_data.h5
---task_name 20news 
---cluster_num 0 
---figure_path ${DATA_DIR}/advanced_partition/dist_figure
+--client_num 100  \
+--partition_file ${DATA_DIR}/partition_files/20news_partition.h5\
+--data_file ${DATA_DIR}/data_files/20news_data.h5\
+--task_name 20news \
+--cluster_num 0 \
+--figure_path ${DATA_DIR}/advanced_partition/dist_figure\
 --task_type text_classification 
 
 python -m data.advanced_partition.util.visualization_quantity_distplot \
---client_num 100 
---partition_file ${DATA_DIR}/partition_files/wikiner_partition.h5
---data_file ${DATA_DIR}/data_files/wikiner_data.h5
---task_name wikiner 
---cluster_num 0 
---figure_path ${DATA_DIR}/advanced_partition/dist_figure
+--client_num 100 \
+--partition_file ${DATA_DIR}/partition_files/wikiner_partition.h5\
+--data_file ${DATA_DIR}/data_files/wikiner_data.h5\
+--task_name wikiner \
+--cluster_num 0 \
+--figure_path ${DATA_DIR}/advanced_partition/dist_figure\
 --task_type name_entity_recognition 
 
 
