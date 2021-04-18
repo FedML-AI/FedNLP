@@ -22,6 +22,38 @@ pip install -r requirements.txt
 cd FedML; git submodule init; git submodule update; cd ../;
 ```
 
+## Code Structure of FedNLP
+<!-- Note: The code of FedNLP only uses `FedML/fedml_core` and `FedML/fedml_api`.
+In near future, once FedML is stable, we will release it as a python package. 
+At that time, we can install FedML package with pip or conda, without the need to use Git submodule. -->
+
+- `FedML`: a soft repository link generated using `git submodule add https://github.com/FedML-AI/FedML`.
+
+
+- `data`: provide data downloading scripts and raw data loader to process original data and generate h5py files. Besides, `data/advanced_partition` offers some practical partition functions to split data for each client.
+
+Note that in `FedML/data`, there also exists datasets for research, but these datasets are used for evaluating federated optimizers (e.g., FedAvg) and platforms.
+FedNLP supports more advanced datasets and models.
+
+- `data_preprocessing`: preprocessors, examples and utility functions for each task formulation.
+
+- `data_manager`: data manager is responsible for loading dataset and partition data from h5py files and driving preprocessor to transform data to features.
+
+- `model`: advanced NLP models. You can define your own models in this folder.
+
+- `trainer`: please define your own `trainer.py` by inheriting the base class in `FedML/fedml-core/trainer/fedavg_trainer.py`.
+Some tasks can share the same trainer.
+
+- `experiments/distributed`: 
+
+    1. `experiments` is the entry point for training. It contains experiments in different platforms. We start from `distributed`.
+    2. Every experiment integrates FIVE building blocks `FedML` (federated optimizers), `data_manager`, `data_preprocessing`, `model`, `trainer`.
+    3. To develop new experiments, please refer the code at `experiments/distributed/transformer_exps/fedavg_main_tc.py`.
+
+- `experiments/centralized`: 
+
+    1. This is used to get the reference model accuracy for FL. 
+
 
 
 ## Data Preparation
@@ -79,37 +111,6 @@ git add FedML
 git commit -m "updating submodule FedML to latest"
 git push
 ```  -->
-
-## Code Structure of FedNLP
-<!-- Note: The code of FedNLP only uses `FedML/fedml_core` and `FedML/fedml_api`.
-In near future, once FedML is stable, we will release it as a python package. 
-At that time, we can install FedML package with pip or conda, without the need to use Git submodule. -->
-
-- `FedML`: a soft repository link generated using `git submodule add https://github.com/FedML-AI/FedML`.
-
-
-- `data`: provide data downloading scripts and raw data loader to process original data and generate h5py files. Besides, `data/advanced_partition` offers some practical partition functions to split data for each client.
-
-Note that in `FedML/data`, there also exists datasets for research, but these datasets are used for evaluating federated optimizers (e.g., FedAvg) and platforms.
-FedNLP supports more advanced datasets and models.
-
-- `data_preprocessing`: preprocessors, examples and utility functions for each task formulation.
-
-- `data_manager`: data manager is responsible for loading dataset and partition data from h5py files and driving preprocessor to transform data to features.
-
-- `model`: advanced NLP models. You can define your own models in this folder.
-
-- `trainer`: please define your own `trainer.py` by inheriting the base class in `FedML/fedml-core/trainer/fedavg_trainer.py`.
-Some tasks can share the same trainer.
-
-- `experiments/distributed`: 
-1. `experiments` is the entry point for training. It contains experiments in different platforms. We start from `distributed`.
-2. Every experiment integrates FIVE building blocks `FedML` (federated optimizers), `data_manager`, `data_preprocessing`, `model`, `trainer`.
-3. To develop new experiments, please refer the code at `experiments/distributed/transformer_exps/fedavg_main_tc.py`.
-
-- `experiments/centralized`: 
-1. This is used to get the reference model accuracy for FL. 
-
 
 
 
