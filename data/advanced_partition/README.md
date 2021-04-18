@@ -105,8 +105,8 @@ python -m data.advanced_partition.niid_label   \
 
 python -m data.advanced_partition.niid_label   \
 --client_number 300 \
---data_file data/data_files/squad_1.1_data.h5 \
---partition_file data/partition_files/squad_1.1_partition.h5 \
+--data_file ${DATA_DIR}/data_files/squad_1.1_data.h5 \
+--partition_file ${DATA_DIR}/partition_files/squad_1.1_partition.h5 \
 --task_type reading_comprehension \
 --kmeans_num 30  \
 --alpha 0.5
@@ -122,8 +122,8 @@ the quantities. beta will be used to calculate Dirichlet Distribution
 
 python -m data.advanced_partition.niid_quantity  \
 --client_number 100  \
---data_file data/data_files/20news_data.h5  \
---partition_file data/partition_files/20news_partition.h5 \
+--data_file ${DATA_DIR}/data_files/20news_data.h5  \
+--partition_file ${DATA_DIR}/partition_files/20news_partition.h5 \
 --task_type text_classification \
 --kmeans_num 0 \
 --beta 5
@@ -131,40 +131,41 @@ python -m data.advanced_partition.niid_quantity  \
 
 python -m data.advanced_partition.niid_quantity  \
 --client_number 1000  \
---data_file data/data_files/agnews_data.h5 \
---partition_file data/partition_files/agnews_partition.h5 \
+--data_file ${DATA_DIR}/data_files/agnews_data.h5 \
+--partition_file ${DATA_DIR}/partition_files/agnews_partition.h5 \
 --task_type text_classification \
 --kmeans_num 0  \
 --beta 5
 
 python -m data.advanced_partition.niid_quantity  \
 --client_number 30 \
---data_file data/data_files/sst_2_data.h5 \
---partition_file data/partition_files/sst_2_partition.h5 \
+--data_file ${DATA_DIR}/data_files/sst_2_data.h5 \
+--partition_file ${DATA_DIR}/partition_files/sst_2_partition.h5 \
 --task_type text_classification \
 --kmeans_num 0 \
 --beta 5
 
 
 python -m data.advanced_partition.niid_quantity  \
---client_number 100 --data_file data/data_files/wikiner_data.h5 \
---partition_file data/partition_files/wikiner_partition.h5 \
+--client_number 100 \
+--data_file ${DATA_DIR}/data_files/wikiner_data.h5 \
+--partition_file ${DATA_DIR}/partition_files/wikiner_partition.h5 \
 --task_type name_entity_recognition \
 --kmeans_num 10 \
 --beta 5
 
 python -m data.advanced_partition.niid_quantity \
 --client_number 30 \
---data_file data/data_files/w_nut_data.h5 \
---partition_file data/partition_files/w_nut_partition.h5\
+--data_file ${DATA_DIR}/data_files/w_nut_data.h5 \
+--partition_file ${DATA_DIR}/partition_files/w_nut_partition.h5\
 --task_type name_entity_recognition --kmeans_num 10  \
 --beta 5
 
 
 python -m data.advanced_partition.niid_quantity   \
 --client_number 300 \
---data_file data/data_files/squad_1.1_data.h5 \
---partition_file data/partition_files/squad_1.1_partition.h5 \
+--data_file ${DATA_DIR}/data_files/squad_1.1_data.h5 \
+--partition_file ${DATA_DIR}/partition_files/squad_1.1_partition.h5 \
 --task_type reading_comprehension \
 --kmeans_num 30  \
 --beta 1

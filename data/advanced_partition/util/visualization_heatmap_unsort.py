@@ -2,6 +2,7 @@ import os
 import h5py
 import argparse
 import pandas as pd
+import json
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -27,14 +28,15 @@ parser.add_argument('--task_type', type=str, default='name entity recognition',m
 
 args = parser.parse_args()
 
-temp = "kmeans"
+temp = "kmeans_" + str(args.cluster_num)
 client_assignment = []
 
 if args.task_type == "text_classification":
     data = h5py.File(args.data_file,"r")
-    client_assignment = [data['Y'][i][()] for i in data['Y'].keys()]
-    for index, value in enumerate(set(client_assignment)):
-        client_assignment = [index if i == value else i for i in client_assignment ]
+    total_labels = [data['Y'][i][()] for i in data['Y'].keys()]
+    attributes = json.loads(data["attributes"][()])
+    label_vocab = attributes['label_vocab']
+    client_assignment = [label_vocab[label] for label in total_labels]
     data.close()
 else:
     f = h5py.File(args.partition_file,"r")
@@ -71,31 +73,36 @@ heat_map_data = np.zeros((client_numbers,client_numbers))
 for i in range(client_numbers):
     for j in range(client_numbers):
         heat_map_data[i][j] = distance.jensenshannon(client_data_distribution[i],client_data_distribution[j])
-#reorder index based on the sum of distance in each client
+""" #reorder index based on the sum of distance in each client
 client_data_distribution_reorder_index = [np.where(np.all(heat_map_data == i,axis = 1))[0][0] for i in sorted(heat_map_data, key=lambda client: sum(client), reverse=True)]
-client_data_distribution_reorder = []
-client_sum_order = sorted([sum(i) for i in heat_map_data], reverse=True)
 #reorder the matrix based on the reorder index
 for index, value in enumerate(heat_map_data):
     heat_map_data[index] = value[client_data_distribution_reorder_index]
-heat_map_data = heat_map_data[client_data_distribution_reorder_index]
+heat_map_data = heat_map_data[client_data_distribution_reorder_index] """
 
+
+
+client_sum_order = sorted([sum(i) for i in heat_map_data], reverse=True)
 
 data_dir = args.figure_path
-fig_name = args.task_name + "_%s_clients_heatmap.png" % args.partition_name
+fig_name = args.task_name + "_%s_clients_heatmap_unsort.png" % args.partition_name
 fig_dir = os.path.join(data_dir, fig_name)
 fig_dims = (30, 22)
 fig, ax = plt.subplots(figsize=fig_dims)
-sns.heatmap(heat_map_data,linewidths = 0.05, cmap="Blues")
-plt.title(args.task_name + "_%s_clients_heatmap" % args.partition_name)
+sns.set(font_scale=6)
+sns.heatmap(heat_map_data,linewidths = 0.05,cmap="Blues",cbar=True, vmin=0, vmax=0.8)
+ax.tick_params(labelbottom=False, labelleft=False,labeltop=False, left=False,bottom=False, top=False)    
+fig.tight_layout(pad=0.1)
 plt.savefig(fig_dir)
+
+sns.set(font_scale=1)
 
 plt.figure(figsize=(20,15))
 fig = sns.distplot(client_sum_order)
 plt.xlim(0,None)
 plt.xlabel('distance')
 plt.xticks(fig.get_xticks(), fig.get_xticks() / 100)
-fig_name = args.task_name + "_%s_clients_sum_distplot.png" % args.partition_name
+fig_name = args.task_name + "_%s_clients_sum_distplot_unsort.png" % args.partition_name
 fig_dir = os.path.join(data_dir, fig_name)
-plt.title(args.task_name + "_%s_clients_sum_distplot" % args.partition_name)
+plt.title(args.task_name + "_%s_clients_sum_distplot_unsort" % args.partition_name)
 plt.savefig(fig_dir,bbox_inches='tight')
