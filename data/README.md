@@ -44,7 +44,7 @@ done
 We provide two kinds of h5py files: the one in direcotry **data_files**  contains the whole dataset.
 The other files in directory **partition_files** are splited dataset using multiple partition methods.
 
-## Data Partation
+## Data Partition
 
 ### Data Partition Methods 
 
