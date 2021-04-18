@@ -63,7 +63,7 @@ CUDA_VISIBLE_DEVICES=1 python -m experiments.centralized.transformer_exps.main_t
 
 ## Experiments for Federated Learning
 
-We already summarize some scripts for running federated learning experiments. Once you finished the environment settings, you can refer and run these scripts. [experiments/distributed/transformer_exps/run_text_classification.sh], [experiments/distributed/transformer_exps/run_text_classification.sh] and [experiments/distributed/transformer_exps/run_text_classification.sh]
+We already summarize some scripts for running federated learning experiments. Once you finished the environment settings, you can refer and run these scripts including `run_text_classification.sh`, `run_seq_tagging.sh` and `run_span_extraction.sh` under `experiments/distributed/transformer_exps`.
 
 
 <!-- ### Update FedML Submodule 
