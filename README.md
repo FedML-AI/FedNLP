@@ -57,7 +57,9 @@ Some tasks can share the same trainer.
 
 
 ## Data Preparation
+In order to set up correct data to support federated learning, we provide some processed data files and partition files. Users can download them for further training conveniently.
 
+If users want to set up their own dataset, they can refer the scripts under `data/raw_data_loader`. We already offer a bunch of examples, just follow one of them to prepare your owned data!
 ### download our processed files from Amazon S3.
 Dwnload files for each dataset using these two scripts `data/download_data.sh` and `data/download_partition.sh`.
 
