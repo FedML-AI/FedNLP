@@ -23,32 +23,12 @@ cd FedML; git submodule init; git submodule update; cd ../;
 
 ## Data Preparation
 
-### Option 1: use our bash scripts to download the dataset that you need manually. 
-For example, in the `data/text_classification/20Newsgroups` folder, you can  run `sh download_and_unzip.sh` to get the raw data and then process it following [data_preprocessing/README.md](data_preprocessing/README.md).
+### download our processed files from Amazon S3.
+Dwnload files for each dataset using these two scripts `data/download_data.sh` and `data/download_partition.sh`.
 
-### Option 2: download our processed files from Amazon S3.
-Dwnload files for each dataset using this command
-```bash
-wget --no-check-certificate --no-proxy https://fednlp.s3-us-west-1.amazonaws.com/data_and_partition_files.zip
-unzip data_loaders_and_partition.zip
-```
-We provide two files for eac dataset: data files are saved in  **data_loaders**, and partition files are in directory **partition**. You need to put the downloaded `data_files` and `partition_files` in the `data` folder here. Simply put, we will have `data/data_files/*_data.h5` and `data/partition_files/*_partition.h5` in the end.
+We provide two files for each dataset: data files are saved in  **data_files**, and partition files are in directory **partiton_files**. You need to put the downloaded `data_files` and `partition_files` in the `data` folder here. Simply put, we will have `data/data_files/*_data.h5` and `data/partition_files/*_partition.h5` in the end.
 
 ## Experiments for Centralized Learning (Sanity Check)
-
-### LSTM-based models 
-
-For example, you can run the centralized version of the models for text classification tasks with BLSTM models ([model/bilstm.py](model/bilstm.py)).
-```bash
-sh experiments/centralized/text_classification/run_text_classification.sh \
-    bilstm_attention 20news \
-    data/data_loaders/20news_data_loader.pkl \
-    data/partition/20news_partition.pkl \
-    uniform 256 1 0.1 32 256 300 adam 0.001 0.0001 200 \
-    word2vec data/pretrained/GoogleNews-vectors-negative300.bin
-```
-
-For more experiments, please read [experiments/centralized/README.md](experiments/centralized/README.md).
 
 ### Transformer-based models 
 
@@ -61,34 +41,30 @@ python -m model.fed_transformers.test
 Run Text Classification model with `distilbert`:
 
 ```bash 
-CUDA_VISIBLE_DEVICES=0 \
-python -m experiments.centralized.transformer_exps.text_classification \
-    --dataset_name 20news \
-    --data_file data/data_loaders/20news_data_loader.pkl \
-    --partition_file data/partition/20news_partition.pkl \
-    --partition_method uniform \
+DATA_NAME=20news
+CUDA_VISIBLE_DEVICES=1 python -m experiments.centralized.transformer_exps.main_tc \
+    --dataset ${DATA_NAME} \
+    --data_file ~/fednlp_data/data_files/${DATA_NAME}_data.h5 \
+    --partition_file ~/fednlp_data/partition_files/${DATA_NAME}_partition.h5 \
+    --partition_method niid_label_clients=100.0_alpha=5.0 \
     --model_type distilbert \
-    --model_name distilbert-base-uncased \
+    --model_name distilbert-base-uncased  \
     --do_lower_case True \
     --train_batch_size 32 \
-    --eval_batch_size 32 \
-    --max_seq_length 128 \
-    --learning_rate 1e-5 \
-    --epochs 3 \
-    --output_dir /tmp/20news_fed/ \
-    --n_gpu 1 --fp16
+    --eval_batch_size 8 \
+    --max_seq_length 256 \
+    --learning_rate 5e-5 \
+    --epochs 20 \
+    --evaluate_during_training_steps 500 \
+    --output_dir /tmp/${DATA_NAME}_fed/ \
+    --n_gpu 1
 ```
 
 
 ## Experiments for Federated Learning
 
-1. Shakespeare + BiLSTM + FedAvg:
-```bash
-sh experiments/distributed/text_classification/run_fedavg_distributed_pytorch.sh 4 4 1 4 rnn hetero 100 1 10 0.8 shakespeare "./data/text_classification/shakespeare/" 0
+We already summarize some scripts for running federated learning experiments. Once you finished the environment settings, you can refer and run these scripts including `run_text_classification.sh`, `run_seq_tagging.sh` and `run_span_extraction.sh` under `experiments/distributed/transformer_exps`.
 
-##run on background
-nohup sh experiments/distributed/text_classification/run_fedavg_distributed_pytorch.sh 4 4 1 4 rnn hetero 100 1 10 0.8 shakespeare "./data/text_classification/shakespeare/" 0  2>&1 &
-```
 
 <!-- ### Update FedML Submodule 
 This is only for internal contributors, can put this kind of info to a seperate readme file.
@@ -109,26 +85,27 @@ At that time, we can install FedML package with pip or conda, without the need t
 - `FedML`: a soft repository link generated using `git submodule add https://github.com/FedML-AI/FedML`.
 
 
-- `data`: provide data downloading scripts and store the downloaded datasets.
+- `data`: provide data downloading scripts and raw data loader to process original data and generate h5py files. Besides, `data/advanced_partition` offers some practical partition functions to split data for each client.
+
 Note that in `FedML/data`, there also exists datasets for research, but these datasets are used for evaluating federated optimizers (e.g., FedAvg) and platforms.
 FedNLP supports more advanced datasets and models.
 
-- `data_preprocessing`: data loaders, partition methods and utility functions
+- `data_preprocessing`: preprocessors, examples and utility functions for each task formulation.
 
-- `model`: advanced NLP models.
+- `data_manager`: data manager is responsible for loading dataset and partition data from h5py files and driving preprocessor to transform data to features.
+
+- `model`: advanced NLP models. You can define your own models in this folder.
 
 - `trainer`: please define your own `trainer.py` by inheriting the base class in `FedML/fedml-core/trainer/fedavg_trainer.py`.
 Some tasks can share the same trainer.
 
 - `experiments/distributed`: 
 1. `experiments` is the entry point for training. It contains experiments in different platforms. We start from `distributed`.
-2. Every experiment integrates FOUR building blocks `FedML` (federated optimizers), `data_preprocessing`, `model`, `trainer`.
-3. To develop new experiments, please refer the code at `experiments/distributed/text-classification`.
+2. Every experiment integrates FIVE building blocks `FedML` (federated optimizers), `data_manager`, `data_preprocessing`, `model`, `trainer`.
+3. To develop new experiments, please refer the code at `experiments/distributed/transformer_exps/fedavg_main_tc.py`.
 
 - `experiments/centralized`: 
-1. please provide centralized training script in this directory. 
-2. This is used to get the reference model accuracy for FL. 
-3. You may need to accelerate your training through distributed training on multi-GPUs and multi-machines. Please refer the code at `experiments/centralized/DDP_demo`.
+1. This is used to get the reference model accuracy for FL. 
 
 
 
