@@ -9,6 +9,15 @@ Fednlp datasets contains 12 datasets which can be trained for four popular tasks
 - **sequence tagging**  
 - **sequence-to-sequence**
 
+## RawDataLoader
+RawDataLoader is responsible for loading data from original data files as well as saving the data as a special format(h5py in our case). As we know, every dataset has its own data format which means RawDataLoader should be various depending on the dataset. However, it is hard to load data from dataset-specific h5py files since different datasets have different structure in their h5py files and the framework has to spend a lot of time for maintaining a large bunch of dataset-specific loading functions. Therefore, we decide to create a more general way to keep our framework as clean as possible. 
+
+RawDataLoader is splitted into four classes based on the task definition in FedNLP. Each class has task-specific attributes and functions for loading and saving data. For each dataset, users can check their task definition, inherit one of the RawDataLoader classes and fulfill the required attributes and functions. Following the above structure, the framework can exploit the data in a faster and more convenient way.
+
+As we mentioned before, FedNLP utilizes h5py as a specific format to store data for future usage. There are several reasons why FedNLP uses h5py and why FedNLP does not load the data from original data files directly. The first one is about indexing. In FedNLP, we have to simulate the setting in federated learning. That is, partitioning the dataset into a number of parts as clients and training the machine learning model in those clients separately. In this case, each client only needs to load a part of data in a dataset, which is h5py good at. h5py is able to load a part of data instead of taking the whole dataset into memory by employing indexing techniques. In addition, h5py files can be used by multi processes which is suitable for our based framework FedML. Because a process means a client or a server in FedML so that all clients are capable of getting touch with data simultaneously.
+
+
+
 ## Download Data
 
 ### Bash downloader
