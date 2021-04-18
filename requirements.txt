@@ -49,7 +49,7 @@ MarkupSafe==1.1.1
 methodtools==0.1.2
 mistune==0.8.4
 mkl-fft==1.2.0
-mkl-random==1.1.1
+mkl-random
 mkl-service==2.3.0
 mpi4py==3.0.3
 murmurhash==1.0.5
