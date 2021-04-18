@@ -6,8 +6,6 @@ FedNLP is a research-oriented benchmarking framework for advancing *federated le
 It uses FedML repository as the git submodule. In other words, FedNLP only focuses on adavanced models and dataset, while FedML supports various
 federated optimizers (e.g., FedAvg) and platforms (Distributed Computing, IoT/Mobile, Standalone).
 
-The figure below is the overall structure of FedNLP.
-![avatar](./FedNLP.png)
 
 ## Installation
 <!-- http://doc.fedml.ai/#/installation -->
