@@ -1,21 +1,18 @@
-## Usage
+## functionality of each file
 
-visualization_stats prints basic stats for input partition method 
+**visualization_stats** prints basic stats for input partition method 
 
-visualization_heterogeneity cannot be applied on kmeans because we use Kmeans cluster as labels in LDA
-therefore we assume all the data in the same client in kmeans_partition has the same label.
-
-visualization_heatmap_unsort is the draw a heatmap. Each cell of the heatmap is the jensen-shannon distance of the corresponding client. For example (i,j) is the the distance between client_i and client_j
+**visualization_heatmap_unsort** is the draw a heatmap. Each cell of the heatmap is the jensen-shannon distance of the corresponding client. For example (i,j) is the the distance between client_i and client_j
 The larger the difference the larger the distance 
 
-visualization_heatmap_label is a heatmap of the distribution of all labels within each clients
+**visualization_heatmap_label** is a heatmap of the distribution of all labels within each clients
 
-visualization_distplot draws the distplots corresponding to all the label skew partition methods and
+**visualization_distplot** draws the distplots corresponding to all the label skew partition methods and
 put all the graphs in the same plot
 
-visualization_quantity_distplot draws the distplots corresponding to all the quantity skew partition methods and put all the graphs in the same plot
+**visualization_quantity_distplot** draws the distplots corresponding to all the quantity skew partition methods and put all the graphs in the same plot
 
-
+## Usage
 ``` bash
 DATA_DIR=~/fednlp_data/
 
