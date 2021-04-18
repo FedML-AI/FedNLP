@@ -2,6 +2,7 @@ import h5py
 import argparse
 import os
 import pickle
+import json
 from sentence_transformers import SentenceTransformer   
 from sklearn.cluster import KMeans
 from sklearn.model_selection import train_test_split
@@ -17,10 +18,12 @@ def get_embedding_Kmeans(embedding_exist,corpus, N_clients, bsz=16):
     else:
         corpus_embeddings = corpus
     ### KMEANS clustering
+    print("start Kmeans")
     num_clusters = N_clients
     clustering_model = KMeans(n_clusters=num_clusters)
     clustering_model.fit(corpus_embeddings)
     cluster_assignment = clustering_model.labels_
+    print("end Kmeans")
 
     return cluster_assignment, embedding_data
 
@@ -52,9 +55,20 @@ def main():
 
     # add a stroe_true for --overwrite 
     args = parser.parse_args()
-    N_Clients = args.client_number
+    N_Clients = args.cluster_number
     print("start reading data")
     f = h5py.File(args.data_file,"r")
+    attributes = json.loads(f["attributes"][()])
+    print(attributes.keys())
+    total_index_list = attributes['index_list']
+    test_index_list = []
+    train_index_list = []
+    if ("train_index_list" in attributes):
+        test_index_list = attributes['test_index_list']
+        print(len(test_index_list))
+        train_index_list = attributes['train_index_list']
+        print(len(train_index_list))
+    
     corpus = []
     if args.task_type == 'name_entity_recognition': # specifically wnut and wikiner datesets
         for i in f['X'].keys():
@@ -75,7 +89,7 @@ def main():
     print("start process embedding data and kmeans partition")
     cluster_assignment = []
     embedding_data = []
-    if args.overwrite == False and os.path.exists(args.embedding_file) == False:
+    if args.overwrite == False:
         cluster_assignment, corpus_embedding = get_embedding_Kmeans(False,corpus, N_Clients, args.bsz)
         embedding_data = {}
         embedding_data['data'] = corpus_embedding
@@ -89,28 +103,47 @@ def main():
                 embedding_data = embedding_data['data']
             cluster_assignment, corpus_embedding = get_embedding_Kmeans(True,embedding_data, N_Clients, args.bsz)
 
-    partition_pkl = {}
-    for index, idx in enumerate(cluster_assignment):
-        if idx in partition_pkl :
-            partition_pkl[idx].append(index)
+
+    print("start insert data")
+    partition_pkl_train = {}
+    partition_pkl_test = {}
+
+    for cluster_id in range(N_Clients):
+        partition_pkl_train[cluster_id] = []
+        partition_pkl_test[cluster_id] = []
+    
+    for index in train_index_list:
+        idx = cluster_assignment[index]
+        if idx in partition_pkl_train :
+            partition_pkl_train[idx].append(index)
         else:
-            partition_pkl[idx] = [index]
+            partition_pkl_train[idx] = [index]
+
+    for index in test_index_list:
+        idx = cluster_assignment[index]
+        if idx in partition_pkl_test :
+            partition_pkl_test[idx].append(index)
+        else:
+            partition_pkl_test[idx] = [index]
+
 
     print("store kmeans partition to file")
     partition = ""
     partition = h5py.File(args.partition_file,"a")
-    if partition['/kmeans_%d'%args.cluter_number]:
-        del partition['/kmeans_%d'%args.cluter_number]
+    if '/kmeans_clusters=%d'%args.cluster_number in partition:
+        del partition['/kmeans_clusters=%d'%args.cluster_number]
 
-    partition['/kmeans_%d'%args.client_number+'/n_clients'] = args.client_number
-    partition['/kmeans_%d'%args.client_number+'/client_assignment'] = cluster_assignment
+    partition['/kmeans_clusters=%d'%args.cluster_number+'/n_clients'] = args.cluster_number
+    partition['/kmeans_clusters=%d'%args.cluster_number+'/client_assignment'] = cluster_assignment
 
-    for i in sorted(partition_pkl.keys()):
-        train, test = train_test_split(partition_pkl[i], test_size=0.2, train_size = 0.8, random_state=42)
-        train_path = '/kmeans_%d'%args.client_number+'/partition_data/'+str(i)+'/train/'
-        test_path = '/kmeans_%d'%args.client_number+'/partition_data/'+str(i)+'/test/'
+    for i in sorted(partition_pkl_train.keys()):
+        train = partition_pkl_train[i]
+        test = partition_pkl_test[i]
+        train_path = '/kmeans_clusters=%d'%args.cluster_number+'/partition_data/'+str(i)+'/train/'
+        test_path = '/kmeans_clusters=%d'%args.cluster_number+'/partition_data/'+str(i)+'/test/'
         partition[train_path] = train
         partition[test_path] = test
+    
     partition.close()
 
 
