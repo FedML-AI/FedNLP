@@ -58,23 +58,26 @@ os.system("kill $(ps aux | grep \"fedavg_main_tc.py\" | grep -v grep | awk '{pri
 # sh run_text_classification.sh FedOPT "niid_quantity_clients=100_beta=5.0" 5e-5 0.1 0.5 30
 
 hps = [
-    'FedAvg "niid_label_clients=100_alpha=10.0" 1e-1 1 0.5 25',
-    'FedAvg "niid_label_clients=100_alpha=1.0" 1e-1 1 0.5 25',
-    'FedAvg "niid_quantity_clients=100_beta=5.0" 1e-1 1 0.5 25',
-    'FedAvg "uniform" 1e-1 1 0.5 25',
-    'FedAvg "niid_quantity_clients=100_beta=5.0" 1e-1 1 0.5 25',
+    # 'FedAvg "niid_label_clients=100_alpha=10.0" 1e-1 1 0.5 25',
+    # 'FedAvg "niid_label_clients=100_alpha=1.0" 1e-1 1 0.5 25',
+    # 'FedAvg "niid_quantity_clients=100_beta=5.0" 1e-1 1 0.5 25',
+    # 'FedAvg "uniform" 1e-1 1 0.5 25',
+    # 'FedAvg "niid_quantity_clients=100_beta=5.0" 1e-1 1 0.5 25',
 
-    'FedProx "niid_label_clients=100_alpha=5.0" 5e-5 0.1 0.5 25',
-    'FedProx "niid_label_clients=100_alpha=10.0" 5e-5 0.1 0.5 25',
-    'FedProx "niid_label_clients=100_alpha=1.0" 5e-5 0.1 0.5 25',
-    'FedProx "uniform" 5e-5 0.1 0.5 25',
-    'FedProx "niid_quantity_clients=100_beta=5.0" 5e-5 0.1 0.5 25',
+    'FedProx "niid_label_clients=100_alpha=5.0" 1e-1 0.1 1 25',
+    'FedProx "niid_label_clients=100_alpha=5.0" 1e-1 0.1 0.1 25',
+    'FedProx "niid_label_clients=100_alpha=5.0" 1e-1 0.1 0.01 25',
 
-    'FedOPT "niid_label_clients=100_alpha=5.0" 5e-5 0.1 0.5 25',
-    'FedOPT "niid_label_clients=100_alpha=10.0" 5e-5 0.1 0.5 25',
-    'FedOPT "niid_label_clients=100_alpha=1.0" 5e-5 0.1 0.5 25',
-    'FedOPT "uniform" 5e-5 0.1 0.5 25',
-    'FedOPT "niid_quantity_clients=100_beta=5.0" 5e-5 0.1 0.5 25',
+    # 'FedProx "niid_label_clients=100_alpha=10.0" 1e-1 0.1 0.5 25',
+    # 'FedProx "niid_label_clients=100_alpha=1.0" 1e-1 0.1 0.5 25',
+    # 'FedProx "uniform" 1e-1 0.1 0.5 25',
+    # 'FedProx "niid_quantity_clients=100_beta=5.0" 1e-1 0.1 0.5 25',
+
+    # 'FedOPT "niid_label_clients=100_alpha=5.0" 5e-5 0.1 0.5 25',
+    # 'FedOPT "niid_label_clients=100_alpha=10.0" 5e-5 0.1 0.5 25',
+    # 'FedOPT "niid_label_clients=100_alpha=1.0" 5e-5 0.1 0.5 25',
+    # 'FedOPT "uniform" 5e-5 0.1 0.5 25',
+    # 'FedOPT "niid_quantity_clients=100_beta=5.0" 5e-5 0.1 0.5 25',
 ]
 
 run_id = 0
