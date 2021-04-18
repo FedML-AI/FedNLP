@@ -5,9 +5,10 @@ We first use sentence transformer to compute the embedding of the data and then 
 
 
 ```bash
-#overwrite switch stores False the default value is True, 
-# if you want to create a new emebdding file add the overwrite switch on otherwise delete the argument the default value is True so that it will automatically use the existing embedding file 
-# use overwrite only if you want to create a new embedding file and not use or do not have an exisiting embedding file 
+# overwrite switch stores False the default value is True, 
+# if you want to create a new emebdding file add the overwrite switch on otherwise delete the argument the default value is True 
+# so that it will automatically use the 3 existing embedding file 
+# use overwrite only if you want to create a new embedding file or do not have an exisiting embedding file 
 # for example the current avaliable gpu is the first GPU use the export CUDA_VISIBLE_DEVICES=0 \ if the current avaliable 
 # GPU is the fourth one use the export CUDA_VISIBLE_DEVICES=3 \
 
@@ -48,12 +49,14 @@ python -m data.advanced_partition.kmeans  \
 
 ## niid_label_skew\ niid cluster skew
 
-we first kmeans to classify some datadataset in to {10,30,50} clusters and then apply DIR to distribute data in to different number of groups as defined in client number
+we first use kmeans clustering to classify some datasets in to {10,30,50} clusters and then calculate dirichlet distribution of all labels within each client 
 
+We already provide clusters data for datasets excluding **20news**, **agnews**, **sst2** because they have their own natural classification. 
 
-We already provide clusters data for datasets excluding **20news**, **agnews**, **sst2** because they have their own natural classification. In the each of the rest partition h5 files, you can access the clustering data by the keyword "**kmeans_%client_number**" based on how many client number you assign in the Kmeans partition and you can also find which data belongs to which cluster under the keyword **kmeans_%client_number/cluster_assignment** . If you would like to create different numbers of clusters you can use the kmeans code we provide above. you can access the partition data by the keyword **niid_cluster_clients=%client_number_alpha=%alpha** for non text-classification tasks, alpha and client is the value you input
+In the each of the rest partition h5 files, you can access the clustering data by the keyword "**kmeans_%client_number**" based on how many client number you assign in the Kmeans partition and you can also find which data belongs to which cluster under the keyword **kmeans_%client_number/cluster_assignment** . 
+you can access the partition data by the keyword **niid_cluster_clients=%client_number_alpha=%alpha** for non text-classification tasks, alpha and client is the value you input. If you would like to create different numbers of clusters you can use the kmeans code we provide above. 
 
-For text_classification data we use their natural label to form the paritition so in **20news**, **agnews**, **sst2**'s partition files  you can access partition by keyword **niid_label_clients=%client_number_alpha=%alpha** for text classification task where alpha is the value you input
+For text_classification data we use their natural label to form the paritition so in **20news**, **agnews**, **sst2**'s partition files, you can access partition by keyword **niid_label_clients=%client_number_alpha=%alpha** for text classification task where alpha is the value you input
 
 ### Usage
 
@@ -114,7 +117,7 @@ python -m data.advanced_partition.niid_label   \
 
 ## niid_quantity_skew
 
-In this partition method. We want to partition our data based solely on qunatity of data.
+In this partition method. We propose a partition method that distribute our data based solely on qunatity of data.
 Therefore, we assume all the data has only one label so we will use Dirichlet Distribution of 
 the quantities. beta will be used to calculate Dirichlet Distribution
 
@@ -168,7 +171,7 @@ python -m data.advanced_partition.niid_quantity   \
 --partition_file ${DATA_DIR}/partition_files/squad_1.1_partition.h5 \
 --task_type reading_comprehension \
 --kmeans_num 30  \
---beta 1
+--beta 5
 
 
 
