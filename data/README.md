@@ -48,6 +48,8 @@ The other files in directory **partition_files** are splited dataset using multi
 
 ### Data Partition Methods 
 
+All the methods metioned below or show in the chart can be found in our preprocessed partition files
+
 #### bert based kmeans clustering
 data/advanced_partition/kmeans.py will generate "kmean_%cluster_number%" based on the input argument --cluster_number except for text classification datasets {**20news**, **sst_2**, **agnews**} because we use natural partition of these datasets
 
