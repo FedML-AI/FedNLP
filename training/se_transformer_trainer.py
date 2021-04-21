@@ -17,7 +17,7 @@ from transformers import (
     get_linear_schedule_with_warmup,
 )
 
-from data_preprocessing.utils.span_extraction_utils import (
+from utils.span_extraction_utils import (
     RawResult,
     RawResultExtended,
     to_list,
