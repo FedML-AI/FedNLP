@@ -1,4 +1,4 @@
-# FedNLP: A Benchmarking Framework for Federated Learning in Natural Language Processing
+# FedNLP: A Research Platform for Federated Learning in Natural Language Processing
  
 <!-- This is FedNLP, an application ecosystem for federated natural language processing based on FedML framework (https://github.com/FedML-AI/FedML). -->
 
@@ -118,6 +118,14 @@ git push
 
 ## Citation
 Please cite our FedNLP and FedML paper if it helps your research.
-You can describe us in your paper like this: "We develop our experiments based on FedNLP [1] and FedML [2]".
+```bib
+@inproceedings{fednlp2021,
+  title={FedNLP: A Research Platform for Federated Learning in Natural Language Processing},
+  author={Bill Yuchen Lin and Chaoyang He and ZiHang Zeng and Hulin Wang and Yufen Huang and M. Soltanolkotabi and Xiang Ren and S. Avestimehr},
+  year={2021},
+  booktitle={arXiv cs.CL 2104.08815},
+  url={https://arxiv.org/abs/2104.08815}
+}
+```
 
  
