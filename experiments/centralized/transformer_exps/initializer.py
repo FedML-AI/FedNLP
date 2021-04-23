@@ -11,6 +11,9 @@ from transformers import (
     DistilBertTokenizer,
     DistilBertForTokenClassification,
     DistilBertForQuestionAnswering,
+    BartConfig, 
+    BartForConditionalGeneration, 
+    BartTokenizer,
 )
 
 from model.transformer.bert_model import BertForSequenceClassification
@@ -34,6 +37,9 @@ def create_model(args, formulation="classification"):
             "bert": (BertConfig, BertForQuestionAnswering, BertTokenizer),
             "distilbert": (DistilBertConfig, DistilBertForQuestionAnswering, DistilBertTokenizer),
         },
+        "seq2seq": {
+            "bart": (BartConfig, BartForConditionalGeneration, BartTokenizer),
+        }
     }
     config_class, model_class, tokenizer_class = MODEL_CLASSES[formulation][
         args.model_type]
