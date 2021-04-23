@@ -62,7 +62,6 @@ class TLMPreprocessor(BasePreprocessor):
 
         if evaluate:
             all_feature_index = torch.arange(all_input_ids.size(0), dtype=torch.long)
-            logging.info(all_feature_index.size())
             dataset = TensorDataset(
                 all_guid, all_input_ids, all_attention_masks, all_token_type_ids, all_feature_index, all_cls_index, all_p_mask
             )
@@ -87,7 +86,7 @@ class TLMPreprocessor(BasePreprocessor):
         for c, q, a, qas_id, idx in zip(context_X, question_X, y, qas_ids, index_list):
             answers = [{"text": c[a[0]:a[1]], "answer_start": a[0]}]
             example = SpanExtractionInputExample(
-                guid=idx,
+                guid= int(idx),
                 qas_id = qas_id,
                 question_text=q,
                 context_text=c,

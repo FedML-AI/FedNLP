@@ -17,7 +17,7 @@ from transformers import (
     get_linear_schedule_with_warmup,
 )
 
-from utils.span_extraction_utils import (
+from training.utils.span_extraction_utils import (
     RawResult,
     RawResultExtended,
     to_list,
@@ -360,54 +360,128 @@ class SpanExtractionTrainer:
         return all_predictions, all_nbest_json, scores_diff_json, eval_loss
 
     def calculate_results(self, predictions, **kwargs):
-        truth_dict = {}
-        questions_dict = {}
+        # truth_dict = {}
+        # questions_dict = {}
+        # all_examples = self.test_dl.examples
+        # for example in all_examples:
+        #     truth_dict[example.qas_id] = example.answer_text
+        #     questions_dict[example.qas_id] = example.question_text
+
+        # correct = 0
+        # incorrect = 0
+        # similar = 0
+        # correct_text = {}
+        # incorrect_text = {}
+        # similar_text = {}
+        # predicted_answers = []
+        # true_answers = []
+
+        # for q_id, answer in truth_dict.items():
+        #     predicted_answers.append(predictions[q_id])
+        #     true_answers.append(answer)
+        #     if predictions[q_id].strip() == answer.strip():
+        #         correct += 1
+        #         correct_text[q_id] = answer
+        #     elif predictions[q_id].strip() in answer.strip() or answer.strip() in predictions[q_id].strip():
+        #         similar += 1
+        #         similar_text[q_id] = {
+        #             "truth": answer,
+        #             "predicted": predictions[q_id],
+        #             "question": questions_dict[q_id],
+        #         }
+        #     else:
+        #         incorrect += 1
+        #         incorrect_text[q_id] = {
+        #             "truth": answer,
+        #             "predicted": predictions[q_id],
+        #             "question": questions_dict[q_id],
+        #         }
+
+        # extra_metrics = {}
+        # for metric, func in kwargs.items():
+        #     extra_metrics[metric] = func(true_answers, predicted_answers)
+
+        # exact_raw, f1_raw = get_raw_scores(all_examples, predictions)
+        # standard_metrics = {
+        #     "exact_match": sum(exact_raw.values()) / len(exact_raw),
+        #     "f1_score": sum(f1_raw.values()) / len(f1_raw)
+        # }
+
+        # result = {"correct": correct, "similar": similar, "incorrect": incorrect, **extra_metrics, **standard_metrics}
+        # wandb.log(result)
+
+        # texts = {
+        #     "correct_text": correct_text,
+        #     "similar_text": similar_text,
+        #     "incorrect_text": incorrect_text,
+        # }
+        
+        # implement FedNLP evaluate function
         all_examples = self.test_dl.examples
-        for example in all_examples:
-            truth_dict[example.qas_id] = example.answer_text
-            questions_dict[example.qas_id] = example.question_text
-
-        correct = 0
-        incorrect = 0
-        similar = 0
-        correct_text = {}
-        incorrect_text = {}
-        similar_text = {}
-        predicted_answers = []
-        true_answers = []
-
-        for q_id, answer in truth_dict.items():
-            predicted_answers.append(predictions[q_id])
-            true_answers.append(answer)
-            if predictions[q_id].strip() == answer.strip():
-                correct += 1
-                correct_text[q_id] = answer
-            elif predictions[q_id].strip() in answer.strip() or answer.strip() in predictions[q_id].strip():
-                similar += 1
-                similar_text[q_id] = {
-                    "truth": answer,
-                    "predicted": predictions[q_id],
-                    "question": questions_dict[q_id],
-                }
-            else:
-                incorrect += 1
-                incorrect_text[q_id] = {
-                    "truth": answer,
-                    "predicted": predictions[q_id],
-                    "question": questions_dict[q_id],
-                }
-
-        extra_metrics = {}
-        for metric, func in kwargs.items():
-            extra_metrics[metric] = func(true_answers, predicted_answers)
-
         exact_raw, f1_raw = get_raw_scores(all_examples, predictions)
+        
+        exact_dict = {}
+        f1_dict = {}
+        counter_dict = {}
+        text_dict = {}
+        for example in all_examples:
+            guid = example.guid
+            pred = predictions[guid]
+            qid = example.qas_id
+            if qid not in exact_dict:
+                exact_dict[qid] = 0
+            if qid not in f1_dict:
+                f1_dict[qid] = 0
+            exact_dict[qid] = max(exact_dict[qid], exact_raw[guid])
+            f1_dict[qid] = max(f1_dict[qid], f1_raw[guid])
+            answer = example.answer_text
+            if answer.strip() == pred.strip():
+                counter_dict[qid] = 2
+                text_dict[qid] = {
+                    "truth": answer,
+                    "predicted": pred,
+                    "question": example.question_text
+                }
+            elif answer.strip() in pred.strip() or pred.strip() in answer.strip():
+                if qid not in counter_dict or counter_dict[qid] < 1:
+                    counter_dict[qid] = 1
+                    text_dict[qid] = {
+                        "truth": answer,
+                        "predicted": pred,
+                        "question": example.question_text
+                    }
+            else:
+                if qid not in counter_dict:
+                    counter_dict[qid] = 0
+                    text_dict[qid] = {
+                        "truth": answer,
+                        "predicted": pred,
+                        "question": example.question_text
+                    }
+
+        correct_text = {}
+        similar_text = {}
+        incorrect_text = {}
+        correct = 0
+        similar = 0
+        incorrect = 0
+        for qid, val in counter_dict.items():
+            if val == 2:
+                correct_text[qid] = text_dict[qid]
+                correct += 1
+            elif val == 1:
+                similar_text[qid] = text_dict[qid]
+                similar += 1
+            else:
+                incorrect_text[qid] = text_dict[qid]
+                incorrect += 1
+        
         standard_metrics = {
             "exact_match": sum(exact_raw.values()) / len(exact_raw),
             "f1_score": sum(f1_raw.values()) / len(f1_raw)
         }
 
-        result = {"correct": correct, "similar": similar, "incorrect": incorrect, **extra_metrics, **standard_metrics}
+        result = {"correct": correct, "similar": similar, "incorrect": incorrect, **standard_metrics}
         wandb.log(result)
 
         texts = {
@@ -415,6 +489,7 @@ class SpanExtractionTrainer:
             "similar_text": similar_text,
             "incorrect_text": incorrect_text,
         }
+
 
         return result, texts
 

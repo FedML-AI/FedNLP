@@ -12,7 +12,7 @@ import numpy as np
 import sklearn
 import torch
 import wandb
-from utils.text_classification_utils import *
+from training.utils.text_classification_utils import *
 from torch.nn import CrossEntropyLoss
 from torch.optim import SGD
 from transformers import (

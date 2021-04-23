@@ -49,6 +49,8 @@ if __name__ == "__main__":
     model_args.model_name = args.model_name
     model_args.model_type = args.model_type
     model_args.load(model_args.model_name)
+    # temporary add
+    model_args.fl_algorithm = ""
     model_args.update_from_dict({"epochs": args.epochs,
                                  "learning_rate": args.learning_rate,
                                  "gradient_accumulation_steps": args.gradient_accumulation_steps,
@@ -89,7 +91,7 @@ if __name__ == "__main__":
 ''' Example Usage:
 
 DATA_NAME=squad_1.1
-CUDA_VISIBLE_DEVICES=1 python -m experiments.centralized.transformer_exps.main_se \
+CUDA_VISIBLE_DEVICES=2 python -m experiments.centralized.transformer_exps.main_se \
     --dataset ${DATA_NAME} \
     --data_file ~/fednlp_data/data_files/${DATA_NAME}_data.h5 \
     --partition_file ~/fednlp_data/partition_files/${DATA_NAME}_partition.h5 \
@@ -102,7 +104,7 @@ CUDA_VISIBLE_DEVICES=1 python -m experiments.centralized.transformer_exps.main_s
     --max_seq_length 256 \
     --learning_rate 5e-5 \
     --epochs 20 \
-    --evaluate_during_training_steps 2000 \
+    --evaluate_during_training_steps 200 \
     --output_dir /tmp/${DATA_NAME}_fed/ \
     --n_gpu 1
 
