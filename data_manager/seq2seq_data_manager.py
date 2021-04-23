@@ -1,5 +1,5 @@
 from data_manager.base_data_manager import BaseDataManager
-
+from tqdm import tqdm
 
 class Seq2SeqDataManager(BaseDataManager):
     """Data manager for seq2seq"""
@@ -17,6 +17,9 @@ class Seq2SeqDataManager(BaseDataManager):
 
 
     def read_instance_from_h5(self, data_file, index_list, desc=""):
-        X = [data_file["X"][str(idx)][()].decode("utf-8") for idx in index_list]
-        y = [data_file["Y"][str(idx)][()].decode("utf-8") for idx in index_list]
-        return X, y
+        X = list()
+        y = list()
+        for idx in tqdm(index_list, desc="Loading data from h5 file." + desc):
+            X.append(data_file["X"][str(idx)][()].decode("utf-8"))
+            y.append(data_file["Y"][str(idx)][()].decode("utf-8"))
+        return {"X": X, "y": y}

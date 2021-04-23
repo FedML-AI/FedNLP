@@ -16,12 +16,10 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "../../")))
 sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), "../../../")))
 
 
-from data_preprocessing.seq_tagging_preprocessor import TLMPreprocessor
-from data_manager.seq_tagging_data_manager import SequenceTaggingDataManager
+from data_preprocessing.seq2seq_preprocessor import TLMPreprocessor
+from data_manager.seq2seq_data_manager import Seq2SeqDataManager
 
-from model.transformer.model_args import SeqTaggingArgs
-
-from training.st_transformer_trainer import SeqTaggingTrainer
+from model.transformer.model_args import Seq2SeqArgs
 
 from experiments.centralized.transformer_exps.initializer import set_seed, add_centralized_args, create_model
  
@@ -46,15 +44,13 @@ if __name__ == "__main__":
     device = torch.device("cuda:0")
 
     # attributes
-    attributes = SequenceTaggingDataManager.load_attributes(args.data_file_path)
-    num_labels = len(attributes["label_vocab"])
+    attributes = Seq2SeqDataManager.load_attributes(args.data_file_path)
 
     # model
-    model_args = SeqTaggingArgs()    
+    model_args = Seq2SeqArgs()    
     model_args.model_name = args.model_name
     model_args.model_type = args.model_type
     model_args.load(model_args.model_name)
-    model_args.num_labels = num_labels
     model_args.fl_algorithm = ""
     model_args.update_from_dict({"epochs": args.epochs,
                               "learning_rate": args.learning_rate,
@@ -75,17 +71,37 @@ if __name__ == "__main__":
                               "output_dir": args.output_dir,
                               "is_debug_mode": args.is_debug_mode
                               })
-    model_args.config["num_labels"] = num_labels
-    model_config, model, tokenizer = create_model(model_args, formulation="seq_tagging")
+    # model_config, model, tokenizer = create_model(model_args, formulation="seq_tagging")
 
     # preprocessor
-    preprocessor = TLMPreprocessor(args=model_args, label_vocab=attributes["label_vocab"], tokenizer=tokenizer)
+    preprocessor = TLMPreprocessor(args=model_args)
 
     # data manager
     process_id = 0
     num_workers = 1
-    dm = SequenceTaggingDataManager(args, model_args, preprocessor)
+    dm = Seq2SeqDataManager(args, model_args, preprocessor)
     train_dl, test_dl = dm.load_centralized_data()
 
 
 
+''' Example Usage:
+
+DATA_NAME=wmt_zh-en
+CUDA_VISIBLE_DEVICES=2 python -m experiments.centralized.transformer_exps.main_ss \
+    --dataset ${DATA_NAME} \
+    --data_file ~/fednlp_data/data_files/${DATA_NAME}_data.h5 \
+    --partition_file ~/fednlp_data/partition_files/${DATA_NAME}_partition.h5 \
+    --partition_method uniform \
+    --model_type distilbert \
+    --model_name distilbert-base-uncased  \
+    --do_lower_case True \
+    --train_batch_size 32 \
+    --eval_batch_size 8 \
+    --max_seq_length 256 \
+    --learning_rate 5e-5 \
+    --epochs 20 \
+    --evaluate_during_training_steps 200 \
+    --output_dir /tmp/${DATA_NAME}_fed/ \
+    --n_gpu 1
+
+'''

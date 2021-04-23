@@ -5,6 +5,7 @@ from dataclasses import asdict, dataclass, field
 from multiprocessing import cpu_count
 
 from torch.nn import CrossEntropyLoss
+from torch.utils.data import Dataset
 
 
 def get_default_process_count():
@@ -169,3 +170,28 @@ class SpanExtractionArgs(ModelArgs):
     null_score_diff_threshold: float = 0.0
     evaluate_during_training_steps: int = 20
     evaluate_during_training: bool = True
+
+
+@dataclass
+class Seq2SeqArgs(ModelArgs):
+    """
+    Model args for a Seq2SeqModel
+    """
+
+    model_class: str = "Seq2SeqModel"
+    base_marian_model_name: str = None
+    dataset_class: Dataset = None
+    do_sample: bool = False
+    early_stopping: bool = True
+    evaluate_generated_text: bool = False
+    length_penalty: float = 2.0
+    max_length: int = 20
+    max_steps: int = -1
+    num_beams: int = 1
+    num_return_sequences: int = 1
+    repetition_penalty: float = 1.0
+    top_k: float = None
+    top_p: float = None
+    use_multiprocessed_decoding: bool = False
+    src_lang: str = "en_XX"
+    tgt_lang: str = "ro_RO"

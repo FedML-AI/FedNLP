@@ -108,5 +108,4 @@ CUDA_VISIBLE_DEVICES=2 python -m experiments.centralized.transformer_exps.main_s
     --output_dir /tmp/${DATA_NAME}_fed/ \
     --n_gpu 1
 
-
 '''
