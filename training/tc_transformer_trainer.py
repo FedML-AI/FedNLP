@@ -211,7 +211,7 @@ class TextClassificationTrainer:
         warmup_steps = math.ceil(iteration_in_total * self.args.warmup_ratio)
         self.args.warmup_steps = warmup_steps if self.args.warmup_steps == 0 else self.args.warmup_steps
         logging.info("warmup steps = %d" % self.args.warmup_steps)
-        if self.args.fl_algorithm == "FedOPT":
+        if self.args.fl_algorithm == "FedOPT" or self.args.fl_algorithm == "":
             optimizer = AdamW(model.parameters(), lr=self.args.learning_rate, eps=self.args.adam_epsilon)
         else:
             optimizer = SGD(model.parameters(), lr=self.args.learning_rate)
