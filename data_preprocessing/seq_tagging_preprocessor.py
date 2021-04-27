@@ -51,17 +51,10 @@ class TLMPreprocessor(BasePreprocessor):
         all_input_mask = torch.tensor([f.input_mask for f in features], dtype=torch.long)
         all_segment_ids = torch.tensor([f.segment_ids for f in features], dtype=torch.long)
         all_label_ids = torch.tensor([f.label_ids for f in features], dtype=torch.long)
-
-        if self.args.model_type == "layoutlm":
-            all_bboxes = torch.tensor([f.bboxes for f in features], dtype=torch.long)
-
         # if self.args.onnx:
         #     return all_label_ids
 
-        if self.args.model_type == "layoutlm":
-            dataset = TensorDataset(all_guid, all_input_ids, all_input_mask, all_segment_ids, all_label_ids, all_bboxes)
-        else:
-            dataset = TensorDataset(all_guid, all_input_ids, all_input_mask, all_segment_ids, all_label_ids)
+        dataset = TensorDataset(all_guid, all_input_ids, all_input_mask, all_segment_ids, all_label_ids)
         return examples, features, dataset
 
     def transform_examples(self, X, y, index_list):
