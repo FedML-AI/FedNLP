@@ -85,7 +85,7 @@ class BaseDataManager(ABC):
     def get_all_clients(self):
         return list(range(0, self.num_clients))
 
-    def load_centralized_data(self):
+    def load_centralized_data(self, cut_off=None):
         data_file = h5py.File(self.args.data_file_path, "r", swmr=True)
         partition_file = h5py.File(
             self.args.partition_file_path, "r", swmr=True)
@@ -98,10 +98,10 @@ class BaseDataManager(ABC):
                 desc="Loading index from h5 file."):
             train_index_list.extend(
                 partition_file[partition_method]["partition_data"]
-                [client_idx]["train"][()])
+                [client_idx]["train"][()][:cut_off])
             test_index_list.extend(
                 partition_file[partition_method]["partition_data"]
-                [client_idx]["test"][()])
+                [client_idx]["test"][()][:cut_off])
         train_data = self.read_instance_from_h5(data_file, train_index_list)
         test_data = self.read_instance_from_h5(data_file, test_index_list)
         data_file.close()
