@@ -72,16 +72,14 @@ class TLMPreprocessor(BasePreprocessor):
             words = sentence_df["words"].tolist()
             if self.text_cleaner:
                 words = self.text_cleaner(words)
-            if self.args.model_type != "layoutlm":
-                examples.append(SeqTaggingInputExample(guid=sentence_id, words=words, labels=sentence_df["labels"].tolist()))
-            else:
-                examples.append(SeqTaggingInputExample(guid=sentence_id,
-                                                        words=words,
-                                                        labels=sentence_df["labels"].tolist(),
-                                                        x0=sentence_df["x0"].tolist(),
-                                                        y0=sentence_df["y0"].tolist(),
-                                                        x1=sentence_df["x1"].tolist(),
-                                                        y1=sentence_df["y1"].tolist()))
+            
+            examples.append(SeqTaggingInputExample(guid=sentence_id,
+                                                    words=words,
+                                                    labels=sentence_df["labels"].tolist(),
+                                                    x0=sentence_df["x0"].tolist(),
+                                                    y0=sentence_df["y0"].tolist(),
+                                                    x1=sentence_df["x1"].tolist(),
+                                                    y1=sentence_df["y1"].tolist()))
 
         return examples
 
