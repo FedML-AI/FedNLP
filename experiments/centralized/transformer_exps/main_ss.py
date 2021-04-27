@@ -71,29 +71,30 @@ if __name__ == "__main__":
                               "output_dir": args.output_dir,
                               "is_debug_mode": args.is_debug_mode
                               })
-    # model_config, model, tokenizer = create_model(model_args, formulation="seq_tagging")
+    model_config, model, tokenizer = create_model(model_args, formulation="seq2seq")
 
     # preprocessor
-    preprocessor = TLMPreprocessor(args=model_args)
+    preprocessor = TLMPreprocessor(args=model_args, tokenizer=tokenizer)
 
     # data manager
     process_id = 0
     num_workers = 1
     dm = Seq2SeqDataManager(args, model_args, preprocessor)
-    train_dl, test_dl = dm.load_centralized_data()
+    train_dl, test_dl = dm.load_centralized_data(cut_off=1)
+
 
 
 
 ''' Example Usage:
 
-DATA_NAME=wmt_zh-en
-CUDA_VISIBLE_DEVICES=2 python -m experiments.centralized.transformer_exps.main_ss \
+DATA_NAME=cnn_dailymail
+CUDA_VISIBLE_DEVICES=1 python -m experiments.centralized.transformer_exps.main_ss \
     --dataset ${DATA_NAME} \
     --data_file ~/fednlp_data/data_files/${DATA_NAME}_data.h5 \
     --partition_file ~/fednlp_data/partition_files/${DATA_NAME}_partition.h5 \
     --partition_method uniform \
-    --model_type distilbert \
-    --model_name distilbert-base-uncased  \
+    --model_type bart \
+    --model_name facebook/bart-base  \
     --do_lower_case True \
     --train_batch_size 32 \
     --eval_batch_size 8 \

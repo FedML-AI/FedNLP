@@ -101,3 +101,18 @@ class SpanExtractionInputExample(InputExample):
             self.end_position = char_to_word_offset[
                 min(start_position_character + len(answer_text) - 1, len(char_to_word_offset) - 1)
             ]
+
+
+class Seq2SeqInputExample(InputExample):
+    """A single training/test example for simple sequence2sequence."""
+
+    def __init__(self, guid, input_text, target_text):
+        """Constructs a InputExample.
+        Args:
+            guid: Unique id for the example.
+            input_text: string. The untokenized text of the input sequence.
+            target_text: string. The untokenized text of the target sequence.
+        """
+        super().__init__(guid)
+        self.input_text = input_text
+        self.target_text = target_text

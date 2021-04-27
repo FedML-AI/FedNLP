@@ -8,9 +8,9 @@ import pandas as pd
 import torch
 from torch.utils.data import TensorDataset
 
-from data_preprocessing.base.base_example import SeqTaggingInputExample
+from data_preprocessing.base.base_example import Seq2SeqInputExample
 from data_preprocessing.base.base_preprocessor import BasePreprocessor
-from data_preprocessing.utils.seq_tagging_utils import convert_examples_to_features
+from data_preprocessing.utils.seq2seq_utils import Seq2SeqDataset, SimpleSummarizationDataset
 
 customized_cleaner_dict = {}
 
@@ -35,16 +35,39 @@ class TLMPreprocessor(BasePreprocessor):
         if index_list is None:
             index_list = [i for i in range(len(X))]
 
-        examples = self.transform_examples(X, y)
+        examples = self.transform_examples(X, y, index_list)
         features = self.transform_features(examples, evaluate)
 
-        dataset = None
+        # for seq2seq task, transform_features func transform examples to dataset directly
+        dataset = features
         
         return examples, features, dataset
 
     def transform_examples(self, X, y, index_list):
-        return None
+        examples = list()
+        for src_text, tgt_text, idx in zip(X, y, index_list):
+            examples.append(Seq2SeqInputExample(idx, src_text, tgt_text))
+        return examples
 
     def transform_features(self, examples, evaluate=False, no_cache=False):
-        return None
+        encoder_tokenizer = self.tokenizer
+        decoder_tokenizer = self.tokenizer
+        args = self.args
+
+        if not no_cache:
+            no_cache = args.no_cache
+
+        if not no_cache:
+            os.makedirs(self.args.cache_dir, exist_ok=True)
+
+        mode = "dev" if evaluate else "train"
+
+        if args.dataset_class:
+            CustomDataset = args.dataset_class
+            return CustomDataset(encoder_tokenizer, decoder_tokenizer, args, examples, mode)
+        else:
+            if args.model_type in ["bart", "mbart", "marian"]:
+                return SimpleSummarizationDataset(encoder_tokenizer, self.args, examples, mode)
+            else:
+                return Seq2SeqDataset(encoder_tokenizer, decoder_tokenizer, self.args, examples, mode,)
 
