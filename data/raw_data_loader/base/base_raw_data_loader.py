@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 import h5py
 import json
 import numpy as np
+from tqdm import tqdm
 
 class BaseRawDataLoader(ABC):
     @abstractmethod
@@ -87,6 +88,20 @@ class Seq2SeqRawDataLoader(BaseRawDataLoader):
         for key in self.X.keys():
             f["X/" + str(key)] = self.X[key]
             f["Y/" + str(key)] = self.Y[key]
+        f.close()
+
+class LanguageModelRawDataLoader(BaseRawDataLoader):
+    def __init__(self, data_path):
+        super(LanguageModelRawDataLoader, self).__init__(data_path)
+        self.X = dict()
+        self.task_type = "lm"
+    
+    def generate_h5_file(self, file_path):
+        f = h5py.File(file_path, "w")
+        f["attributes"] = json.dumps(self.attributes)
+        utf8_type = h5py.string_dtype('utf-8', None)
+        for key in tqdm(self.X.keys(), desc="generate data h5 file"):
+            f["X/" + str(key)] = np.array(self.X[key], dtype=utf8_type)
         f.close()
 
 
