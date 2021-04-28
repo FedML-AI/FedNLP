@@ -99,9 +99,8 @@ class LanguageModelRawDataLoader(BaseRawDataLoader):
     def generate_h5_file(self, file_path):
         f = h5py.File(file_path, "w")
         f["attributes"] = json.dumps(self.attributes)
-        utf8_type = h5py.string_dtype('utf-8', None)
         for key in tqdm(self.X.keys(), desc="generate data h5 file"):
-            f["X/" + str(key)] = np.array(self.X[key], dtype=utf8_type)
+            f["X/" + str(key)] = self.X[key]
         f.close()
 
 
