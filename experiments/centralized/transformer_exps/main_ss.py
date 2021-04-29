@@ -20,7 +20,7 @@ from data_preprocessing.seq2seq_preprocessor import TLMPreprocessor
 from data_manager.seq2seq_data_manager import Seq2SeqDataManager
 
 from model.transformer.model_args import Seq2SeqArgs
-
+from training.ss_transformer_trainer import Seq2SeqTrainer
 from experiments.centralized.transformer_exps.initializer import set_seed, add_centralized_args, create_model
  
 
@@ -80,10 +80,13 @@ if __name__ == "__main__":
     process_id = 0
     num_workers = 1
     dm = Seq2SeqDataManager(args, model_args, preprocessor)
-    train_dl, test_dl = dm.load_centralized_data(cut_off=1)
+    train_dl, test_dl = dm.load_centralized_data(cut_off=1) # cut_off = 1 for each client.
 
-
-
+    # Create a Seq2Seq Trainer and start train
+    trainer = Seq2SeqTrainer(model_args, device, model, train_dl, test_dl, tokenizer)
+    trainer.train_model()
+    trainer.eval_model()
+    
 
 ''' Example Usage:
 
