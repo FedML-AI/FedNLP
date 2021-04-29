@@ -47,8 +47,14 @@ def create_model(args, formulation="classification"):
     #     args.model_name, num_labels=args.num_labels, **args.config)
     config = config_class.from_pretrained(args.model_name, **args.config)
     model = model_class.from_pretrained(args.model_name, config=config)
-    tokenizer = tokenizer_class.from_pretrained(
-        args.model_name, do_lower_case=args.do_lower_case)
+    if formulation != "seq2seq":
+        tokenizer = tokenizer_class.from_pretrained(
+            args.model_name, do_lower_case=args.do_lower_case)
+    else:
+        tokenizer = [None, None]
+        tokenizer[0] = tokenizer_class.from_pretrained(args.model_name)
+        tokenizer[1]= tokenizer[0]
+    
     # logging.info(self.model)
     return config, model, tokenizer
 

@@ -31,13 +31,14 @@ class Seq2SeqTrainer:
         self.device = device
 
         # set data
-        self.num_labels = args.num_labels
         self.set_data(train_dl, test_dl)
 
         # model
         self.model = model
         self.model.to(self.device)
-        self.tokenizer = tokenizer
+        # self.tokenizer = tokenizer
+        self.encoder_tokenizer = tokenizer[0]
+        self.decoder_tokenizer = tokenizer[1]
 
         # training results
         self.results = {}
@@ -152,7 +153,8 @@ class Seq2SeqTrainer:
             self.model.train()
             
             for batch_idx, batch in enumerate(self.train_dl):
-                batch = tuple(t.to(device) for t in batch)
+                # print(batch)
+                # batch = tuple(t.to(device) for t in batch)
                 
                 inputs = self._get_inputs_dict(batch)
                 if args.fp16:

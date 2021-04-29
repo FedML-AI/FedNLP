@@ -76,11 +76,11 @@ class Seq2SeqDataset(Dataset):
 def preprocess_data_bart(data):
     input_text, target_text, tokenizer, args = data
 
-    input_ids = tokenizer.batch_encode_plus(
+    input_ids = tokenizer[0].batch_encode_plus(
         [input_text], max_length=args.max_seq_length, padding="max_length", return_tensors="pt", truncation=True
     )
 
-    target_ids = tokenizer.batch_encode_plus(
+    target_ids = tokenizer[1].batch_encode_plus(
         [target_text], max_length=args.max_seq_length, padding="max_length", return_tensors="pt", truncation=True
     )
 

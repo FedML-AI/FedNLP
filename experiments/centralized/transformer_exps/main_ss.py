@@ -91,7 +91,7 @@ if __name__ == "__main__":
 ''' Example Usage:
 
 DATA_NAME=cnn_dailymail
-CUDA_VISIBLE_DEVICES=1 python -m experiments.centralized.transformer_exps.main_ss \
+CUDA_VISIBLE_DEVICES=0 python -m experiments.centralized.transformer_exps.main_ss \
     --dataset ${DATA_NAME} \
     --data_file ~/fednlp_data/data_files/${DATA_NAME}_data.h5 \
     --partition_file ~/fednlp_data/partition_files/${DATA_NAME}_partition.h5 \
@@ -99,8 +99,8 @@ CUDA_VISIBLE_DEVICES=1 python -m experiments.centralized.transformer_exps.main_s
     --model_type bart \
     --model_name facebook/bart-base  \
     --do_lower_case True \
-    --train_batch_size 32 \
-    --eval_batch_size 8 \
+    --train_batch_size 8 \
+    --eval_batch_size 4 \
     --max_seq_length 256 \
     --learning_rate 5e-5 \
     --epochs 20 \
