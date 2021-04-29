@@ -128,4 +128,13 @@ Please cite our FedNLP and FedML paper if it helps your research.
 }
 ```
 
+```
+@article{chaoyanghe2020fedml,
+  Author = {He, Chaoyang and Li, Songze and So, Jinhyun and Zhang, Mi and Wang, Hongyi and Wang, Xiaoyang and Vepakomma, Praneeth and Singh, Abhishek and Qiu, Hang and Shen, Li and Zhao, Peilin and Kang, Yan and Liu, Yang and Raskar, Ramesh and Yang, Qiang and Annavaram, Murali and Avestimehr, Salman},
+  Journal = {arXiv preprint arXiv:2007.13518},
+  Title = {FedML: A Research Library and Benchmark for Federated Machine Learning},
+  Year = {2020}
+}
+```
+
  
