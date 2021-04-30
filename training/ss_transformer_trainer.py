@@ -275,8 +275,9 @@ class Seq2SeqTrainer:
         references = [ex.target_text for ex in self.test_dl.examples]
         model_preds = self.predict(to_predict)
 
-        result = self.compute_metrics(references, model_preds)
-        self.results.update(result)
+        # TODO: compute ROUGE/BLUE/ scores here.
+        # result = self.compute_metrics(references, model_preds)
+        # self.results.update(result)
             
         logging.info(self.results)
 
