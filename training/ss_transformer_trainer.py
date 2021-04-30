@@ -17,6 +17,8 @@ from seqeval.metrics import (
     recall_score,
     classification_report
 )
+from multiprocessing import Pool, cpu_count
+from tqdm import tqdm
 from torch.nn import CrossEntropyLoss
 from torch.optim import SGD
 from transformers import (
@@ -231,7 +233,7 @@ class Seq2SeqTrainer:
         self.model.eval()
         logging.info("len(test_dl) = %d, n_batches = %d" % (len(self.test_dl), n_batches))
         for i, batch in enumerate(self.test_dl):
-            batch = tuple(t for t in batch)
+            # batch = tuple(t for t in batch)
             inputs = self._get_inputs_dict(batch)
             with torch.no_grad(): 
                 outputs = self.model(**inputs)
@@ -266,13 +268,15 @@ class Seq2SeqTrainer:
                 writer.write("{} = {}\n".format(key, str(result[key])))
         self.results.update(result)
 
-        if self.args.evaluate_generated_text:
-            to_predict = [ex.input_text for ex in self.test_dl.examples]
-            references = [ex.output_text for ex in self.test_dl.examples]
-            model_preds = self.predict(to_predict)
+        model_preds = None
 
-            result = self.compute_metrics(references, model_preds)
-            self.results.update(result)
+        # if self.args.evaluate_generated_text:
+        to_predict = [ex.input_text for ex in self.test_dl.examples]
+        references = [ex.target_text for ex in self.test_dl.examples]
+        model_preds = self.predict(to_predict)
+
+        result = self.compute_metrics(references, model_preds)
+        self.results.update(result)
             
         logging.info(self.results)
 
@@ -325,3 +329,127 @@ class Seq2SeqTrainer:
             }
 
         return inputs
+
+    def predict(self, to_predict):
+        """
+        Performs predictions on a list of text.
+
+        Args:
+            to_predict: A python list of text (str) to be sent to the model for prediction. Note that the prefix should be prepended to the text.
+
+        Returns:
+            preds: A python list of the generated sequences.
+        """  # noqa: ignore flake8"
+
+        # self._move_model_to_device()
+
+        all_outputs = []
+        # Batching
+        for batch in [
+            to_predict[i : i + self.args.eval_batch_size] for i in range(0, len(to_predict), self.args.eval_batch_size)
+        ]:
+            if self.args.model_type == "marian":
+                input_ids = self.encoder_tokenizer.prepare_seq2seq_batch(
+                    batch,
+                    max_length=self.args.max_seq_length,
+                    padding="max_length",
+                    return_tensors="pt",
+                    truncation=True,
+                )["input_ids"]
+            elif self.args.model_type in ["mbart"]:
+                input_ids = self.encoder_tokenizer.prepare_seq2seq_batch(
+                    src_texts=batch,
+                    max_length=self.args.max_seq_length,
+                    pad_to_max_length=True,
+                    padding="max_length",
+                    truncation=True,
+                    src_lang=self.args.src_lang,
+                )["input_ids"]
+            else:
+                input_ids = self.encoder_tokenizer.batch_encode_plus(
+                    batch,
+                    max_length=self.args.max_seq_length,
+                    padding="max_length",
+                    return_tensors="pt",
+                    truncation=True,
+                )["input_ids"]
+            input_ids = input_ids.to(self.device)
+
+            if self.args.model_type in ["bart", "marian"]:
+                outputs = self.model.generate(
+                    input_ids=input_ids,
+                    num_beams=self.args.num_beams,
+                    max_length=self.args.max_length,
+                    length_penalty=self.args.length_penalty,
+                    early_stopping=self.args.early_stopping,
+                    repetition_penalty=self.args.repetition_penalty,
+                    do_sample=self.args.do_sample,
+                    top_k=self.args.top_k,
+                    top_p=self.args.top_p,
+                    num_return_sequences=self.args.num_return_sequences,
+                )
+            elif self.args.model_type in ["mbart"]:
+                tgt_lang_token = self.decoder_tokenizer._convert_token_to_id(self.args.tgt_lang)
+
+                outputs = self.model.generate(
+                    input_ids=input_ids,
+                    decoder_start_token_id=tgt_lang_token,
+                    num_beams=self.args.num_beams,
+                    max_length=self.args.max_length,
+                    length_penalty=self.args.length_penalty,
+                    early_stopping=self.args.early_stopping,
+                    repetition_penalty=self.args.repetition_penalty,
+                    do_sample=self.args.do_sample,
+                    top_k=self.args.top_k,
+                    top_p=self.args.top_p,
+                    num_return_sequences=self.args.num_return_sequences,
+                )
+            else:
+                outputs = self.model.generate(
+                    input_ids=input_ids,
+                    decoder_start_token_id=self.model.config.decoder.pad_token_id,
+                    num_beams=self.args.num_beams,
+                    max_length=self.args.max_length,
+                    length_penalty=self.args.length_penalty,
+                    early_stopping=self.args.early_stopping,
+                    repetition_penalty=self.args.repetition_penalty,
+                    do_sample=self.args.do_sample,
+                    top_k=self.args.top_k,
+                    top_p=self.args.top_p,
+                    num_return_sequences=self.args.num_return_sequences,
+                )
+
+            all_outputs.extend(outputs.cpu().numpy())
+
+        if self.args.use_multiprocessed_decoding:
+            self.model.to("cpu")
+            with Pool(self.args.process_count) as p:
+                outputs = list(
+                    tqdm(
+                        p.imap(self._decode, all_outputs, chunksize=self.args.multiprocessing_chunksize),
+                        total=len(all_outputs),
+                        desc="Decoding outputs",
+                        disable=self.args.silent,
+                    )
+                )
+            self._move_model_to_device()
+        else:
+            outputs = [
+                self.decoder_tokenizer.decode(
+                    output_id, skip_special_tokens=self.args.skip_special_tokens, clean_up_tokenization_spaces=True
+                )
+                for output_id in all_outputs
+            ]
+
+        if self.args.num_return_sequences > 1:
+            return [
+                outputs[i : i + self.args.num_return_sequences]
+                for i in range(0, len(outputs), self.args.num_return_sequences)
+            ]
+        else:
+            return outputs
+
+    def _decode(self, output_id):
+        return self.decoder_tokenizer.decode(
+            output_id, skip_special_tokens=self.args.skip_special_tokens, clean_up_tokenization_spaces=True
+        )

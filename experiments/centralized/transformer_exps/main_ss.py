@@ -100,10 +100,10 @@ CUDA_VISIBLE_DEVICES=0 python -m experiments.centralized.transformer_exps.main_s
     --model_name facebook/bart-base  \
     --do_lower_case True \
     --train_batch_size 8 \
-    --eval_batch_size 4 \
+    --eval_batch_size 2 \
     --max_seq_length 256 \
     --learning_rate 5e-5 \
-    --epochs 20 \
+    --epochs 3 \
     --evaluate_during_training_steps 200 \
     --output_dir /tmp/${DATA_NAME}_fed/ \
     --n_gpu 1
