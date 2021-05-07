@@ -1,4 +1,3 @@
-from FedML.fedml_api.data_preprocessing.MNIST.mnist_mobile_preprocessor import client_sampling
 from data_manager.base_data_manager import BaseDataManager
 from torch.utils.data import DataLoader
 import h5py
