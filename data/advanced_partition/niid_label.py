@@ -7,19 +7,33 @@ import math
 from decimal import *
 
 
-def dynamic_batch_fill(index_marker, label_client_matrix, remaing_length,
+def dynamic_batch_fill(label_index_tracker, label_index_matrix, remaining_length,
                        current_label_id):
+    """
+    params
+    ------------------------------------------------------------------------
+    label_index_tracker : 1d numpy array track how many data each label has used 
+    label_index_matrix : 2d array list of indexs of each label
+    remaining_length : int remaining empty space in current partition client list
+    current_label_id : int current round label id
+    ------------------------------------------------------------------------
 
-    remaining_unfiled = remaing_length
+    return 
+    ---------------------------------------------------------
+    label_index_offset: dict  dictionary key is label id 
+    and value is the offset associated with this key
+    ----------------------------------------------------------
+    """
+    remaining_unfiled = remaining_length
     label_index_offset = {}
     label_remain_length_dict = {}
     total_label_remain_length = 0
     # calculate total number of all the remaing labels and each label's remaining length
-    for label_id, label_list in enumerate(label_client_matrix):
+    for label_id, label_list in enumerate(label_index_matrix):
         if label_id == current_label_id:
             label_remain_length_dict[label_id] = 0
             continue
-        label_remaining_count = len(label_list) - index_marker[label_id]
+        label_remaining_count = len(label_list) - label_index_tracker[label_id]
         if label_remaining_count > 0:
             total_label_remain_length = (total_label_remain_length +
                                          label_remaining_count)
@@ -27,18 +41,15 @@ def dynamic_batch_fill(index_marker, label_client_matrix, remaing_length,
     length_pointer = remaining_unfiled
 
     if total_label_remain_length > 0:
-        label_sorted_by_length = {
-            k: v
-            for k, v in sorted(label_remain_length_dict.items(),
-                               key=lambda item: item[1])
-        }
+        label_sorted_by_length = {k: v for k, v in sorted(label_remain_length_dict.items(),
+                               key=lambda item: item[1]) }
     else:
         label_index_offset = label_remain_length_dict
         return label_index_offset
     # for each label calculate the offset move forward by distribution of remaining labels
     for label_id in label_sorted_by_length.keys():
         fill_count = math.ceil(label_remain_length_dict[label_id] /
-                               total_label_remain_length * remaing_length)
+                               total_label_remain_length * remaining_length)
         fill_count = min(fill_count, label_remain_length_dict[label_id])
         offset_forward = fill_count
         # if left room not enough for all offset set it to 0
@@ -72,37 +83,47 @@ def dynamic_batch_fill(index_marker, label_client_matrix, remaing_length,
 
 
 def label_skew_process(label_vocab, label_assignment, client_num, alpha):
-    label_client_matrix = [[] for _ in label_vocab]
+    """
+    params
+    -------------------------------------------------------------------
+    label_vocab : dict label vocabulary of the dataset 
+    label_assignment : 1d list a list of label, the index of list is the index associated to label
+    client_num : int number of clients
+    alpha : float similarity of each client, the larger the alpha the similar data for each client
+    -------------------------------------------------------------------
+    return 
+    ------------------------------------------------------------------
+    partition_result : 2d array list of partition index of each client 
+    ------------------------------------------------------------------
+    """
+    label_index_matrix = [[] for _ in label_vocab]
     label_proportion = []
     partition_result = [[] for _ in range(client_num)]
+    client_length = 0
     # shuffle indexs and calculate each label proportion of the dataset
     for index, value in enumerate(label_vocab):
         label_location = np.where(label_assignment == value)[0]
         label_proportion.append(len(label_location) / len(label_assignment))
         np.random.shuffle(label_location)
-        label_client_matrix[index].extend(label_location[:])
+        label_index_matrix[index].extend(label_location[:])
 
     # calculate size for each partition client
-    index_marker = np.zeros(len(label_vocab), dtype=int)
+    label_index_tracker = np.zeros(len(label_vocab), dtype=int)
     total_index = len(label_assignment)
-    each_client_length = int(total_index / client_num)
-    client_length = 0
-
-    lable_dis = []  # debug
+    each_client_index_length = int(total_index / client_num)
     client_dir_dis = np.array([alpha * l for l in label_proportion])
     print(client_dir_dis)
 
     proportions = np.random.dirichlet(client_dir_dis)
     # add all the unused data to the client
     for client_id in range(len(partition_result)):
-        assignment = partition_result[client_id]
+        each_client_partition_result = partition_result[client_id]
         proportions = np.random.dirichlet(client_dir_dis)
-        client_length = min(each_client_length, total_index)
+        client_length = min(each_client_index_length, total_index)
         if total_index < client_length * 2:
             client_length = total_index
         total_index -= client_length
         client_length_pointer = client_length
-        temp = {}  # debug
         # for each label calculate the offset length assigned to by Dir distribution and then extend assignment
         for label_id, _ in enumerate(label_vocab):
             offset = round(proportions[label_id] * client_length)
@@ -114,48 +135,37 @@ def label_skew_process(label_vocab, label_assignment, client_num, alpha):
                     offset = client_length_pointer
                 client_length_pointer -= offset
 
-            temp[label_id] = offset
-
-            start = int(index_marker[label_id])
-            end = int(index_marker[label_id] + offset)
-            label_total_number = len(label_client_matrix[label_id])
+            start = int(label_index_tracker[label_id])
+            end = int(label_index_tracker[label_id] + offset)
+            label_data_length = len(label_index_matrix[label_id])
             # if the the label is assigned to a offset length that is more than what its remaining length
-            if end > label_total_number:
-                assignment.extend(label_client_matrix[label_id][start:])
-                index_marker[label_id] = label_total_number
-
-                label_index_offset = dynamic_batch_fill(
-                    index_marker,
-                    label_client_matrix,
-                    end - label_total_number,
-                    label_id,
-                )
+            if end > label_data_length:
+                each_client_partition_result.extend(label_index_matrix[label_id][start:])
+                label_index_tracker[label_id] = label_data_length
+                label_index_offset = dynamic_batch_fill( label_index_tracker, label_index_matrix,
+                    end - label_data_length, label_id)
                 for fill_label_id in label_index_offset.keys():
-                    start = index_marker[fill_label_id]
-                    end = (index_marker[fill_label_id] +
+                    start = label_index_tracker[fill_label_id]
+                    end = (label_index_tracker[fill_label_id] +
                            label_index_offset[fill_label_id])
-                    assignment.extend(
-                        label_client_matrix[fill_label_id][start:end])
-                    index_marker[fill_label_id] = (
-                        index_marker[fill_label_id] +
-                        label_index_offset[fill_label_id])
+                    each_client_partition_result.extend(
+                        label_index_matrix[fill_label_id][start:end])
+                    label_index_tracker[fill_label_id] = (label_index_tracker[fill_label_id] 
+                                                            + label_index_offset[fill_label_id])
             else:
-                assignment.extend(label_client_matrix[label_id][start:end])
-                index_marker[label_id] = index_marker[label_id] + offset
-
+                each_client_partition_result.extend(label_index_matrix[label_id][start:end])
+                label_index_tracker[label_id] = label_index_tracker[label_id] + offset
+        #if last client still has empty rooms, fill empty rooms with the rest of the unused data
         if client_id == len(partition_result) - 1:
             print("last client fill the rest of the unfilled lable")
             for not_fillall_label_id in range(len(label_vocab)):
-                if index_marker[not_fillall_label_id] < len(
-                        label_client_matrix[not_fillall_label_id]):
-                    start = index_marker[not_fillall_label_id]
-                    assignment.extend(
-                        label_client_matrix[not_fillall_label_id][start:])
-                    index_marker[not_fillall_label_id] = len(
-                        label_client_matrix[not_fillall_label_id])
-                    temp[not_fillall_label_id] += len(
-                        label_client_matrix[not_fillall_label_id][start:])
-        lable_dis.append(temp)  # debug
+                if label_index_tracker[not_fillall_label_id] < len(label_index_matrix[not_fillall_label_id]):
+                    start = label_index_tracker[not_fillall_label_id]
+                    each_client_partition_result.extend(
+                        label_index_matrix[not_fillall_label_id][start:])
+                    label_index_tracker[not_fillall_label_id] = len(
+                        label_index_matrix[not_fillall_label_id])
+        partition_result[client_id] = each_client_partition_result
         return partition_result
 
 
@@ -207,8 +217,6 @@ def main():
     print("start reading data")
     client_num = args.client_number
     alpha = args.alpha  # need adjustment for each dataset
-    print(alpha)
-    print(isinstance(alpha, float))
     label_vocab = []
     label_assignment = np.array([])
 
