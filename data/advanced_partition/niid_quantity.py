@@ -74,7 +74,7 @@ def main():
     test_index_list = []
 
     label_list = attributes['index_list']
-    if ("train_index_list" in attributes):
+    if "train_index_list" in attributes:
         test_index_list = attributes['test_index_list']
         print(len(test_index_list))
         train_index_list = attributes['train_index_list']
@@ -95,21 +95,13 @@ def main():
     while min_size_test < 1 or min_size_train < 1:
         partition_pkl_train = [[] for _ in range(client_num)]
         partition_pkl_test = [[] for _ in range(client_num)]
-        if args.task_type == 'text_classification':
-            train_n = len(train_index_list)
-            test_n = len(test_index_list)
-            partition_pkl_train = partition_class_samples_with_dirichlet_distribution(train_n, beta, client_num,partition_pkl_train, train_index_list)
-            partition_pkl_test = partition_class_samples_with_dirichlet_distribution(test_n, beta, client_num,partition_pkl_test, test_index_list)
+        train_n = len(train_index_list)
+        test_n = len(test_index_list)
+        partition_pkl_train = partition_class_samples_with_dirichlet_distribution(train_n, beta, client_num,partition_pkl_train, train_index_list)
+        partition_pkl_test = partition_class_samples_with_dirichlet_distribution(test_n, beta, client_num,partition_pkl_test, test_index_list)
         
-
-        else:
-            # aasume all data have the same label so no need to update seperately 
-            train_n = len(train_index_list)
-            test_n = len(test_index_list)
-            partition_pkl_train = partition_class_samples_with_dirichlet_distribution(train_n, beta, client_num,partition_pkl_train, train_index_list)
-            partition_pkl_test = partition_class_samples_with_dirichlet_distribution(test_n, beta, client_num,partition_pkl_test, test_index_list)
-        min_size_test = min([len(i) for i in partition_pkl_test]) #debig
-        min_size_train = min([len(i) for i in partition_pkl_train]) #debig
+        min_size_test = min([len(i) for i in partition_pkl_test])  
+        min_size_train = min([len(i) for i in partition_pkl_train])  
         print("test",min_size_test)
         print("train",min_size_train)
 
