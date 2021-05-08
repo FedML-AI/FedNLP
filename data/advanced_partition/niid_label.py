@@ -219,6 +219,11 @@ def main():
 
     args = parser.parse_args()
 
+    # TODO: add a random seed arg 
+    # random.seed(args.seed)
+    # np.random.seed(args.seed)
+
+
     print("start reading data")
     client_num = args.client_number
     alpha = args.alpha  # need adjustment for each dataset
