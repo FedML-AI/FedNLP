@@ -12,7 +12,7 @@ def get_embedding_Kmeans(embedding_exist,corpus, N_clients, bsz=16):
     corpus_embeddings = []
     if embedding_exist == False:
         embedder = SentenceTransformer('distilbert-base-nli-stsb-mean-tokens', device = 'cuda:0') # server only
-        corpus_embeddings = embedder.encode(corpus, show_progress_bar=True, batch_size=bsz) #smaller batch size for gpu
+        corpus_embeddings = embedder.encode(corpus, show_progress_bar=True, batch_size=bsz) # smaller batch size for gpu
         
         embedding_data['data'] = corpus_embeddings
     else:
@@ -24,6 +24,7 @@ def get_embedding_Kmeans(embedding_exist,corpus, N_clients, bsz=16):
     clustering_model.fit(corpus_embeddings)
     cluster_assignment = clustering_model.labels_
     print("end Kmeans")
+    # TODO: read the center points
 
     return cluster_assignment, embedding_data
 

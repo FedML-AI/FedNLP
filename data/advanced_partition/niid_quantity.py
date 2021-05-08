@@ -115,26 +115,15 @@ def main():
     print("start dirichlet distribution")
     while min_size_test < 1 or min_size_train < 1:
         partition_result_train = [[] for _ in range(client_num)]
-        partition_result_test = [[] for _ in range(client_num)]
-        if args.task_type == "text_classification":
-            train_n = len(train_index_list)
-            test_n = len(test_index_list)
-            partition_result_train = partition_class_samples_with_dirichlet_distribution(
-                train_n, beta, client_num, partition_result_train,
-                train_index_list)
-            partition_result_test = partition_class_samples_with_dirichlet_distribution(
-                test_n, beta, client_num, partition_result_test,
-                test_index_list)
-        else:
-            # aasume all data have the same label so no need to update seperately
-            train_n = len(train_index_list)
-            test_n = len(test_index_list)
-            partition_result_train = partition_class_samples_with_dirichlet_distribution(
-                train_n, beta, client_num, partition_result_train,
-                train_index_list)
-            partition_result_test = partition_class_samples_with_dirichlet_distribution(
-                test_n, beta, client_num, partition_result_test,
-                test_index_list)
+        partition_result_test = [[] for _ in range(client_num)] 
+        train_n = len(train_index_list)
+        test_n = len(test_index_list)
+        partition_result_train = partition_class_samples_with_dirichlet_distribution(
+            train_n, beta, client_num, partition_result_train,
+            train_index_list)
+        partition_result_test = partition_class_samples_with_dirichlet_distribution(
+            test_n, beta, client_num, partition_result_test,
+            test_index_list) 
     print("minsize of the train data",
           min([len(i) for i in partition_result_train]))
     print("minsize of the test data",
