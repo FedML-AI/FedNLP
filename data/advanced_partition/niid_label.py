@@ -155,9 +155,9 @@ def label_skew_process(label_vocab, label_assignment, client_num, alpha):
             else:
                 each_client_partition_result.extend(label_index_matrix[label_id][start:end])
                 label_index_tracker[label_id] = label_index_tracker[label_id] + offset
-        #if last client still has empty rooms, fill empty rooms with the rest of the unused data
+        # if last client still has empty rooms, fill empty rooms with the rest of the unused data
         if client_id == len(partition_result) - 1:
-            print("last client fill the rest of the unfilled lable")
+            print("Last client fill the rest of the unfilled lables.")
             for not_fillall_label_id in range(len(label_vocab)):
                 if label_index_tracker[not_fillall_label_id] < len(label_index_matrix[not_fillall_label_id]):
                     start = label_index_tracker[not_fillall_label_id]
@@ -200,7 +200,12 @@ def main():
     parser.add_argument("--task_type",
                         type=str,
                         metavar="TT",
-                        help="task type")
+                        help="task type: []")
+
+    parser.add_argument("--skew_type",
+                        type=str,
+                        metavar="TT",
+                        help="skeq type: [label, feature]")
 
     parser.add_argument("--kmeans_num",
                         type=int,
@@ -245,18 +250,27 @@ def main():
     # retreive label vocab and label assigment the index of label assignment is the index of data assigned to this label
     # the value of each index is the label
     # label assignment's index all the index of the data and the label_assignment[index] stands for the label correspond to that index
-    if args.task_type == "text_classification":
-        label_vocab = attributes["label_vocab"].keys()
-        label_assignment = np.array(
-            [data["Y"][str(i)][()].decode("utf-8") for i in total_index_list])
-        label_assignment_test = np.array([
-            data["Y"][str(idx)][()].decode("utf-8") for idx in test_index_list
-        ])
-        label_assignment_train = np.array([
-            data["Y"][str(idx)][()].decode("utf-8") for idx in train_index_list
-        ])
-
-    else:
+    if args.skew_type == "label":
+        if args.task_type == "text_classification":
+            label_vocab = attributes["label_vocab"].keys()
+            label_assignment = np.array(
+                [data["Y"][str(i)][()].decode("utf-8") for i in total_index_list])
+            label_assignment_test = np.array([
+                data["Y"][str(idx)][()].decode("utf-8") for idx in test_index_list
+            ])
+            label_assignment_train = np.array([
+                data["Y"][str(idx)][()].decode("utf-8") for idx in train_index_list
+            ])
+        elif args.task_type == "sequence_tagging":
+            # TODO: convert seq of tags --> a str for the sorted set of tags 
+            # e.g.,  "OOOO B-PER I-PER  OOO B-LOC OOO B-LOC " ---> set{B-PER, B-LOC} --sorted--> "LOC-PER"
+            # print(len(differnt types of pseudo-label))
+            pass
+        else:
+            print("Not Implemented.")
+            exit()
+    elif args.skew_type == "feature":
+        # input feature skew --> Kmeans clustering + dir.
         partition = h5py.File(args.partition_file, "r")
         label_vocab = [i for i in range(args.kmeans_num)]
         label_assignment = np.array(partition["kmeans_%d" % args.kmeans_num +
@@ -282,61 +296,32 @@ def main():
     print("store data in h5 data")
     partition = h5py.File(args.partition_file, "a")
 
-    if args.task_type == "text_classification":
-        # delete the old partition files in h5 so that we can write to  the h5 file
-        if ("/niid_label_clients=%.1f_alpha=%.1f" %
-            (args.client_number, args.alpha) in partition):
-            del partition["/niid_label_clients=%.1f_alpha=%.1f" %
-                          (args.client_number, args.alpha)]
-        if ("/niid_label_clients=%df_alpha=%.1f" %
-            (args.client_number, args.alpha) in partition):
-            del partition["/niid_label_clients=%df_alpha=%.1f" %
-                          (args.client_number, args.alpha)]
+    flag_str = "label" if args.skew_type == "label" else "cluster" 
+    # delete the old partition files in h5 so that we can write to  the h5 file
+    if ("/niid"+flag_str+"clients=%.1f_alpha=%.1f" %
+        (args.client_number, args.alpha) in partition):
+        del partition["/niid"+flag_str+"clients=%.1f_alpha=%.1f" %
+                        (args.client_number, args.alpha)]
+    if ("/niid"+flag_str+"clients=%df_alpha=%.1f" %
+        (args.client_number, args.alpha) in partition):
+        del partition["/niid"+flag_str+"clients=%df_alpha=%.1f" %
+                        (args.client_number, args.alpha)]
 
-        partition["/niid_label_clients=%d_alpha=%.1f" %
-                  (args.client_number, args.alpha) + "/n_clients"] = client_num
-        partition["/niid_label_clients=%d_alpha=%.1f" %
-                  (args.client_number, args.alpha) + "/alpha"] = alpha
-        for partition_id in range(client_num):
-            train = partition_result_train[partition_id]
-            test = partition_result_test[partition_id]
-            train_path = ("/niid_label_clients=%d_alpha=%.1f" %
-                          (args.client_number, args.alpha) +
-                          "/partition_data/" + str(partition_id) + "/train/")
-            test_path = ("/niid_label_clients=%d_alpha=%.1f" %
-                         (args.client_number, args.alpha) +
-                         "/partition_data/" + str(partition_id) + "/test/")
-            partition[train_path] = train
-            partition[test_path] = test
-        partition.close()
-
-    else:
-        # delete the old partition files in h5 so that we can write to the h5 file
-        if ("/niid_cluster_clients=%.1f_alpha=%.1f" %
-            (args.client_number, args.alpha) in partition):
-            del partition["/niid_cluster_clients=%.1f_alpha=%.1f" %
-                          (args.client_number, args.alpha)]
-        if ("/niid_cluster_clients=%d_alpha=%d" %
-            (args.client_number, args.alpha) in partition):
-            del partition["/niid_cluster_clients=%.1f_alpha=%.1f" %
-                          (args.client_number, args.alpha)]
-
-        partition["/niid_cluster_clients=%d_alpha=%.1f" %
-                  (args.client_number, args.alpha) + "/n_clients"] = client_num
-        partition["/niid_cluster_clients=%d_alpha=%.1f" %
-                  (args.client_number, args.alpha) + "/alpha"] = alpha
-        for partition_id in range(client_num):
-            train = partition_result_train[partition_id]
-            test = partition_result_test[partition_id]
-            train_path = ("/niid_cluster_clients=%d_alpha=%.1f" %
-                          (args.client_number, args.alpha) +
-                          "/partition_data/" + str(partition_id) + "/train/")
-            test_path = ("/niid_cluster_clients=%d_alpha=%.1f" %
-                         (args.client_number, args.alpha) +
-                         "/partition_data/" + str(partition_id) + "/test/")
-            partition[train_path] = train
-            partition[test_path] = test
-        partition.close()
-
+    partition["/niid"+flag_str+"clients=%d_alpha=%.1f" %
+                (args.client_number, args.alpha) + "/n_clients"] = client_num
+    partition["/niid"+flag_str+"clients=%d_alpha=%.1f" %
+                (args.client_number, args.alpha) + "/alpha"] = alpha
+    for partition_id in range(client_num):
+        train = partition_result_train[partition_id]
+        test = partition_result_test[partition_id]
+        train_path = ("/niid"+flag_str+"clients=%d_alpha=%.1f" %
+                        (args.client_number, args.alpha) +
+                        "/partition_data/" + str(partition_id) + "/train/")
+        test_path = ("/niid"+flag_str+"clients=%d_alpha=%.1f" %
+                        (args.client_number, args.alpha) +
+                        "/partition_data/" + str(partition_id) + "/test/")
+        partition[train_path] = train
+        partition[test_path] = test
+    partition.close()
 
 main()
