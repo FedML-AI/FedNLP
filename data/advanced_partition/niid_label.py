@@ -219,8 +219,7 @@ def main():
 
     args = parser.parse_args()
 
-    # TODO: add a random seed arg 
-    # random.seed(args.seed)
+    # TODO: add a random seed arg  
     # np.random.seed(args.seed)
 
 
