@@ -86,6 +86,7 @@ if __name__ == "__main__":
     model_args = Seq2SeqArgs()
     model_args.model_name = args.model_name
     model_args.model_type = args.model_type
+    model_args.use_multiprocessing = False
     model_args.load(model_args.model_name)
     model_args.update_from_dict({"fl_algorithm": args.fl_algorithm,
                                  "epochs": args.epochs,

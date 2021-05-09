@@ -75,15 +75,12 @@ class Seq2SeqDataset(Dataset):
 
 def preprocess_data_bart(data):
     input_text, target_text, tokenizer, args = data
-
     input_ids = tokenizer[0].batch_encode_plus(
         [input_text], max_length=args.max_seq_length, padding="max_length", return_tensors="pt", truncation=True
     )
-
     target_ids = tokenizer[1].batch_encode_plus(
         [target_text], max_length=args.max_seq_length, padding="max_length", return_tensors="pt", truncation=True
     )
-
     return {
         "source_ids": input_ids["input_ids"].squeeze(),
         "source_mask": input_ids["attention_mask"].squeeze(),
@@ -135,7 +132,7 @@ class SimpleSummarizationDataset(Dataset):
             with open(cached_features_file, "rb") as handle:
                 self.examples = pickle.load(handle)
         else:
-            logger.info(" Creating features from dataset file at %s", args.cache_dir)
+            logger.info(" Creating features")
 
             data = [
                 (d.input_text, d.target_text, tokenizer, args)
@@ -145,6 +142,7 @@ class SimpleSummarizationDataset(Dataset):
             preprocess_fn = preprocess_data_mbart if args.model_type == "mbart" else preprocess_data_bart
 
             if args.use_multiprocessing:
+                logging.info("process count %d" % args.process_count)
                 with Pool(args.process_count) as p:
                     self.examples = list(
                         tqdm(

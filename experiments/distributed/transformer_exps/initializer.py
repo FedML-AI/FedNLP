@@ -11,6 +11,9 @@ from transformers import (
     DistilBertTokenizer,
     DistilBertForTokenClassification,
     DistilBertForQuestionAnswering,
+    BartConfig, 
+    BartForConditionalGeneration, 
+    BartTokenizer,
 )
 
 from FedML.fedml_api.distributed.fedavg.FedAvgAPI import FedML_FedAvg_distributed
@@ -50,6 +53,9 @@ def create_model(args, formulation="classification"):
             "bert": (BertConfig, BertForQuestionAnswering, BertTokenizer),
             "distilbert": (DistilBertConfig, DistilBertForQuestionAnswering, DistilBertTokenizer),
         },
+        "seq2seq": {
+            "bart": (BartConfig, BartForConditionalGeneration, BartTokenizer),
+        }
     }
     config_class, model_class, tokenizer_class = MODEL_CLASSES[formulation][
         args.model_type]
@@ -57,8 +63,13 @@ def create_model(args, formulation="classification"):
     #     args.model_name, num_labels=args.num_labels, **args.config)
     config = config_class.from_pretrained(args.model_name, **args.config)
     model = model_class.from_pretrained(args.model_name, config=config)
-    tokenizer = tokenizer_class.from_pretrained(
-        args.model_name, do_lower_case=args.do_lower_case)
+    if formulation != "seq2seq":
+        tokenizer = tokenizer_class.from_pretrained(
+            args.model_name, do_lower_case=args.do_lower_case)
+    else:
+        tokenizer = [None, None]
+        tokenizer[0] = tokenizer_class.from_pretrained(args.model_name)
+        tokenizer[1]= tokenizer[0]
     # logging.info(self.model)
     return config, model, tokenizer
 

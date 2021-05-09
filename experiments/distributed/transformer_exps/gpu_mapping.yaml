@@ -11,7 +11,7 @@ mapping_lambda-server1:
     lambda-server1: [2, 3, 3, 3, 0, 0, 0, 0]
 
 mapping_lambda-server2:
-    lambda-server2: [0, 0, 0, 0, 3, 2, 3, 3]
+    lambda-server2: [1, 2, 2, 2, 1, 1, 1, 1]
 
 mapping_lambda-server3:
     lambda-server3: [1, 2, 2, 2, 1, 1, 1, 1]
