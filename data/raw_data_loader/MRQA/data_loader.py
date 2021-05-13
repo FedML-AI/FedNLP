@@ -22,7 +22,6 @@ class RawDataLoader(SpanExtractionRawDataLoader):
 
     def load_data(self):
         if len(self.context_X) == 0 or len(self.question_X) == 0 or len(self.Y) == 0:
-            self.attributes["label_index"] = dict() # cannot gather this information if not nessary remove it
             train_size = 0
             test_size = 0
             for train_dataset in self.train_file_name:
@@ -50,6 +49,7 @@ class RawDataLoader(SpanExtractionRawDataLoader):
                     for answer in question['detected_answers']: # same answer continue or not?
                         assert len(self.context_X) == len(self.question_X) == len(self.Y) == len(self.question_ids)
                         idx = len(self.context_X)
+                        # clean context data 
                         self.context_X[idx] =  ''.join(filter(lambda x: x in printable, paragraph['context']))
                         self.question_X[idx] = question['question']
                         start = answer['char_spans'][0][0]
