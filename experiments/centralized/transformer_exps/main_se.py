@@ -90,8 +90,8 @@ if __name__ == "__main__":
 
 ''' Example Usage:
 
-DATA_NAME=squad_1.1
-CUDA_VISIBLE_DEVICES=2 python -m experiments.centralized.transformer_exps.main_se \
+DATA_NAME=mrqa
+CUDA_VISIBLE_DEVICES=0 python -m experiments.centralized.transformer_exps.main_se \
     --dataset ${DATA_NAME} \
     --data_file ~/fednlp_data/data_files/${DATA_NAME}_data.h5 \
     --partition_file ~/fednlp_data/partition_files/${DATA_NAME}_partition.h5 \

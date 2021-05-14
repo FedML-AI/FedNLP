@@ -7,6 +7,7 @@ import pandas as pd
 import torch
 from collections import defaultdict
 from torch.utils.data import TensorDataset
+from tqdm import tqdm
 
 from data_preprocessing.base.base_example import SpanExtractionInputExample
 from data_preprocessing.base.base_preprocessor import BasePreprocessor
@@ -83,7 +84,10 @@ class TLMPreprocessor(BasePreprocessor):
 
     def transform_examples(self, context_X, question_X, y, qas_ids, index_list):
         examples = list()
-        for c, q, a, qas_id, idx in zip(context_X, question_X, y, qas_ids, index_list):
+        for c, q, a, qas_id, idx in tqdm(zip(context_X, question_X, y, qas_ids, index_list), desc="trasforming examples"):
+            # ignore the qa pair which doesn't have answer
+            if c[a[0]:a[1]].strip() == "":
+                continue 
             answers = [{"text": c[a[0]:a[1]], "answer_start": a[0]}]
             example = SpanExtractionInputExample(
                 guid= int(idx),

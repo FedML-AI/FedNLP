@@ -11,15 +11,10 @@ import os
 import numpy as np
 import torch
 import wandb
-from seqeval.metrics import (
-    f1_score,
-    precision_score,
-    recall_score,
-    classification_report
-)
 from multiprocessing import Pool, cpu_count
 from tqdm import tqdm
 from torch.nn import CrossEntropyLoss
+from training.utils.seq2seq_utils import *
 from torch.optim import SGD
 from transformers import (
     AdamW,
@@ -218,6 +213,7 @@ class Seq2SeqTrainer:
         results = {}
 
         eval_loss = 0.0
+        rouge_score = 0.0
         nb_eval_steps = 0
 
         n_batches = len(self.test_dl)
@@ -237,8 +233,15 @@ class Seq2SeqTrainer:
             inputs = self._get_inputs_dict(batch)
             with torch.no_grad(): 
                 outputs = self.model(**inputs)
-                tmp_eval_loss = outputs[0] 
-                
+                tmp_eval_loss = outputs[0]
+                summary_ids = self.model.generate(inputs['input_ids'], num_beams=self.args.num_beams, max_length=self.args.max_length, early_stopping=True)
+                hyp_list = [self.decoder_tokenizer.decode(g, skip_special_tokens=True, clean_up_tokenization_spaces=False).strip() for g in summary_ids]
+                ref_list = [self.decoder_tokenizer.decode(g, skip_special_tokens=True, clean_up_tokenization_spaces=False).strip() for g in inputs['input_ids']]
+                rouge = Rouge()
+                refs = {idx: [line] for (idx, line) in enumerate(ref_list)}
+                hyps = {idx: [line] for (idx, line) in enumerate(hyp_list)}
+                res = rouge.compute_score(refs, hyps)
+                rouge_score += res[0]
                 # logits = output[0]
                 # loss_fct = CrossEntropyLoss()
                 # loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
@@ -252,11 +255,12 @@ class Seq2SeqTrainer:
             logging.info("batch index = %d, start_index = %d, end_index = %d" % (i, start_index, end_index))
  
         eval_loss = eval_loss / nb_eval_steps
+        rouge_score = rouge_score / nb_eval_steps
 
         result = {
             "eval_loss": eval_loss,
+            "rouge_score": rouge_score
         }
-        result["eval_loss"] = eval_loss
         
         wandb.log(result)
         results.update(result)

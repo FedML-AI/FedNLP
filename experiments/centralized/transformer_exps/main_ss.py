@@ -52,12 +52,14 @@ if __name__ == "__main__":
     model_args.model_type = args.model_type
     model_args.load(model_args.model_name)
     model_args.fl_algorithm = ""
+    model_args.use_multiprocessing = False
+    # model_args.multiprocessing_chunksize = 10
     model_args.update_from_dict({"epochs": args.epochs,
                               "learning_rate": args.learning_rate,
                               "gradient_accumulation_steps": args.gradient_accumulation_steps,
                               "do_lower_case": args.do_lower_case,
                               "manual_seed": args.manual_seed,
-                              "reprocess_input_data": True, # for ignoring the cache features.
+                              "reprocess_input_data": True, # True for ignoring the cache features.
                               "overwrite_output_dir": True,
                               "max_seq_length": args.max_seq_length,
                               "train_batch_size": args.train_batch_size,
@@ -80,7 +82,7 @@ if __name__ == "__main__":
     process_id = 0
     num_workers = 1
     dm = Seq2SeqDataManager(args, model_args, preprocessor)
-    train_dl, test_dl = dm.load_centralized_data(cut_off=1) # cut_off = 1 for each client.
+    train_dl, test_dl = dm.load_centralized_data() # cut_off = 1 for each client.
 
     # Create a Seq2Seq Trainer and start train
     trainer = Seq2SeqTrainer(model_args, device, model, train_dl, test_dl, tokenizer)
@@ -91,7 +93,7 @@ if __name__ == "__main__":
 ''' Example Usage:
 
 DATA_NAME=cnn_dailymail
-CUDA_VISIBLE_DEVICES=0 python -m experiments.centralized.transformer_exps.main_ss \
+CUDA_VISIBLE_DEVICES=6 python -m experiments.centralized.transformer_exps.main_ss \
     --dataset ${DATA_NAME} \
     --data_file ~/fednlp_data/data_files/${DATA_NAME}_data.h5 \
     --partition_file ~/fednlp_data/partition_files/${DATA_NAME}_partition.h5 \
@@ -99,12 +101,12 @@ CUDA_VISIBLE_DEVICES=0 python -m experiments.centralized.transformer_exps.main_s
     --model_type bart \
     --model_name facebook/bart-base  \
     --do_lower_case True \
-    --train_batch_size 8 \
-    --eval_batch_size 2 \
+    --train_batch_size 32 \
+    --eval_batch_size 32 \
     --max_seq_length 256 \
     --learning_rate 5e-5 \
-    --epochs 3 \
-    --evaluate_during_training_steps 200 \
+    --epochs 10 \
+    --evaluate_during_training_steps 500 \
     --output_dir /tmp/${DATA_NAME}_fed/ \
     --n_gpu 1
 

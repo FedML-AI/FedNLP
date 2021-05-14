@@ -89,30 +89,38 @@ class BaseDataManager(ABC):
         return list(range(0, self.num_clients))
 
     def load_centralized_data(self, cut_off=None):
-        data_file = h5py.File(self.args.data_file_path, "r", swmr=True)
-        partition_file = h5py.File(
-            self.args.partition_file_path, "r", swmr=True)
-        partition_method = self.args.partition_method
-        train_index_list = []
-        test_index_list = []
-        for client_idx in tqdm(
-            partition_file[partition_method]
-            ["partition_data"].keys(),
-                desc="Loading index from h5 file."):
-            train_index_list.extend(
-                partition_file[partition_method]["partition_data"]
-                [client_idx]["train"][()][:cut_off])
-            test_index_list.extend(
-                partition_file[partition_method]["partition_data"]
-                [client_idx]["test"][()][:cut_off])
-        train_data = self.read_instance_from_h5(data_file, train_index_list)
-        test_data = self.read_instance_from_h5(data_file, test_index_list)
-        data_file.close()
-        partition_file.close()
-        train_examples, train_features, train_dataset = self.preprocessor.transform(
-            **train_data, index_list=train_index_list)
-        test_examples, test_features, test_dataset = self.preprocessor.transform(
-            **test_data, index_list=test_index_list, evaluate=True)
+        state, res = self._load_data_loader_from_cache(-1)
+        if state:
+            train_examples, train_features, train_dataset, test_examples, test_features, test_dataset = res
+        else:
+            data_file = h5py.File(self.args.data_file_path, "r", swmr=True)
+            partition_file = h5py.File(
+                self.args.partition_file_path, "r", swmr=True)
+            partition_method = self.args.partition_method
+            train_index_list = []
+            test_index_list = []
+            for client_idx in tqdm(
+                partition_file[partition_method]
+                ["partition_data"].keys(),
+                    desc="Loading index from h5 file."):
+                train_index_list.extend(
+                    partition_file[partition_method]["partition_data"]
+                    [client_idx]["train"][()][:cut_off])
+                test_index_list.extend(
+                    partition_file[partition_method]["partition_data"]
+                    [client_idx]["test"][()][:cut_off])
+            train_data = self.read_instance_from_h5(data_file, train_index_list)
+            test_data = self.read_instance_from_h5(data_file, test_index_list)
+            data_file.close()
+            partition_file.close()
+            train_examples, train_features, train_dataset = self.preprocessor.transform(
+                **train_data, index_list=train_index_list)
+            test_examples, test_features, test_dataset = self.preprocessor.transform(
+                **test_data, index_list=test_index_list, evaluate=True)
+            
+            with open(res, "wb") as handle:
+                pickle.dump((train_examples, train_features, train_dataset, test_examples, test_features, test_dataset), handle)
+
         train_dl = BaseDataLoader(train_examples, train_features, train_dataset,
                               batch_size=self.train_batch_size,
                               num_workers=0,
@@ -124,6 +132,7 @@ class BaseDataManager(ABC):
                              num_workers=0,
                              pin_memory=True,
                              drop_last=False)
+        
         return train_dl, test_dl
 
     def load_federated_data(self, process_id):
@@ -138,60 +147,55 @@ class BaseDataManager(ABC):
         train_data_local_num_dict = None
         test_data_local_dict = {}
         if state:
-            train_data_global, test_data_global = res
-            if train_data_global is None:
+            train_examples, train_features, train_dataset, test_examples, test_features, test_dataset = res
+            if train_dataset is None:
                 train_data_num = 0
             else:
-                train_data_num = len(train_data_global.dataset)
-            return (train_data_num, train_data_global, test_data_global,
-                train_data_local_num_dict, train_data_local_dict, test_data_local_dict, self.num_clients)
-        data_file = h5py.File(self.args.data_file_path, "r", swmr=True)
-        partition_file = h5py.File(
-            self.args.partition_file_path, "r", swmr=True)
-        partition_method = self.args.partition_method
-        train_index_list = []
-        test_index_list = []
-        # test_examples = []
-        # test_features = []
-        # test_dataset = []
-        for client_idx in tqdm(
-            partition_file[partition_method]
-            ["partition_data"].keys(),
-                desc="Loading index from h5 file."):
-            train_index_list.extend(
-                partition_file[partition_method]["partition_data"]
-                [client_idx]["train"][()])
-            local_test_index_list = partition_file[partition_method][
-                "partition_data"][client_idx]["test"][()]
-            test_index_list.extend(local_test_index_list)
-            # local_test_X = [data_file["X"][str(idx)][()].decode("utf-8") for idx in local_test_index_list]
-            # local_test_y = [data_file["Y"][str(idx)][()].decode("utf-8") for idx in local_test_index_list]
-            # local_test_data = self.read_instance_from_h5(
-            #     data_file, local_test_index_list)
-            # local_test_examples, local_test_features, local_test_dataset = self.preprocessor.transform(
-            #     **local_test_data, index_list=local_test_index_list, evaluate=True)
-            # local_test_dl = BaseDataLoader(local_test_examples, local_test_features, local_test_dataset,
-            #                              batch_size=self.eval_batch_size,
-            #                              num_workers=0,
-            #                              pin_memory=True,
-            #                              drop_last=False)
-            # test_data_local_dict[int(client_idx)] = local_test_dl
-            # test_examples += local_test_examples
-            # test_features += local_test_features
-            # test_dataset += local_test_dataset
+                train_data_num = len(train_dataset)
+        else:
+            data_file = h5py.File(self.args.data_file_path, "r", swmr=True)
+            partition_file = h5py.File(
+                self.args.partition_file_path, "r", swmr=True)
+            partition_method = self.args.partition_method
+            train_index_list = []
+            test_index_list = []
+            # test_examples = []
+            # test_features = []
+            # test_dataset = []
+            for client_idx in tqdm(
+                partition_file[partition_method]
+                ["partition_data"].keys(),
+                    desc="Loading index from h5 file."):
+                train_index_list.extend(
+                    partition_file[partition_method]["partition_data"]
+                    [client_idx]["train"][()])
+                local_test_index_list = partition_file[partition_method][
+                    "partition_data"][client_idx]["test"][()]
+                test_index_list.extend(local_test_index_list)
 
-        if not test_only:
-            train_data = self.read_instance_from_h5(
-                data_file, train_index_list)
+            if not test_only:
+                train_data = self.read_instance_from_h5(
+                    data_file, train_index_list)
         
-        test_data = self.read_instance_from_h5(data_file, test_index_list)
+            test_data = self.read_instance_from_h5(data_file, test_index_list)
 
-        data_file.close()
-        partition_file.close()
+            data_file.close()
+            partition_file.close()
 
-        if not test_only:
-            train_examples, train_features, train_dataset = self.preprocessor.transform(
-                **train_data, index_list=train_index_list)
+            train_examples, train_features, train_dataset = None, None, None
+            if not test_only:
+                train_examples, train_features, train_dataset = self.preprocessor.transform(
+                    **train_data, index_list=train_index_list)
+            test_examples, test_features, test_dataset = self.preprocessor.transform(
+                **test_data, index_list=test_index_list)
+            
+            with open(res, "wb") as handle:
+                pickle.dump((train_examples, train_features, train_dataset, test_examples, test_features, test_dataset), handle)
+
+        if test_only or train_dataset is None:
+            train_data_num = 0
+            train_data_global = None
+        else:
             train_data_global = BaseDataLoader(train_examples, train_features, train_dataset,
                                         batch_size=self.train_batch_size,
                                         num_workers=0,
@@ -199,12 +203,7 @@ class BaseDataManager(ABC):
                                         drop_last=False)
             train_data_num = len(train_examples)
             logging.info("train_dl_global number = " + str(len(train_data_global)))
-        else:
-            train_data_num = 0
-            train_data_global = None
 
-        test_examples, test_features, test_dataset = self.preprocessor.transform(
-            **test_data, index_list=test_index_list)
         test_data_global = BaseDataLoader(test_examples, test_features, test_dataset,
                                       batch_size=self.eval_batch_size,
                                       num_workers=0,
@@ -213,8 +212,6 @@ class BaseDataManager(ABC):
 
         logging.info("test_dl_global number = " + str(len(test_data_global)))
 
-        with open(res, "wb") as handle:
-            pickle.dump((train_data_global, test_data_global), handle)
 
         return (train_data_num, train_data_global, test_data_global,
                 train_data_local_num_dict, train_data_local_dict, test_data_local_dict, self.num_clients)
@@ -236,7 +233,7 @@ class BaseDataManager(ABC):
             # TODO: cancel the partiation file usage
             state, res = self._load_data_loader_from_cache(client_idx)
             if state:
-                train_loader, test_loader = res
+                train_examples, train_features, train_dataset, test_examples, test_features, test_dataset = res
             else:
                 train_index_list = partition_file[partition_method][
                     "partition_data"][
@@ -255,21 +252,22 @@ class BaseDataManager(ABC):
                     **train_data, index_list=train_index_list)
                 test_examples, test_features, test_dataset = self.preprocessor.transform(
                     **test_data, index_list=test_index_list, evaluate=True)
-
-
-                train_loader = BaseDataLoader(train_examples, train_features, train_dataset,
-                                        batch_size=self.train_batch_size,
-                                        num_workers=0,
-                                        pin_memory=True,
-                                        drop_last=False)
-
-                test_loader = BaseDataLoader(test_examples, test_features, test_dataset,
-                                        batch_size=self.eval_batch_size,
-                                        num_workers=0,
-                                        pin_memory=True,
-                                        drop_last=False)
+                
                 with open(res, "wb") as handle:
-                    pickle.dump((train_loader, test_loader), handle)
+                    pickle.dump((train_examples, train_features, train_dataset, test_examples, test_features, test_dataset), handle)
+
+
+            train_loader = BaseDataLoader(train_examples, train_features, train_dataset,
+                                    batch_size=self.train_batch_size,
+                                    num_workers=0,
+                                    pin_memory=True,
+                                    drop_last=False)
+
+            test_loader = BaseDataLoader(test_examples, test_features, test_dataset,
+                                    batch_size=self.eval_batch_size,
+                                    num_workers=0,
+                                    pin_memory=True,
+                                    drop_last=False)
             train_data_local_dict[client_idx] = train_loader
             test_data_local_dict[client_idx] = test_loader
             train_data_local_num_dict[client_idx] = len(train_loader)
@@ -298,8 +296,8 @@ class BaseDataManager(ABC):
             or (model_args.use_cached_eval_features and not model_args.no_cache)
         ):
             logging.info(" Loading features from cached file %s", cached_features_file)
-            train_dl, test_dl = None, None
+            train_examples, train_features, train_dataset, test_examples, test_features, test_dataset = None, None, None, None, None, None
             with open(cached_features_file, "rb") as handle:
-                train_dl, test_dl = pickle.load(handle)
-            return True, (train_dl, test_dl)
+                train_examples, train_features, train_dataset, test_examples, test_features, test_dataset = pickle.load(handle)
+            return True, (train_examples, train_features, train_dataset, test_examples, test_features, test_dataset)
         return False, cached_features_file
