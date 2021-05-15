@@ -79,12 +79,16 @@ def main():
 
     elif args.task_type == 'reading_comprehension': # specifically Squad1.1 dataset
         for i in f['context_X'].keys():
-            sentence = f['context_X'][i][()]
+            sentence = f['context_X'][i][()].decode('UTF-8')
+            corpus.append(sentence)
+    elif args.task_type == 'sequence_to_sequence':
+        for i in f['Y'].keys():
+            sentence = f['Y'][i][()].decode('UTF-8')
             corpus.append(sentence)
             
     else:
         for i in f['X'].keys():
-            sentence = f['X'][i][()]
+            sentence = f['X'][i][()].decode('UTF-8')
             corpus.append(sentence)
     f.close()
     print("start process embedding data and kmeans partition")
