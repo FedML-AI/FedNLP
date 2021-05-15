@@ -37,22 +37,15 @@ logging.basicConfig(level=logging.INFO,
 parser = argparse.ArgumentParser()
 args = add_args(parser)
 
-os.system("kill $(ps aux | grep \"fedavg_main_st.py\" | grep -v grep | awk '{print $2}')")
+os.system("kill $(ps aux | grep \"fedavg_main_se.py\" | grep -v grep | awk '{print $2}')")
 
-# sh run_seq_tagging.sh FedAvg "niid_cluster_clients=100_alpha=5.0" 1e-5 0.1 20
-# sh run_seq_tagging.sh FedProx "niid_cluster_clients=100_alpha=5.0" 1e-5 0.1 20
-# sh run_seq_tagging.sh FedOPT "niid_cluster_clients=100_alpha=5.0" 1e-5 0.1 20
-
-
+# sh run_span_extraction.sh FedAvg "niid_cluster_clients=10_alpha=5.0" 1e-5 0.1 30
+# sh run_span_extraction.sh FedProx "niid_cluster_clients=10_alpha=5.0" 1e-5 0.1 30
+# sh run_span_extraction.sh FedOPT "niid_cluster_clients=10_alpha=5.0" 1e-5 0.1 30
 
 hps = [
-    # 'FedProx "niid_label_clients=30_alpha=0.1" 1e-1 1 1 30',
-    # 'FedProx "niid_label_clients=30_alpha=0.1" 1e-1 1 0.1 30',
-    # 'FedProx "niid_label_clients=30_alpha=0.1" 1e-1 1 0.01 30',
-    # 'FedProx "niid_label_clients=30_alpha=0.1" 1e-1 1 0.001 30',
-    'FedAvg "niid_label_clients=30_alpha=0.1" 1e-1 1 0.5 30',
-    'FedOPT "niid_label_clients=30_alpha=0.1" 5e-5 1 0.5 30',
-    'FedOPT "niid_label_clients=30_alpha=0.1" 5e-5 1 0.5 30',
+    'FedAvg "niid_cluster_clients=30_alpha=0.1" 1e-1 1 0.5 15',
+    # 'FedProx "niid_cluster_clients=30_alpha=0.1" 1e-1 1 0.5 15',
 ]
 
 run_id = 0
@@ -61,17 +54,15 @@ for hp in hps:
     args.run_id = run_id
 
     logging.info("hp = %s" % args.hp)
-    os.system("mkdir ./tmp/; touch ./tmp/fedml")
-    os.system('nohup sh run_seq_tagging.sh '
+    os.system("mkdir /tmp/; touch ./tmp/fedml")
+    os.system('nohup sh run_span_extraction.sh '
               '{args.hp} '
-              '> ./fednlp_st_{args.run_id}.log 2>&1 &'.format(args=args))
+              '> ./fednlp_se_{args.run_id}.log 2>&1 &'.format(args=args))
 
     wait_for_the_training_process()
 
     logging.info("cleaning the training...")
-
-    # kill $(ps aux | grep fedavg_main_st.py | grep -v grep | awk '{print $2}')
-    os.system("kill $(ps aux | grep \"fedavg_main_st.py\" | grep -v grep | awk '{print $2}')")
+    os.system("kill $(ps aux | grep \"fedavg_main_se.py\" | grep -v grep | awk '{print $2}')")
 
     sleep(5)
     run_id += 1

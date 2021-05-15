@@ -9,7 +9,7 @@ CUDA_VISIBLE_DEVICES=7 python -m experiments.centralized.transformer_exps.main_s
     --do_lower_case True \
     --train_batch_size 32 \
     --eval_batch_size 32 \
-    --max_seq_length 256 \
+    --max_seq_length 128 \
     --learning_rate 5e-5 \
     --epochs 10 \
     --evaluate_during_training_steps 500 \
