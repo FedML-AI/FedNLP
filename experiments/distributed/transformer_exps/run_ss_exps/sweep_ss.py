@@ -39,9 +39,9 @@ args = add_args(parser)
 
 os.system("kill $(ps aux | grep \"fedavg_main_ss.py\" | grep -v grep | awk '{print $2}')")
 
-# sh run_seq2seq.sh FedAvg "niid_cluster_clients=10_alpha=5.0" 1e-5 0.1 30
-# sh run_seq2seq.sh FedProx "niid_cluster_clients=10_alpha=5.0" 1e-5 0.1 30
-# sh run_seq2seq.sh FedOPT "niid_cluster_clients=10_alpha=5.0" 1e-5 0.1 30
+# sh run_seq2seq.sh FedOpt "niid_cluster_clients=30_alpha=0.1" 5e-5 1 0.5 15
+# sh run_seq2seq.sh FedOpt "niid_cluster_clients=30_alpha=0.1" 5e-5 1 0.5 15
+# sh run_seq2seq.sh FedAvg "niid_cluster_clients=30_alpha=0.1" 1e-1 1 0.5 15
 
 hps = [
     'FedOpt "niid_cluster_clients=30_alpha=0.1" 5e-5 1 0.5 15',
