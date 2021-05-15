@@ -58,7 +58,7 @@ for hp in hps:
     os.system("mkdir /tmp/; touch ./tmp/fedml")
     os.system('nohup sh run_seq2seq.sh '
               '{args.hp} '
-              '> ./fednlp_se_{args.run_id}.log 2>&1 &'.format(args=args))
+              '> ./fednlp_ss_{args.run_id}.log 2>&1 &'.format(args=args))
 
     wait_for_the_training_process()
 
