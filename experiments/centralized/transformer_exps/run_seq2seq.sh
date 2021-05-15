@@ -1,4 +1,4 @@
-DATA_NAME=cnn_dailymail
+DATA_NAME=gigaword
 CUDA_VISIBLE_DEVICES=6 python -m experiments.centralized.transformer_exps.main_ss \
     --dataset ${DATA_NAME} \
     --data_file ~/fednlp_data/data_files/${DATA_NAME}_data.h5 \
@@ -11,7 +11,8 @@ CUDA_VISIBLE_DEVICES=6 python -m experiments.centralized.transformer_exps.main_s
     --eval_batch_size 32 \
     --max_seq_length 256 \
     --learning_rate 5e-5 \
-    --epochs 5 \
-    --evaluate_during_training_steps 100 \
+    --epochs 10 \
+    --reprocess_input_data False \
+    --evaluate_during_training_steps 1000 \
     --output_dir /tmp/${DATA_NAME}_fed/ \
     --n_gpu 1
