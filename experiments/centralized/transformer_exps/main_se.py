@@ -39,8 +39,10 @@ if __name__ == "__main__":
     set_seed(args.manual_seed)
 
     # device
-    device = torch.device("cuda:0")
-
+    print("device count:",torch.cuda.device_count())
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    #device = torch.device("cuda:"+",".join([str(i) for i in range(args.n_gpu)]))    
+    print(device)
     # attributes
     attributes = SpanExtractionDataManager.load_attributes(args.data_file_path)
 
@@ -68,7 +70,8 @@ if __name__ == "__main__":
                                  "partition_method": args.partition_method,
                                  "dataset": args.dataset,
                                  "output_dir": args.output_dir,
-                                 "is_debug_mode": args.is_debug_mode
+                                 "is_debug_mode": args.is_debug_mode,
+                                 "n_gpu": args.n_gpu
                                  })
 
     model_config, model, tokenizer = create_model(model_args, formulation="span_extraction")

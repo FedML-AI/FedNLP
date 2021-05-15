@@ -116,6 +116,8 @@ class SpanExtractionTrainer:
         optimizer, scheduler = self.build_optimizer(self.model, iteration_in_total)
 
         if args.n_gpu > 1:
+            print("gpu number",args.n_gpu)
+            logging.info("torch.nn.DataParallel(self.model)")
             self.model = torch.nn.DataParallel(self.model)
 
         # training result
@@ -214,7 +216,7 @@ class SpanExtractionTrainer:
         if not device:
             device = self.device
 
-        logging.info("train_model self.device: " + str(device))
+        logging.info("test_model self.device: " + str(device))
         self.model.to(device)
 
         all_predictions, all_nbest_json, scores_diff_json, eval_loss = self.evaluate(output_dir)
@@ -233,8 +235,9 @@ class SpanExtractionTrainer:
         Utility function to be used by the eval_model() method. Not intended to be used directly.
         """
         tokenizer = self.tokenizer
-        device = self.device
+        device = torch.device("cuda:0")
         model = self.model
+        model.to(device)
         args = self.args
 
         # # reassgin unique_id for features to keep order for federated learning situation
@@ -250,8 +253,8 @@ class SpanExtractionTrainer:
         nb_eval_steps = 0
         model.eval()
 
-        if args.n_gpu > 1:
-            model = torch.nn.DataParallel(model)
+        # if args.n_gpu > 1:
+        #     model = torch.nn.DataParallel(model)
 
         if self.args.fp16:
             from torch.cuda import amp

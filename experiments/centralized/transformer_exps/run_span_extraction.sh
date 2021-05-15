@@ -7,12 +7,12 @@ CUDA_VISIBLE_DEVICES=4,5,6,7 python -m experiments.centralized.transformer_exps.
     --model_type distilbert \
     --model_name distilbert-base-uncased  \
     --do_lower_case True \
-    --train_batch_size 48 \
-    --eval_batch_size 8 \
+    --train_batch_size 256 \
+    --eval_batch_size 128 \
     --max_seq_length 256 \
     --learning_rate 5e-5 \
     --epochs 10 \
-    --evaluate_during_training_steps 200 \
+    --evaluate_during_training_steps 500 \
     --output_dir /tmp/${DATA_NAME}_fed/ \
-    --n_gpu 4
+    --n_gpu 4 
 
