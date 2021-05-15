@@ -46,9 +46,11 @@ class RawDataLoader(SpanExtractionRawDataLoader):
             for line in f:
                 paragraph = json.loads(line)
                 for question in paragraph['qas']:
-                    if len(question['detected_answers']) < 1:
-                        continue
+                    seen_answers = set()
                     for answer in question['detected_answers']: # same answer continue or not?
+                        if answer["text"] in seen_answers:
+                            continue
+                        seen_answers.add(answer["text"])
                         assert len(self.context_X) == len(self.question_X) == len(self.Y) == len(self.question_ids)
                         idx = len(self.context_X)
                         # clean context data 
