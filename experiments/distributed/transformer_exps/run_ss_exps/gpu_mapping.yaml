@@ -37,3 +37,7 @@ mapping_ink-ron:
 mapping_ink-lucy:
     ink-ron: [2, 3, 3, 3]
 
+
+mapping_a100:
+    g1lmd2: [1, 1, 1, 1, 2, 2, 2, 1]
+
