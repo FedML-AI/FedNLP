@@ -145,7 +145,7 @@ def add_centralized_args(parser):
                         help='path to save the trained results and ckpts')
 
     # cached related
-    parser.add_argument('--reprocess_input_data', type=bool, default=False, metavar='N',
+    parser.add_argument('--reprocess_input_data',  action='store_true',
                         help='whether generate features')
 
     return parser

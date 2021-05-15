@@ -3,7 +3,7 @@ CUDA_VISIBLE_DEVICES=6 python -m experiments.centralized.transformer_exps.main_s
     --dataset ${DATA_NAME} \
     --data_file ~/fednlp_data/data_files/${DATA_NAME}_data.h5 \
     --partition_file ~/fednlp_data/partition_files/${DATA_NAME}_partition.h5 \
-    --partition_method uniform \
+    --partition_method niid_cluster_clients=100_alpha=0.1 \
     --model_type bart \
     --model_name facebook/bart-base  \
     --do_lower_case True \
@@ -12,7 +12,6 @@ CUDA_VISIBLE_DEVICES=6 python -m experiments.centralized.transformer_exps.main_s
     --max_seq_length 256 \
     --learning_rate 5e-5 \
     --epochs 10 \
-    --reprocess_input_data False \
     --evaluate_during_training_steps 1000 \
     --output_dir /tmp/${DATA_NAME}_fed/ \
     --n_gpu 1
