@@ -37,15 +37,16 @@ logging.basicConfig(level=logging.INFO,
 parser = argparse.ArgumentParser()
 args = add_args(parser)
 
-os.system("kill $(ps aux | grep \"fedavg_main_se.py\" | grep -v grep | awk '{print $2}')")
+os.system("kill $(ps aux | grep \"fedavg_main_ss.py\" | grep -v grep | awk '{print $2}')")
 
-# sh run_span_extraction.sh FedAvg "niid_cluster_clients=10_alpha=5.0" 1e-5 0.1 30
-# sh run_span_extraction.sh FedProx "niid_cluster_clients=10_alpha=5.0" 1e-5 0.1 30
-# sh run_span_extraction.sh FedOPT "niid_cluster_clients=10_alpha=5.0" 1e-5 0.1 30
+# sh run_seq2seq.sh FedAvg "niid_cluster_clients=10_alpha=5.0" 1e-5 0.1 30
+# sh run_seq2seq.sh FedProx "niid_cluster_clients=10_alpha=5.0" 1e-5 0.1 30
+# sh run_seq2seq.sh FedOPT "niid_cluster_clients=10_alpha=5.0" 1e-5 0.1 30
 
 hps = [
+    'FedOpt "niid_cluster_clients=30_alpha=0.1" 5e-5 1 0.5 15',
     'FedAvg "niid_cluster_clients=30_alpha=0.1" 1e-1 1 0.5 15',
-    # 'FedProx "niid_cluster_clients=30_alpha=0.1" 1e-1 1 0.5 15',
+    'FedProx "niid_cluster_clients=30_alpha=0.1" 1e-1 1 0.5 15',
 ]
 
 run_id = 0
@@ -55,14 +56,14 @@ for hp in hps:
 
     logging.info("hp = %s" % args.hp)
     os.system("mkdir /tmp/; touch ./tmp/fedml")
-    os.system('nohup sh run_span_extraction.sh '
+    os.system('nohup sh run_seq2seq.sh '
               '{args.hp} '
               '> ./fednlp_se_{args.run_id}.log 2>&1 &'.format(args=args))
 
     wait_for_the_training_process()
 
     logging.info("cleaning the training...")
-    os.system("kill $(ps aux | grep \"fedavg_main_se.py\" | grep -v grep | awk '{print $2}')")
+    os.system("kill $(ps aux | grep \"fedavg_main_ss.py\" | grep -v grep | awk '{print $2}')")
 
     sleep(5)
     run_id += 1
