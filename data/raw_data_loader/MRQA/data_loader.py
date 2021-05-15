@@ -13,8 +13,8 @@ class RawDataLoader(SpanExtractionRawDataLoader):
     def __init__(self, data_path):
         super().__init__(data_path)
         # i rename some of the file so that they are more distinguishable 
-        self.train_file_name = ["HotpotQA.jsonl","NewsQA.jsonl", "SearchQA.jsonl", "NaturalQuestionsShort.jsonl","SQuAD.jsonl" ,"TriviaQA-web.jsonl"]
-        self.test_file_name = ["HotpotQA-dev.jsonl","NewsQA-dev.jsonl","SearchQA-dev.jsonl", "NaturalQuestionsShort-dev.jsonl","SQuAD-dev.jsonl","TriviaQA-web-dev.jsonl"]
+        self.train_file_name = ["HotpotQA.jsonl","NewsQA.jsonl", "SearchQA.jsonl", "NaturalQuestionsShort.jsonl","SQuAD.jsonl" ,"TriviaQA.jsonl"]
+        self.test_file_name = ["HotpotQA-dev.jsonl","NewsQA-dev.jsonl","SearchQA-dev.jsonl", "NaturalQuestionsShort-dev.jsonl","SQuAD-dev.jsonl","TriviaQA-dev.jsonl"]
         self.question_ids = dict()
         self.attributes["train_index_list"] = []
         self.attributes["test_index_list"] = []
@@ -68,7 +68,6 @@ class RawDataLoader(SpanExtractionRawDataLoader):
         f = h5py.File(file_path, "w")
         f["attributes"] = json.dumps(self.attributes)
         for key in self.context_X.keys():
-            print(key)
             f["context_X/" + str(key)] = self.context_X[key]
             f["question_X/" + str(key)] = self.question_X[key]
             f["Y/" + str(key)] = self.Y[key]
