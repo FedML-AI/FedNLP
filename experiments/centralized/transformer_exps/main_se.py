@@ -56,7 +56,7 @@ if __name__ == "__main__":
                                  "gradient_accumulation_steps": args.gradient_accumulation_steps,
                                  "do_lower_case": args.do_lower_case,
                                  "manual_seed": args.manual_seed,
-                                 "reprocess_input_data": True,  # for ignoring the cache features.
+                                 "reprocess_input_data": args.reprocess_input_data,  # for ignoring the cache features.
                                  "overwrite_output_dir": True,
                                  "max_seq_length": args.max_seq_length,
                                  "train_batch_size": args.train_batch_size,
@@ -103,7 +103,7 @@ CUDA_VISIBLE_DEVICES=0 python -m experiments.centralized.transformer_exps.main_s
     --eval_batch_size 8 \
     --max_seq_length 256 \
     --learning_rate 5e-5 \
-    --epochs 20 \
+    --epochs 10 \
     --evaluate_during_training_steps 200 \
     --output_dir /tmp/${DATA_NAME}_fed/ \
     --n_gpu 1

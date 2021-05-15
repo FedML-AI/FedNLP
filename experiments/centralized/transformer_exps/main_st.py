@@ -61,7 +61,7 @@ if __name__ == "__main__":
                               "gradient_accumulation_steps": args.gradient_accumulation_steps,
                               "do_lower_case": args.do_lower_case,
                               "manual_seed": args.manual_seed,
-                              "reprocess_input_data": True, # for ignoring the cache features.
+                              "reprocess_input_data": True, # True for ignoring the cache features.
                               "overwrite_output_dir": True,
                               "max_seq_length": args.max_seq_length,
                               "train_batch_size": args.train_batch_size,

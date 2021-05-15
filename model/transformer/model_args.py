@@ -187,11 +187,12 @@ class Seq2SeqArgs(ModelArgs):
     length_penalty: float = 2.0
     max_length: int = 20
     max_steps: int = -1
-    num_beams: int = 1
+    num_beams: int = 4
     num_return_sequences: int = 1
     repetition_penalty: float = 1.0
     top_k: float = None
     top_p: float = None
     use_multiprocessed_decoding: bool = False
+    evaluate_during_training: bool = True
     src_lang: str = "en_XX"
     tgt_lang: str = "ro_RO"

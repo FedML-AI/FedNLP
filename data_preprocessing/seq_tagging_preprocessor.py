@@ -75,11 +75,7 @@ class TLMPreprocessor(BasePreprocessor):
             
             examples.append(SeqTaggingInputExample(guid=sentence_id,
                                                     words=words,
-                                                    labels=sentence_df["labels"].tolist(),
-                                                    x0=sentence_df["x0"].tolist(),
-                                                    y0=sentence_df["y0"].tolist(),
-                                                    x1=sentence_df["x1"].tolist(),
-                                                    y1=sentence_df["y1"].tolist()))
+                                                    labels=sentence_df["labels"].tolist()))
 
         return examples
 

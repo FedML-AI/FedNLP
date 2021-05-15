@@ -144,4 +144,8 @@ def add_centralized_args(parser):
     parser.add_argument('--output_dir', type=str, default="/tmp/", metavar='N',
                         help='path to save the trained results and ckpts')
 
+    # cached related
+    parser.add_argument('--reprocess_input_data', type=bool, default=False, metavar='N',
+                        help='whether generate features')
+
     return parser

@@ -149,8 +149,6 @@ class SeqTaggingTrainer:
             with torch.no_grad():
                 sample_index_list = batch[0].to(device).cpu().numpy()
 
-                if i == len(self.test_dl) - 1:
-                    logging.info(batch)
                 x = batch[1].to(device)
                 labels = batch[4].to(device)
 
@@ -205,16 +203,17 @@ class SeqTaggingTrainer:
             word_tokens.append(w_log)
 
         model_outputs = [[word_tokens[i][j] for j in range(len(preds_list[i]))] for i in range(len(preds_list))]
-
+        logging.info(preds_list[:2])
+        logging.info(out_label_list[:2])
         result = {
             "eval_loss": eval_loss,
             "precision": precision_score(out_label_list, preds_list),
             "recall": recall_score(out_label_list, preds_list),
             "f1_score": f1_score(out_label_list, preds_list),
         }
-        result["eval_loss"] = eval_loss
         wandb.log(result)
         results.update(result)
+        logging.info(result)
 
         os.makedirs(eval_output_dir, exist_ok=True)
         output_eval_file = os.path.join(eval_output_dir, "eval_results.txt")

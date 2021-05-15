@@ -132,8 +132,8 @@ class Seq2SeqTrainer:
         steps_trained_in_current_epoch = 0
         epochs_trained = 0
 
-        if args.evaluate_during_training:
-            training_progress_scores = self._create_training_progress_scores()
+        # if args.evaluate_during_training:
+        #     training_progress_scores = self._create_training_progress_scores()
 
         if args.fp16:
             from torch.cuda import amp
@@ -203,6 +203,10 @@ class Seq2SeqTrainer:
                     scheduler.step()  # Update learning rate schedule
                     self.model.zero_grad()
                     global_step += 1
+                    if self.args.evaluate_during_training and (self.args.evaluate_during_training_steps > 0
+                                                               and global_step % self.args.evaluate_during_training_steps == 0):
+                        results, _, _ = self.eval_model(epoch, global_step)
+                        logging.info(results)
 
         return global_step, tr_loss / global_step
 
@@ -275,9 +279,9 @@ class Seq2SeqTrainer:
         model_preds = None
 
         # if self.args.evaluate_generated_text:
-        to_predict = [ex.input_text for ex in self.test_dl.examples]
-        references = [ex.target_text for ex in self.test_dl.examples]
-        model_preds = self.predict(to_predict)
+        # to_predict = [ex.input_text for ex in self.test_dl.examples]
+        # references = [ex.target_text for ex in self.test_dl.examples]
+        # model_preds = self.predict(to_predict)
 
         # TODO: compute ROUGE/BLUE/ scores here.
         # result = self.compute_metrics(references, model_preds)
