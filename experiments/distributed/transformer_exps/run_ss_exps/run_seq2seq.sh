@@ -5,12 +5,12 @@ S_LR=$4
 MU=$5
 ROUND=$6
 
-LOG_FILE="fedavg_transformer_se.log"
+LOG_FILE="fedavg_transformer_ss.log"
 WORKER_NUM=10
 CI=0
 
 DATA_DIR=~/fednlp_data/
-DATA_NAME=squad_1.1
+DATA_NAME=gigaword
 PROCESS_NUM=`expr $WORKER_NUM + 1`
 echo $PROCESS_NUM
 
