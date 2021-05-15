@@ -49,9 +49,8 @@ hps = [
     # 'FedProx "niid_label_clients=30_alpha=0.1" 1e-1 1 1 30',
     # 'FedProx "niid_label_clients=30_alpha=0.1" 1e-1 1 0.1 30',
     # 'FedProx "niid_label_clients=30_alpha=0.1" 1e-1 1 0.01 30',
-    # 'FedProx "niid_label_clients=30_alpha=0.1" 1e-1 1 0.001 30',
+    'FedProx "niid_label_clients=30_alpha=0.1" 1e-1 1 0.001 30',
     'FedAvg "niid_label_clients=30_alpha=0.1" 1e-1 1 0.5 30',
-    'FedOPT "niid_label_clients=30_alpha=0.1" 5e-5 1 0.5 30',
     'FedOPT "niid_label_clients=30_alpha=0.1" 5e-5 1 0.5 30',
 ]
 
