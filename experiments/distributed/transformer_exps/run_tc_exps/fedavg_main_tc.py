@@ -48,6 +48,15 @@ def wait_for_the_training_process():
             sleep(3)
             print("Daemon is alive. Waiting for the training result.")
 
+def post_complete_message(tc_args):
+    pipe_path = "/tmp/fednlp_tc"
+    if not os.path.exists(pipe_path):
+        os.mkfifo(pipe_path)
+    pipe_fd = os.open(pipe_path, os.O_WRONLY)
+
+    with os.fdopen(pipe_fd, 'w') as pipe:
+        pipe.write("training is finished! \n%s" % (str(tc_args)))
+
 
 if __name__ == "__main__":
     # parse python script input parameters
