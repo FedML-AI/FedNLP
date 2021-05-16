@@ -14,7 +14,7 @@ def add_args(parser):
 
 
 def wait_for_the_training_process():
-    pipe_path = "./tmp/"
+    pipe_path = "./tmp/fedml"
     if not os.path.exists(os.path.dirname(pipe_path)):
         try:
             os.makedirs(os.path.dirname(pipe_path))
