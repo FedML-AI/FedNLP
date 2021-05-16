@@ -80,16 +80,14 @@ def main():
     elif args.task_type == 'reading_comprehension': # specifically Squad1.1 dataset
         for i in f['context_X'].keys():
             question_components = []
-            context = f['context_X'][i][()].decode('UTF-8')
+            # context = f['context_X'][i][()].decode('UTF-8')
             question = f['question_X'][i][()].decode('UTF-8')
-            answer_start = f['Y'][i][()].decode('UTF-8')[0]
-            answer_end = f['Y'][i][()].decode('UTF-8')[1]
+            answer_start = f['Y'][i][()][0]
+            answer_end = f['Y'][i][()][1]
             answer = f['context_X'][i][()].decode('UTF-8')[answer_start : answer_end]
 
-            question_components.append(context)
             question_components.append(question)
             question_components.append(answer)
-
             corpus.append(" ".join(question_components))
 
     elif args.task_type == 'sequence_to_sequence':
@@ -102,6 +100,7 @@ def main():
             sentence = f['X'][i][()].decode('UTF-8')
             corpus.append(sentence)
     f.close()
+
     print("start process embedding data and kmeans partition")
     cluster_assignment = []
     embedding_data = []
