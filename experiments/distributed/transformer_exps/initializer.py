@@ -204,5 +204,8 @@ def add_federated_args(parser):
 
     parser.add_argument('--ci', type=int, default=0,
                         help='CI')
+    # cached related
+    parser.add_argument('--reprocess_input_data',  action='store_true',
+                        help='whether generate features')
 
     return parser

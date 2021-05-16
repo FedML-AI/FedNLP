@@ -32,14 +32,14 @@ python -m fedavg_main_se \
   --model_name distilbert-base-uncased \
   --do_lower_case True \
   --train_batch_size 16 \
-  --eval_batch_size 16 \
+  --eval_batch_size 128 \
   --max_seq_length 128 \
   --lr $C_LR \
   --server_lr $S_LR \
   --fedprox_mu $MU \
   --epochs 1 \
   --output_dir "/tmp/fedavg_${DATA_NAME}_output/" \
-  --fp16
+  --fp16 
   2> ${LOG_FILE} &
 
 
