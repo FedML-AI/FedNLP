@@ -22,6 +22,12 @@ pip install -r requirements.txt
 pip uninstall transformers
 pip install -e transformers/
 cd FedML; git submodule init; git submodule update; cd ../;
+
+# For Evaluation NLG
+# pip install git+https://github.com/google-research/bleurt.git
+# cd ~/fednlp_data/
+# wget https://storage.googleapis.com/bleurt-oss/bleurt-base-128.zip .
+# unzip bleurt-base-128.zip
 ```
 
 ## Code Structure of FedNLP

@@ -40,6 +40,11 @@ if __name__ == "__main__":
 
     set_seed(args.manual_seed)
 
+    # initialize the wandb machine learning experimental tracking platform (https://wandb.ai/automl/fednlp).
+    wandb.init(project="fednlp", entity="automl", name="FedNLP-Centralized" +
+                                                "-SS-" + str(args.dataset) + "-" + str(args.model_name),
+        config=args)
+
     # device
     device = torch.device("cuda:0")
 
@@ -71,7 +76,8 @@ if __name__ == "__main__":
                               "partition_method": args.partition_method,
                               "dataset": args.dataset,
                               "output_dir": args.output_dir,
-                              "is_debug_mode": args.is_debug_mode
+                              "is_debug_mode": args.is_debug_mode,
+                              "num_beams": 3
                               })
     model_config, model, tokenizer = create_model(model_args, formulation="seq2seq")
 
@@ -83,6 +89,9 @@ if __name__ == "__main__":
     num_workers = 1
     dm = Seq2SeqDataManager(args, model_args, preprocessor)
     train_dl, test_dl = dm.load_centralized_data() # cut_off = 1 for each client.
+
+
+    
 
     # Create a Seq2Seq Trainer and start train
     trainer = Seq2SeqTrainer(model_args, device, model, train_dl, test_dl, tokenizer)

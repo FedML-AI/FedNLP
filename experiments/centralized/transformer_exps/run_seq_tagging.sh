@@ -14,4 +14,8 @@ CUDA_VISIBLE_DEVICES=7 python -m experiments.centralized.transformer_exps.main_s
     --epochs 10 \
     --evaluate_during_training_steps 500 \
     --output_dir /tmp/${DATA_NAME}_fed/ \
-    --n_gpu 1
+    --n_gpu 1 
+
+
+# bash experiments/centralized/transformer_exps/run_seq_tagging.sh > centralized_onto.log 2>&1 &
+# tail -f centralized_onto.log
