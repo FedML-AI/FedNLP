@@ -73,13 +73,13 @@ hps = [
     # 'FedOPT "uniform" 5e-5 0.1 25',
     # 'FedAvg "niid_quantity_clients=100_beta=5.0" 5e-5 0.1 25',
     # 'FedOPT "niid_quantity_clients=100_beta=5.0" 5e-5 0.1 25', # finished by Chaoyang
-    'FedOPT "niid_label_clients=100_alpha=1.0" 5e-5 0.1 30 10 e,0,1,2,3,4,5',
-    'FedOPT "niid_label_clients=100_alpha=1.0" 5e-5 0.1 30 10 e,0,1,2,3,4',
-    'FedOPT "niid_label_clients=100_alpha=1.0" 5e-5 0.1 30 10 e,0,1,2,3',
-    'FedOPT "niid_label_clients=100_alpha=1.0" 5e-5 0.1 30 10 e,0,1,2',
-    'FedOPT "niid_label_clients=100_alpha=1.0" 5e-5 0.1 30 10 e,0,1',
-    'FedOPT "niid_label_clients=100_alpha=1.0" 5e-5 0.1 30 10 e,0',
-    'FedOPT "niid_label_clients=100_alpha=1.0" 5e-5 0.1 30 10 e',
+    'FedOPT "niid_label_clients=100_alpha=1.0" 5e-5 1 30 10 e,0,1,2,3,4,5',
+    'FedOPT "niid_label_clients=100_alpha=1.0" 5e-5 1 30 10 e,0,1,2,3,4',
+    'FedOPT "niid_label_clients=100_alpha=1.0" 5e-5 1 30 10 e,0,1,2,3',
+    'FedOPT "niid_label_clients=100_alpha=1.0" 5e-5 1 30 10 e,0,1,2',
+    'FedOPT "niid_label_clients=100_alpha=1.0" 5e-5 1 30 10 e,0,1',
+    'FedOPT "niid_label_clients=100_alpha=1.0" 5e-5 1 30 10 e,0',
+    'FedOPT "niid_label_clients=100_alpha=1.0" 5e-5 1 30 10 e',
 ]
 
 run_id = 0

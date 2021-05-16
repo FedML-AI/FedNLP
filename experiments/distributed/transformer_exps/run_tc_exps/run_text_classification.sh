@@ -30,12 +30,12 @@ python -m fedavg_main_tc \
   --partition_file "${DATA_DIR}/partition_files/${DATA_NAME}_partition.h5" \
   --partition_method $PARTITION_METHOD \
   --fl_algorithm $FL_ALG \
-  --model_type bert \
-  --model_name bert-base-uncased \
+  --model_type distilbert \
+  --model_name distilbert-base-uncased \
   --do_lower_case True \
-  --train_batch_size 8 \
+  --train_batch_size 32 \
   --eval_batch_size 8 \
-  --max_seq_length 128 \
+  --max_seq_length 256 \
   --lr $C_LR \
   --server_lr $S_LR \
   --epochs 1 \
