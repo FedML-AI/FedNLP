@@ -56,12 +56,13 @@ if __name__ == "__main__":
     model_args.model_type = args.model_type
     model_args.load(model_args.model_name)
     model_args.num_labels = num_labels
+    model_args.fl_algorithm = ""
     model_args.update_from_dict({"epochs": args.epochs,
                                  "learning_rate": args.learning_rate,
                                  "gradient_accumulation_steps": args.gradient_accumulation_steps,
                                  "do_lower_case": args.do_lower_case,
                                  "manual_seed": args.manual_seed,
-                                 "reprocess_input_data": True,  # for ignoring the cache features.
+                                 "reprocess_input_data": args.reprocess_input_data,  # for ignoring the cache features.
                                  "overwrite_output_dir": True,
                                  "max_seq_length": args.max_seq_length,
                                  "train_batch_size": args.train_batch_size,
@@ -88,8 +89,11 @@ if __name__ == "__main__":
     train_dl, test_dl = dm.load_centralized_data()
 
     # Create a ClassificationModel and start train
+    freeze_layers = None
+    if args.freeze_layers:
+        freeze_layers = args.freeze_layers.split(",")
     trainer = TextClassificationTrainer(model_args, device, model, train_dl, test_dl)
-    trainer.train_model()
+    trainer.train_model(freeze_layers=freeze_layers)
     trainer.eval_model()
 
 ''' Example Usage:

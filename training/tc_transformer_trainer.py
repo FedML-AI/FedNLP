@@ -42,7 +42,7 @@ class TextClassificationTrainer:
         self.train_dl = train_dl
         self.test_dl = test_dl
 
-    def train_model(self, device=None):
+    def train_model(self, device=None, freeze_layers=None):
         if not device:
             device = self.device
 
@@ -52,7 +52,7 @@ class TextClassificationTrainer:
         # build optimizer and scheduler
         iteration_in_total = len(
             self.train_dl) // self.args.gradient_accumulation_steps * self.args.epochs
-        optimizer, scheduler = self.build_optimizer(self.model, iteration_in_total)
+        optimizer, scheduler = self.build_optimizer(self.model, iteration_in_total, freeze_layers)
 
         # training result
         global_step = 0
@@ -207,10 +207,11 @@ class TextClassificationTrainer:
             wrong,
         )
 
-    def build_optimizer(self, model, iteration_in_total):
+    def build_optimizer(self, model, iteration_in_total, freeze_layers):
         warmup_steps = math.ceil(iteration_in_total * self.args.warmup_ratio)
         self.args.warmup_steps = warmup_steps if self.args.warmup_steps == 0 else self.args.warmup_steps
         logging.info("warmup steps = %d" % self.args.warmup_steps)
+        self.freeze_model_parameters(model, freeze_layers)
         if self.args.fl_algorithm == "FedOPT" or self.args.fl_algorithm == "":
             optimizer = AdamW(model.parameters(), lr=self.args.learning_rate, eps=self.args.adam_epsilon)
         else:
@@ -219,3 +220,24 @@ class TextClassificationTrainer:
             optimizer, num_warmup_steps=self.args.warmup_steps, num_training_steps=iteration_in_total
         )
         return optimizer, scheduler
+    
+    def freeze_model_parameters(self, model, freeze_layers):
+        if freeze_layers is None:
+            return
+        modules = list()
+        logging.info(freeze_layers)
+        for layer_idx in freeze_layers:
+            if layer_idx == "e":
+                modules.append(model.distilbert.embeddings)
+            else:
+                modules.append(model.distilbert.transformer.layer[int(layer_idx)])
+        for module in modules:
+            for param in module.parameters():
+                param.requires_grad = False
+        logging.info(get_parameter_number(model))
+
+def get_parameter_number(net):
+    total_num = sum(p.numel() for p in net.parameters())
+    trainable_num = sum(p.numel() for p in net.parameters() if p.requires_grad)
+    return {'Total': total_num, 'Trainable': trainable_num}
+

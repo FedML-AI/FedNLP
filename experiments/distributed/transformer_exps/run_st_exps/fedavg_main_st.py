@@ -1,6 +1,7 @@
 import os
 import socket
 import sys
+from time import sleep
 
 import psutil
 import setproctitle
@@ -27,14 +28,22 @@ import argparse
 import logging
 
 
-def post_complete_message(tc_args):
-    pipe_path = "/tmp/fednlp_st"
-    if not os.path.exists(pipe_path):
-        os.mkfifo(pipe_path)
-    pipe_fd = os.open(pipe_path, os.O_WRONLY)
-
-    with os.fdopen(pipe_fd, 'w') as pipe:
-        pipe.write("training is finished! \n%s" % (str(tc_args)))
+def wait_for_the_training_process():
+    folder = "./folder"
+    if not os.path.exists(folder):
+        os.mkfifo(folder)
+    pipe_path = "./tmp/fedml"
+    pipe_fd = os.open(pipe_path, os.O_RDONLY | os.O_NONBLOCK)
+    with os.fdopen(pipe_fd) as pipe:
+        while True:
+            message = pipe.read()
+            if message:
+                print("Received: '%s'" % message)
+                print("Training is finished. Start the next training with...")
+                os.remove(pipe_path)
+                return
+            sleep(3)
+            print("Daemon is alive. Waiting for the training result.")
 
 
 if __name__ == "__main__":
