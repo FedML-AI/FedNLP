@@ -13,7 +13,7 @@ def add_args(parser):
 
 
 def wait_for_the_training_process():
-    folder = "./folder"
+    folder = "./tmp"
     if not os.path.exists(folder):
         os.mkfifo(folder)
     pipe_path = "./tmp/fedml"
