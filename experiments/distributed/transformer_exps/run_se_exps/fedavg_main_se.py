@@ -64,7 +64,7 @@ if __name__ == "__main__":
     # customize the process name
     str_process_name = "FedNLP-" + str(args.dataset) + ":" + str(process_id)
     setproctitle.setproctitle(str_process_name)
-    
+
     hostname = socket.gethostname()
     logging.info("#############process ID = " + str(process_id) +
                  ", host name = " + hostname + "########" +
