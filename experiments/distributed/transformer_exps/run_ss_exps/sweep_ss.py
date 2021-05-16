@@ -15,8 +15,7 @@ def add_args(parser):
 def wait_for_the_training_process():
     pipe_path = "./tmp/fedml"
     if not os.path.exists(pipe_path):
-        with open(pipe_path, 'w'):
-            pass
+        with open(pipe_path, 'w'): pass
     pipe_fd = os.open(pipe_path, os.O_RDONLY | os.O_NONBLOCK)
     with os.fdopen(pipe_fd) as pipe:
         while True:
