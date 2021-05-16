@@ -38,7 +38,7 @@ class TextClassificationTrainer:
         self.best_accuracy = 0.0
 
         # freeze
-        self.freeze_layers = args.freeze_layers.split(",")
+        self.freeze_layers = args.freeze_layers.split(",") if args.freeze_layers else []
 
     def set_data(self, train_dl=None, test_dl=None):
         # Used for fedtrainer
