@@ -62,3 +62,4 @@ data/fednlp/*
 
 experiments/centralized/transformer_exps/output/*
 experiments/distributed/transformer_exps/output/*
+experiments/distributed/transformer_exps/*/tmp/fedml
