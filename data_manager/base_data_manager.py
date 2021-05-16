@@ -287,7 +287,7 @@ class BaseDataManager(ABC):
         args = self.args
         model_args = self.model_args
         cached_features_file = os.path.join(
-            model_args.cache_dir, args.model_type + "_cached_" + str(args.max_seq_length) + "_" + model_args.model_class + "_" 
+            model_args.cache_dir, args.model_type + "_" + args.model_name.split("/")[-1] + "_cached_" + str(args.max_seq_length) + "_" + model_args.model_class + "_" 
             + args.dataset + "_" + args.partition_method + "_" + str(client_id)
         )
 
