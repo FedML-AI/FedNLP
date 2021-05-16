@@ -117,7 +117,6 @@ threadpoolctl==2.0.0
 tokenizers==0.9.3
 toml==0.10.2
 toolz==0.11.1
-torch==1.6.0+cu101
 torchtext==0.4.0
 torchvision==0.7.0+cu101
 tornado==6.1
