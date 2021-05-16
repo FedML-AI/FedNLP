@@ -1,6 +1,7 @@
-LAYERS=$1
+GPU_NUM=$1
+LAYERS=$2
 DATA_NAME=20news
-CUDA_VISIBLE_DEVICES=6 python -m main_tc \
+CUDA_VISIBLE_DEVICES=$GPU_NUM python -m main_tc \
     --dataset ${DATA_NAME} \
     --data_file ~/fednlp_data/data_files/${DATA_NAME}_data.h5 \
     --partition_file ~/fednlp_data/partition_files/${DATA_NAME}_partition.h5 \

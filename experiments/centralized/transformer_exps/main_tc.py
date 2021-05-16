@@ -43,7 +43,7 @@ if __name__ == "__main__":
 
     # initialize the wandb machine learning experimental tracking platform (https://wandb.ai/automl/fednlp).
     wandb.init(project="fednlp", entity="automl", name="FedNLP-Centralized" +
-                                                "-TC-" + str(args.dataset) + "-" + str(args.model_name),
+                                                "-TC-" + str(args.dataset) + "-" + str(args.model_name) + "-freeze-" + args.freeze_layers if args.freeze_layers else "",
         config=args)
 
     # attributes
@@ -58,6 +58,7 @@ if __name__ == "__main__":
     model_args.num_labels = num_labels
     model_args.fl_algorithm = ""
     model_args.update_from_dict({"epochs": args.epochs,
+                                 "freeze_layers": args.freeze_layers,
                                  "learning_rate": args.learning_rate,
                                  "gradient_accumulation_steps": args.gradient_accumulation_steps,
                                  "do_lower_case": args.do_lower_case,
@@ -89,11 +90,8 @@ if __name__ == "__main__":
     train_dl, test_dl = dm.load_centralized_data()
 
     # Create a ClassificationModel and start train
-    freeze_layers = None
-    if args.freeze_layers:
-        freeze_layers = args.freeze_layers.split(",")
     trainer = TextClassificationTrainer(model_args, device, model, train_dl, test_dl)
-    trainer.train_model(freeze_layers=freeze_layers)
+    trainer.train_model()
     trainer.eval_model()
 
 ''' Example Usage:

@@ -3,10 +3,12 @@ PARTITION_METHOD=$2
 C_LR=$3
 S_LR=$4
 ROUND=$5
+WORKER_NUM=$6
+LAYERS=$7
 
 
 LOG_FILE="fedavg_transformer_tc.log"
-WORKER_NUM=10
+# WORKER_NUM=10
 CI=0
 
 DATA_DIR=~/fednlp_data/
@@ -37,7 +39,9 @@ python -m fedavg_main_tc \
   --lr $C_LR \
   --server_lr $S_LR \
   --epochs 1 \
-  --output_dir "/tmp/fedavg_${DATA_NAME}_output/"
+  --output_dir "/tmp/fedavg_${DATA_NAME}_output/" \
+  --freeze_layers $LAYERS
+
 
 # sh run_text_classification.sh FedAvg "niid_label_clients=100_alpha=5.0" 5e-5 0.1 50
 # sh run_text_classification.sh FedAvg "niid_label_clients=100_alpha=10.0" 5e-5 0.1 50
@@ -54,5 +58,5 @@ python -m fedavg_main_tc \
 # sh run_text_classification.sh FedOPT "niid_label_clients=100_alpha=5.0" 5e-5 0.1 50
 # sh run_text_classification.sh FedOPT "niid_label_clients=100_alpha=10.0" 5e-5 0.1 50
 # sh run_text_classification.sh FedOPT "niid_label_clients=100_alpha=1.0" 5e-5 0.1 50
-# sh run_text_classification.sh FedOPT "uniform" 5e-5 0.1 50
+# sh run_text_classification.sh FedOPT "uniform" 5e-5 0.1 300
 # sh run_text_classification.sh FedOPT "niid_quantity_clients=100_beta=5.0" 5e-5 0.1 50

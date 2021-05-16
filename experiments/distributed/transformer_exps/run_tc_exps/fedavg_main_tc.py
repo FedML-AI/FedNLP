@@ -74,7 +74,7 @@ if __name__ == "__main__":
     if process_id == 0:
         # initialize the wandb machine learning experimental tracking platform (https://wandb.ai/automl/fednlp).
         wandb.init(project="fednlp", entity="automl", name="FedNLP-" + str(args.fl_algorithm) +
-                                                    "-TC-" + str(args.dataset) + "-" + str(args.model_name),
+                                                    "-TC-" + str(args.dataset) + "-" + str(args.model_name) + "-freeze-" + args.freeze_layers if args.freeze_layers else "",
             config=args)
 
     # device: check "gpu_mapping.yaml" to see how to define the topology
@@ -97,13 +97,14 @@ if __name__ == "__main__":
     model_args.load(model_args.model_name)
     model_args.num_labels = num_labels
     model_args.update_from_dict({"fl_algorithm": args.fl_algorithm,
+                                 "freeze_layers": args.freeze_layers,
                                  "epochs": args.epochs,
                                  "learning_rate": args.lr,
                                  "gradient_accumulation_steps": args.gradient_accumulation_steps,
                                  "do_lower_case": args.do_lower_case,
                                  "manual_seed": args.manual_seed,
                                  # for ignoring the cache features.
-                                 "reprocess_input_data": True,
+                                 "reprocess_input_data": args.reprocess_input_data,
                                  "overwrite_output_dir": True,
                                  "max_seq_length": args.max_seq_length,
                                  "train_batch_size": args.train_batch_size,
