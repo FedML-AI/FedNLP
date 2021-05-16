@@ -41,6 +41,11 @@ if __name__ == "__main__":
     # device
     device = torch.device("cuda:0")
 
+    # initialize the wandb machine learning experimental tracking platform (https://wandb.ai/automl/fednlp).
+    wandb.init(project="fednlp", entity="automl", name="FedNLP-Centralized" +
+                                                "-TC-" + str(args.dataset) + "-" + str(args.model_name),
+        config=args)
+
     # attributes
     attributes = TextClassificationDataManager.load_attributes(args.data_file_path)
     num_labels = len(attributes["label_vocab"])
