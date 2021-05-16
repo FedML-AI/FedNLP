@@ -31,7 +31,7 @@ def wait_for_the_training_process():
                 os.remove(pipe_path)
                 return
             sleep(3)
-            print("Daemon is alive. Waiting for the training result.")
+            # print("Daemon is alive. Waiting for the training result.")
 
 
 # customize the log format
