@@ -23,25 +23,26 @@ args = add_args(parser)
 os.system("kill $(ps aux | grep \"main_tc.py\" | grep -v grep | awk '{print $2}')")
 
 hps = [
-    "e",
-    "e,0",
-    "e,0,1",
-    "e,0,1,2",
-    "e,0,1,2,3",
-    "e,0,1,2,3,4",
-    "e,0,1,2,3,4,5"
+    # "6"
+    # "6 e",
+    # "6 e,0",
+    # "6 e,0,1",
+    "7 e,0,1,2",
+    "7 e,0,1,2,3",
+    "7 e,0,1,2,3,4",
+    "7 e,0,1,2,3,4,5"
 ]
 
 run_id = 0
-for hp in hps:
+for hp in hps[::-1]:
     args.hp = hp
     args.run_id = run_id
-
+    layers = hp.split(" ")[-1]
     logging.info("hp = %s" % args.hp)
     os.system("mkdir ./tmp/; touch ./tmp/fedml")
     os.system('nohup sh run_text_classification_sweep.sh '
-              '{args.hp} '
-              '> ./fednlp_tc_freeze_{args.hp}.log 2>&1'.format(args=args))
+              '%s '
+              '> ./fednlp_tc_freeze_%s.log 2>&1' % (hp, layers))
 
     logging.info("cleaning the training...")
     os.system("kill $(ps aux | grep \"main_tc.py\" | grep -v grep | awk '{print $2}')")
