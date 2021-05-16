@@ -13,9 +13,10 @@ def add_args(parser):
 
 
 def wait_for_the_training_process():
+    folder = "./tmp"
+    if not os.path.exists(folder):
+        os.mkfifo(folder)
     pipe_path = "./tmp/fedml"
-    if not os.path.exists(pipe_path):
-        os.mkfifo(pipe_path)
     pipe_fd = os.open(pipe_path, os.O_RDONLY | os.O_NONBLOCK)
     with os.fdopen(pipe_fd) as pipe:
         while True:
@@ -38,7 +39,6 @@ parser = argparse.ArgumentParser()
 args = add_args(parser)
 
 os.system("kill $(ps aux | grep \"fedavg_main_st.py\" | grep -v grep | awk '{print $2}')")
-
 
 hps = [
     'FedOPT "uniform" 5e-5 1 0.5 15',
