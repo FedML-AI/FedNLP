@@ -85,67 +85,67 @@ class TLMPreprocessor(BasePreprocessor):
 
         output_mode = "classification"
 
-        if not no_cache:
-            os.makedirs(args.cache_dir, exist_ok=True)
+        # if not no_cache:
+        #     os.makedirs(args.cache_dir, exist_ok=True)
 
-        mode = "dev" if evaluate else "train"
-        cached_features_file = os.path.join(
-            args.cache_dir,
-            "cached_{}_{}_{}_{}_{}".format(
-                mode, args.model_type, args.max_seq_length, len(self.label_vocab), len(examples),
-            ),
+        # mode = "dev" if evaluate else "train"
+        # cached_features_file = os.path.join(
+        #     args.cache_dir,
+        #     "cached_{}_{}_{}_{}_{}".format(
+        #         mode, args.model_type, args.max_seq_length, len(self.label_vocab), len(examples),
+        #     ),
+        # )
+        # logging.debug("cached_features_file = %s" % str(cached_features_file))
+        # logging.debug("args.reprocess_input_data = %s" % str(args.reprocess_input_data))
+        # logging.debug("no_cache = %s" % str(no_cache))
+        # if os.path.exists(cached_features_file) and (
+        #         (not args.reprocess_input_data and not no_cache)
+        #         or (mode == "dev" and args.use_cached_eval_features and not no_cache)
+        # ):
+        #     logging.info(cached_features_file)
+        #     features = torch.load(cached_features_file)
+        #     logging.debug(f" Features loaded from cache at {cached_features_file}")
+        # else:
+        logging.debug(" Converting to features started. Cache is not used.")
+
+        # If labels_map is defined, then labels need to be replaced with ints
+        if args.labels_map and not args.regression:
+            for example in examples:
+                example.label = args.labels_map[example.label]
+
+        features = convert_examples_to_features(
+            examples,
+            args.max_seq_length,
+            tokenizer,
+            output_mode,
+            # XLNet has a CLS token at the end
+            cls_token_at_end=bool(args.model_type in ["xlnet"]),
+            cls_token=tokenizer.cls_token,
+            cls_token_segment_id=2 if args.model_type in ["xlnet"] else 0,
+            sep_token=tokenizer.sep_token,
+            # RoBERTa uses an extra separator b/w pairs of sentences,
+            # cf. github.com/pytorch/fairseq/commit/1684e166e3da03f5b600dbb7855cb98ddfcd0805
+            sep_token_extra=bool(args.model_type in ["roberta", "camembert", "xlmroberta", "longformer"]),
+            # PAD on the left for XLNet
+            pad_on_left=bool(args.model_type in ["xlnet"]),
+            pad_token=tokenizer.convert_tokens_to_ids([tokenizer.pad_token])[0],
+            pad_token_segment_id=4 if args.model_type in ["xlnet"] else 0,
+            process_count=process_count,
+            multi_label=False,
+            silent=args.silent or silent,
+            use_multiprocessing=args.use_multiprocessing,
+            sliding_window=args.sliding_window,
+            flatten=not evaluate,
+            stride=args.stride,
+            add_prefix_space=bool(args.model_type in ["roberta", "camembert", "xlmroberta", "longformer"]),
+            # avoid padding in case of single example/online inferencing to decrease execution time
+            pad_to_max_length=bool(len(examples) > 1),
+            args=args,
         )
-        logging.debug("cached_features_file = %s" % str(cached_features_file))
-        logging.debug("args.reprocess_input_data = %s" % str(args.reprocess_input_data))
-        logging.debug("no_cache = %s" % str(no_cache))
-        if os.path.exists(cached_features_file) and (
-                (not args.reprocess_input_data and not no_cache)
-                or (mode == "dev" and args.use_cached_eval_features and not no_cache)
-        ):
-            logging.info(cached_features_file)
-            features = torch.load(cached_features_file)
-            logging.debug(f" Features loaded from cache at {cached_features_file}")
-        else:
-            logging.debug(" Converting to features started. Cache is not used.")
+        logging.info(f" {len(features)} features created from {len(examples)} samples.")
 
-            # If labels_map is defined, then labels need to be replaced with ints
-            if args.labels_map and not args.regression:
-                for example in examples:
-                    example.label = args.labels_map[example.label]
-
-            features = convert_examples_to_features(
-                examples,
-                args.max_seq_length,
-                tokenizer,
-                output_mode,
-                # XLNet has a CLS token at the end
-                cls_token_at_end=bool(args.model_type in ["xlnet"]),
-                cls_token=tokenizer.cls_token,
-                cls_token_segment_id=2 if args.model_type in ["xlnet"] else 0,
-                sep_token=tokenizer.sep_token,
-                # RoBERTa uses an extra separator b/w pairs of sentences,
-                # cf. github.com/pytorch/fairseq/commit/1684e166e3da03f5b600dbb7855cb98ddfcd0805
-                sep_token_extra=bool(args.model_type in ["roberta", "camembert", "xlmroberta", "longformer"]),
-                # PAD on the left for XLNet
-                pad_on_left=bool(args.model_type in ["xlnet"]),
-                pad_token=tokenizer.convert_tokens_to_ids([tokenizer.pad_token])[0],
-                pad_token_segment_id=4 if args.model_type in ["xlnet"] else 0,
-                process_count=process_count,
-                multi_label=False,
-                silent=args.silent or silent,
-                use_multiprocessing=args.use_multiprocessing,
-                sliding_window=args.sliding_window,
-                flatten=not evaluate,
-                stride=args.stride,
-                add_prefix_space=bool(args.model_type in ["roberta", "camembert", "xlmroberta", "longformer"]),
-                # avoid padding in case of single example/online inferencing to decrease execution time
-                pad_to_max_length=bool(len(examples) > 1),
-                args=args,
-            )
-            logging.info(f" {len(features)} features created from {len(examples)} samples.")
-
-            if not no_cache:
-                torch.save(features, cached_features_file)
+            # if not no_cache:
+            #     torch.save(features, cached_features_file)
         return features
 
 
