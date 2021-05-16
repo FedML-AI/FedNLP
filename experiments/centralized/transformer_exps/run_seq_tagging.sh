@@ -7,11 +7,15 @@ CUDA_VISIBLE_DEVICES=7 python -m experiments.centralized.transformer_exps.main_s
     --model_type distilbert \
     --model_name distilbert-base-uncased  \
     --do_lower_case True \
-    --train_batch_size 32 \
-    --eval_batch_size 32 \
-    --max_seq_length 256 \
+    --train_batch_size 256 \
+    --eval_batch_size 256 \
+    --max_seq_length 128 \
     --learning_rate 5e-5 \
-    --epochs 10 \
-    --evaluate_during_training_steps 500 \
+    --epochs 30 \
+    --evaluate_during_training_steps 300 \
     --output_dir /tmp/${DATA_NAME}_fed/ \
-    --n_gpu 1
+    --n_gpu 1 
+
+
+# bash experiments/centralized/transformer_exps/run_seq_tagging.sh > centralized_onto.log 2>&1 &
+# tail -f centralized_onto.log

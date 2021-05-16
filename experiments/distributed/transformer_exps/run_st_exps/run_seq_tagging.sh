@@ -10,7 +10,7 @@ WORKER_NUM=10
 CI=0
 
 DATA_DIR=~/fednlp_data/
-DATA_NAME=ploner
+DATA_NAME=onto  # dataname
 PROCESS_NUM=`expr $WORKER_NUM + 1`
 echo $PROCESS_NUM
 
@@ -31,9 +31,9 @@ python -m fedavg_main_st \
   --model_type distilbert \
   --model_name distilbert-base-uncased \
   --do_lower_case True \
-  --train_batch_size 8 \
-  --eval_batch_size 8 \
-  --max_seq_length 256 \
+  --train_batch_size 16 \
+  --eval_batch_size 16 \
+  --max_seq_length 128 \
   --lr $C_LR \
   --server_lr $S_LR \
   --fedprox_mu $MU \

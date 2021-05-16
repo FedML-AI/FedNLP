@@ -19,7 +19,15 @@ conda activate fednlp
 # conda install pytorch==1.6.0 torchvision==0.7.0 cudatoolkit=10.1 -c pytorch -n fednlp
 pip install torch==1.6.0+cu101 torchvision==0.7.0+cu101 -f https://download.pytorch.org/whl/torch_stable.html
 pip install -r requirements.txt 
+pip uninstall transformers
+pip install -e transformers/
 cd FedML; git submodule init; git submodule update; cd ../;
+
+# For Evaluation NLG
+# pip install git+https://github.com/google-research/bleurt.git
+# cd ~/fednlp_data/
+# wget https://storage.googleapis.com/bleurt-oss/bleurt-base-128.zip .
+# unzip bleurt-base-128.zip
 ```
 
 ## Code Structure of FedNLP

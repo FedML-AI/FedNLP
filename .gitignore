@@ -35,6 +35,7 @@ cifar-10-batches-py
 *.tar.gz
 *.zip
 *.json
+*.png
 
 data/cifar10/*-python
 data/cifar100/*-python
@@ -45,6 +46,8 @@ data/MNIST/test
 data/text_classification/shakespeare/train
 data/text_classification/shakespeare/test
 data/stackoverflow/datasets
+
+data/
 
 # android
 .gradle
@@ -62,3 +65,4 @@ data/fednlp/*
 
 experiments/centralized/transformer_exps/output/*
 experiments/distributed/transformer_exps/output/*
+experiments/distributed/transformer_exps/*/tmp/fedml

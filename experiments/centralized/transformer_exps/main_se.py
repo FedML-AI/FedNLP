@@ -43,6 +43,12 @@ if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     #device = torch.device("cuda:"+",".join([str(i) for i in range(args.n_gpu)]))    
     print(device)
+
+    # initialize the wandb machine learning experimental tracking platform (https://wandb.ai/automl/fednlp).
+    wandb.init(project="fednlp", entity="automl", name="FedNLP-Centralized" +
+                                                "-SE-" + str(args.dataset) + "-" + str(args.model_name),
+        config=args)
+
     # attributes
     attributes = SpanExtractionDataManager.load_attributes(args.data_file_path)
 

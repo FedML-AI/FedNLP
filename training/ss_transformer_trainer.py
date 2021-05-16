@@ -21,6 +21,9 @@ from transformers import (
     get_linear_schedule_with_warmup,
 )
 
+# import bleurt 
+
+
 
 class Seq2SeqTrainer:
     def __init__(self, args, device, model, train_dl=None, test_dl=None, tokenizer=None):
@@ -218,6 +221,12 @@ class Seq2SeqTrainer:
 
         eval_loss = 0.0
         rouge_score = 0.0
+        
+        # bluert_score = 0.0
+        # bluert_checkpoint = "~/fednlp_data/bleurt-base-128"
+        # bleurt_scorer = bleurt.score.BleurtScorer(bluert_checkpoint)
+
+
         nb_eval_steps = 0
 
         n_batches = len(self.test_dl)
@@ -240,7 +249,7 @@ class Seq2SeqTrainer:
                 tmp_eval_loss = outputs[0]
                 summary_ids = self.model.generate(inputs['input_ids'], num_beams=self.args.num_beams, max_length=self.args.max_length, early_stopping=True)
                 hyp_list = [self.decoder_tokenizer.decode(g, skip_special_tokens=True, clean_up_tokenization_spaces=False).strip() for g in summary_ids]
-                ref_list = [self.decoder_tokenizer.decode(g, skip_special_tokens=True, clean_up_tokenization_spaces=False).strip() for g in inputs['input_ids']]
+                ref_list = [self.decoder_tokenizer.decode(g, skip_special_tokens=True, clean_up_tokenization_spaces=False).strip() for g in inputs['decoder_input_ids']]
                 rouge = Rouge()
                 refs = {idx: [line] for (idx, line) in enumerate(ref_list)}
                 hyps = {idx: [line] for (idx, line) in enumerate(hyp_list)}
