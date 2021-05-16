@@ -3,6 +3,7 @@ import socket
 import sys
 
 import psutil
+import setproctitle
 import torch
 # this is a temporal import, we will refactor FedML as a package installation
 import wandb
@@ -59,6 +60,11 @@ if __name__ == "__main__":
 
     # initialize distributed computing (MPI)
     comm, process_id, worker_number = FedML_init()
+
+    # customize the process name
+    str_process_name = "FedNLP-" + str(args.dataset) + ":" + str(process_id)
+    setproctitle.setproctitle(str_process_name)
+    
     hostname = socket.gethostname()
     logging.info("#############process ID = " + str(process_id) +
                  ", host name = " + hostname + "########" +
