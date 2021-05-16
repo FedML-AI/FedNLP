@@ -14,8 +14,13 @@ def add_args(parser):
 
 def wait_for_the_training_process():
     pipe_path = "./tmp/fedml"
+    if not os.path.exists(os.path.dirname(pipe_path)):
+        try:
+            os.makedirs(os.path.dirname(pipe_path))
+        except OSError as exc:  # Guard against race condition
+            print(exc)
     if not os.path.exists(pipe_path):
-        os.mkfifo(pipe_path)
+        open(pipe_path, 'w').close()
     pipe_fd = os.open(pipe_path, os.O_RDONLY | os.O_NONBLOCK)
     with os.fdopen(pipe_fd) as pipe:
         while True:
@@ -26,7 +31,7 @@ def wait_for_the_training_process():
                 os.remove(pipe_path)
                 return
             sleep(3)
-            print("Daemon is alive. Waiting for the training result.")
+            # print("Daemon is alive. Waiting for the training result.")
 
 
 # customize the log format
@@ -39,16 +44,19 @@ args = add_args(parser)
 
 os.system("kill $(ps aux | grep \"fedavg_main_st.py\" | grep -v grep | awk '{print $2}')")
 
-# sh run_seq_tagging.sh FedAvg "niid_cluster_clients=100_alpha=5.0" 1e-5 0.1 20
-# sh run_seq_tagging.sh FedProx "niid_cluster_clients=100_alpha=5.0" 1e-5 0.1 20
-# sh run_seq_tagging.sh FedOPT "niid_cluster_clients=100_alpha=5.0" 1e-5 0.1 20
-
-
-
 hps = [
-    'FedOPT "niid_label_clients=30_alpha=0.1" 5e-5 1 0.5 30',
-    'FedAvg "niid_label_clients=30_alpha=0.1" 1e-1 1 0.5 30',
-    'FedProx "niid_label_clients=30_alpha=0.1" 1e-1 1 0.001 30',
+    'FedOPT "uniform" 5e-5 1 0.5 20',
+    'FedOPT "niid_label_clients=30_alpha=0.1" 5e-5 1 0.5 20',
+    'FedOPT "niid_label_clients=30_alpha=0.01" 5e-5 1 0.5 20',
+
+    'FedProx "uniform" 1e-1 1 0.5 20',
+    'FedProx "niid_label_clients=30_alpha=0.1" 1e-1 1 0.5 20',
+    'FedProx "niid_label_clients=30_alpha=0.01" 1e-1 1 0.5 20',
+
+    'FedAvg "uniform" 1e-1 1 0.5 20',
+    'FedAvg "niid_label_clients=30_alpha=0.1" 1e-1 1 0.5 20',
+    'FedAvg "niid_label_clients=30_alpha=0.01" 1e-1 1 0.5 20',
+
     # 'FedProx "niid_label_clients=30_alpha=0.1" 1e-1 1 1 30',
     # 'FedProx "niid_label_clients=30_alpha=0.1" 1e-1 1 0.1 30',
     # 'FedProx "niid_label_clients=30_alpha=0.1" 1e-1 1 0.01 30',

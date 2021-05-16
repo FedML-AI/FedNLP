@@ -3,10 +3,10 @@ PARTITION_METHOD=$2
 C_LR=$3
 S_LR=$4
 ROUND=$5
-
+WORKER_NUM=$6
 
 LOG_FILE="fedavg_transformer_tc.log"
-WORKER_NUM=10
+# WORKER_NUM=10
 CI=0
 
 DATA_DIR=~/fednlp_data/
@@ -19,7 +19,7 @@ hostname > mpi_host_file
 mpirun -np $PROCESS_NUM -hostfile mpi_host_file \
 python -m fedavg_main_tc \
   --gpu_mapping_file "gpu_mapping.yaml" \
-  --gpu_mapping_key "mapping_ink-lucy" \
+  --gpu_mapping_key mapping_a100 \
   --client_num_per_round $WORKER_NUM \
   --comm_round $ROUND \
   --ci $CI \
@@ -28,8 +28,8 @@ python -m fedavg_main_tc \
   --partition_file "${DATA_DIR}/partition_files/${DATA_NAME}_partition.h5" \
   --partition_method $PARTITION_METHOD \
   --fl_algorithm $FL_ALG \
-  --model_type distilbert \
-  --model_name distilbert-base-uncased \
+  --model_type bert \
+  --model_name bert-base-uncased \
   --do_lower_case True \
   --train_batch_size 8 \
   --eval_batch_size 8 \
@@ -38,6 +38,7 @@ python -m fedavg_main_tc \
   --server_lr $S_LR \
   --epochs 1 \
   --output_dir "/tmp/fedavg_${DATA_NAME}_output/"
+
 
 # sh run_text_classification.sh FedAvg "niid_label_clients=100_alpha=5.0" 5e-5 0.1 50
 # sh run_text_classification.sh FedAvg "niid_label_clients=100_alpha=10.0" 5e-5 0.1 50
@@ -54,5 +55,5 @@ python -m fedavg_main_tc \
 # sh run_text_classification.sh FedOPT "niid_label_clients=100_alpha=5.0" 5e-5 0.1 50
 # sh run_text_classification.sh FedOPT "niid_label_clients=100_alpha=10.0" 5e-5 0.1 50
 # sh run_text_classification.sh FedOPT "niid_label_clients=100_alpha=1.0" 5e-5 0.1 50
-# sh run_text_classification.sh FedOPT "uniform" 5e-5 0.1 50
+# sh run_text_classification.sh FedOPT "uniform" 5e-5 0.1 300
 # sh run_text_classification.sh FedOPT "niid_quantity_clients=100_beta=5.0" 5e-5 0.1 50

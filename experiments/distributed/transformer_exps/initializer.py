@@ -204,8 +204,13 @@ def add_federated_args(parser):
 
     parser.add_argument('--ci', type=int, default=0,
                         help='CI')
+    
     # cached related
     parser.add_argument('--reprocess_input_data',  action='store_true',
                         help='whether generate features')
+    
+    # freeze related
+    parser.add_argument('--freeze_layers', type=str, default='', metavar='N',
+                        help='freeze which layers')
 
     return parser

@@ -48,6 +48,15 @@ def wait_for_the_training_process():
             sleep(3)
             print("Daemon is alive. Waiting for the training result.")
 
+def post_complete_message(tc_args):
+    pipe_path = "/tmp/fednlp_tc"
+    if not os.path.exists(pipe_path):
+        os.mkfifo(pipe_path)
+    pipe_fd = os.open(pipe_path, os.O_WRONLY)
+
+    with os.fdopen(pipe_fd, 'w') as pipe:
+        pipe.write("training is finished! \n%s" % (str(tc_args)))
+
 
 if __name__ == "__main__":
     # parse python script input parameters
@@ -82,8 +91,9 @@ if __name__ == "__main__":
     if process_id == 0:
         # initialize the wandb machine learning experimental tracking platform (https://wandb.ai/automl/fednlp).
         wandb.init(project="fednlp", entity="automl", name="FedNLP-" + str(args.fl_algorithm) +
-                                                           "-TC-" + str(args.dataset) + "-" + str(args.model_name),
-                   config=args)
+                                                    "-TC-" + str(args.dataset) + "-" + str(args.model_name) + "-freeze-" + args.freeze_layers if args.freeze_layers else "",
+            config=args)
+
 
     # device: check "gpu_mapping.yaml" to see how to define the topology
     device = mapping_processes_to_gpu_device_from_yaml_file(
@@ -105,13 +115,14 @@ if __name__ == "__main__":
     model_args.load(model_args.model_name)
     model_args.num_labels = num_labels
     model_args.update_from_dict({"fl_algorithm": args.fl_algorithm,
+                                 "freeze_layers": args.freeze_layers,
                                  "epochs": args.epochs,
                                  "learning_rate": args.lr,
                                  "gradient_accumulation_steps": args.gradient_accumulation_steps,
                                  "do_lower_case": args.do_lower_case,
                                  "manual_seed": args.manual_seed,
                                  # for ignoring the cache features.
-                                 "reprocess_input_data": True,
+                                 "reprocess_input_data": args.reprocess_input_data,
                                  "overwrite_output_dir": True,
                                  "max_seq_length": args.max_seq_length,
                                  "train_batch_size": args.train_batch_size,
