@@ -120,7 +120,6 @@ toolz==0.11.1
 tornado==6.1
 tqdm==4.55.1
 traitlets==5.0.5
-transformers==3.5.0
 typing-extensions==3.7.4.3
 tzlocal==2.1
 urllib3==1.26.2
