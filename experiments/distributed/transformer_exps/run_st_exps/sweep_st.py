@@ -45,7 +45,10 @@ args = add_args(parser)
 os.system("kill $(ps aux | grep \"fedavg_main_st.py\" | grep -v grep | awk '{print $2}')")
 
 hps = [
+    # running
     'FedOPT "uniform" 5e-5 1 0.5 20',
+
+    # to do
     'FedOPT "niid_label_clients=30_alpha=0.1" 5e-5 1 0.5 20',
     'FedOPT "niid_label_clients=30_alpha=0.01" 5e-5 1 0.5 20',
 
