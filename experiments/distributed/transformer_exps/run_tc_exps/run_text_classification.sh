@@ -4,7 +4,6 @@ C_LR=$3
 S_LR=$4
 ROUND=$5
 WORKER_NUM=$6
-LAYERS=$7
 
 LOG_FILE="fedavg_transformer_tc.log"
 # WORKER_NUM=10
