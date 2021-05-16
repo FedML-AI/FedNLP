@@ -13,10 +13,14 @@ def add_args(parser):
 
 
 def wait_for_the_training_process():
-    folder = "./tmp"
-    if not os.path.exists(folder):
-        os.mkfifo(folder)
     pipe_path = "./tmp/fedml"
+    if not os.path.exists(os.path.dirname(pipe_path)):
+        try:
+            os.makedirs(os.path.dirname(pipe_path))
+        except OSError as exc:  # Guard against race condition
+            print(exc)
+    if not os.path.exists(pipe_path):
+        open(pipe_path, 'w').close()
     pipe_fd = os.open(pipe_path, os.O_RDONLY | os.O_NONBLOCK)
     with os.fdopen(pipe_fd) as pipe:
         while True:
@@ -27,7 +31,7 @@ def wait_for_the_training_process():
                 os.remove(pipe_path)
                 return
             sleep(3)
-            print("Daemon is alive. Waiting for the training result.")
+            # print("Daemon is alive. Waiting for the training result.")
 
 
 # customize the log format
@@ -82,8 +86,24 @@ hps = [
     'FedOPT "niid_label_clients=100_alpha=1.0" 5e-5 1 30 10 e',
 ]
 
+hps_ch = [
+    'FedOPT "niid_label_clients=100_alpha=0.1" 5e-5 1 100 10'
+    'FedOPT "niid_label_clients=100_alpha=0.5" 5e-5 1 100 10'
+    'FedOPT "niid_label_clients=100_alpha=1.0" 5e-5 1 100 10'
+    'FedOPT "niid_label_clients=100_alpha=5.0" 5e-5 1 100 10'
+    'FedOPT "niid_label_clients=100_alpha=10.0" 5e-5 1 100 10'
+    'FedOPT "niid_quantity_clients=100_beta=5.0" 5e-5 1 100 10'
+
+    'FedAvg "niid_label_clients=100_alpha=0.1" 1e-1 1 100 10'
+    'FedAvg "niid_label_clients=100_alpha=0.5" 1e-1 1 100 10'
+    'FedAvg "niid_label_clients=100_alpha=1.0" 1e-1 1 100 10'
+    'FedAvg "niid_label_clients=100_alpha=5.0" 1e-1 1 100 10'
+    'FedAvg "niid_label_clients=100_alpha=10.0" 1e-1 1 100 10'
+    'FedAvg "niid_quantity_clients=100_beta=5.0" 1e-1 1 100 10'
+]
+
 run_id = 0
-for hp in hps:
+for hp in hps_ch:
     args.hp = hp
     args.run_id = run_id
 

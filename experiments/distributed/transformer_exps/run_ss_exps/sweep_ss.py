@@ -1,4 +1,5 @@
 import argparse
+import errno
 import logging
 import os
 from time import sleep
@@ -14,8 +15,13 @@ def add_args(parser):
 
 def wait_for_the_training_process():
     pipe_path = "./tmp/fedml"
+    if not os.path.exists(os.path.dirname(pipe_path)):
+        try:
+            os.makedirs(os.path.dirname(pipe_path))
+        except OSError as exc:  # Guard against race condition
+            print(exc)
     if not os.path.exists(pipe_path):
-        os.mknod(pipe_path)
+        open(pipe_path, 'w').close()
     pipe_fd = os.open(pipe_path, os.O_RDONLY | os.O_NONBLOCK)
     with os.fdopen(pipe_fd) as pipe:
         while True:
@@ -26,7 +32,7 @@ def wait_for_the_training_process():
                 os.remove(pipe_path)
                 return
             sleep(3)
-            print("Daemon is alive. Waiting for the training result.")
+            # print("Daemon is alive. Waiting for the training result.")
 
 
 # customize the log format
