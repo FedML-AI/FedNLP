@@ -4,7 +4,6 @@ C_LR=$3
 S_LR=$4
 ROUND=$5
 WORKER_NUM=$6
-LAYERS=$7
 
 
 LOG_FILE="fedavg_transformer_tc.log"
@@ -39,8 +38,7 @@ python -m fedavg_main_tc \
   --lr $C_LR \
   --server_lr $S_LR \
   --epochs 1 \
-  --output_dir "/tmp/fedavg_${DATA_NAME}_output/" \
-  --freeze_layers $LAYERS
+  --output_dir "/tmp/fedavg_${DATA_NAME}_output/"
 
 
 # sh run_text_classification.sh FedAvg "niid_label_clients=100_alpha=5.0" 5e-5 0.1 50
