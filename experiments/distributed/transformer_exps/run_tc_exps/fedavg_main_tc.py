@@ -1,7 +1,6 @@
 import os
 import socket
 import sys
-from time import sleep
 
 import psutil
 import setproctitle
@@ -30,23 +29,6 @@ from experiments.distributed.transformer_exps.initializer import add_federated_a
 import argparse
 import logging
 
-
-def wait_for_the_training_process():
-    folder = "./folder"
-    if not os.path.exists(folder):
-        os.mkfifo(folder)
-    pipe_path = "./tmp/fedml"
-    pipe_fd = os.open(pipe_path, os.O_RDONLY | os.O_NONBLOCK)
-    with os.fdopen(pipe_fd) as pipe:
-        while True:
-            message = pipe.read()
-            if message:
-                print("Received: '%s'" % message)
-                print("Training is finished. Start the next training with...")
-                os.remove(pipe_path)
-                return
-            sleep(3)
-            print("Daemon is alive. Waiting for the training result.")
 
 def post_complete_message(tc_args):
     pipe_path = "/tmp/fednlp_tc"
@@ -91,9 +73,9 @@ if __name__ == "__main__":
     if process_id == 0:
         # initialize the wandb machine learning experimental tracking platform (https://wandb.ai/automl/fednlp).
         wandb.init(project="fednlp", entity="automl", name="FedNLP-" + str(args.fl_algorithm) +
-                                                    "-TC-" + str(args.dataset) + "-" + str(args.model_name) + "-freeze-" + args.freeze_layers if args.freeze_layers else "",
-            config=args)
-
+                                                           "-TC-" + str(args.dataset) + "-" + str(
+            args.model_name) + "-freeze-" + args.freeze_layers if args.freeze_layers else "",
+                   config=args)
 
     # device: check "gpu_mapping.yaml" to see how to define the topology
     device = mapping_processes_to_gpu_device_from_yaml_file(
@@ -164,6 +146,3 @@ if __name__ == "__main__":
     fl_algorithm(process_id, worker_number, device, comm, client_model, train_data_num,
                  train_data_global, test_data_global, train_data_local_num_dict,
                  train_data_local_dict, test_data_local_dict, args, fed_trainer)
-
-    if args.local_rank == 0:
-        post_complete_message(args)

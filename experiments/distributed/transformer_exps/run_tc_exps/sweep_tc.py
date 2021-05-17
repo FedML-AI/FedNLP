@@ -88,7 +88,7 @@ hps = [
 
 hps_ch = [
     # running
-    'FedOPT "niid_label_clients=100_alpha=0.1" 5e-5 1 100 10' 
+    # 'FedOPT "niid_label_clients=100_alpha=0.1" 5e-5 1 100 10'
     
     # to do
     'FedOPT "niid_label_clients=100_alpha=0.5" 5e-5 1 100 10'

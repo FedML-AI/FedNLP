@@ -1,7 +1,6 @@
 import os
 import socket
 import sys
-from time import sleep
 
 import psutil
 import setproctitle
@@ -26,24 +25,6 @@ from FedML.fedml_api.distributed.utils.gpu_mapping import mapping_processes_to_g
 from FedML.fedml_api.distributed.fedavg.FedAvgAPI import FedML_init
 import argparse
 import logging
-
-
-def wait_for_the_training_process():
-    folder = "./folder"
-    if not os.path.exists(folder):
-        os.mkfifo(folder)
-    pipe_path = "./tmp/fedml"
-    pipe_fd = os.open(pipe_path, os.O_RDONLY | os.O_NONBLOCK)
-    with os.fdopen(pipe_fd) as pipe:
-        while True:
-            message = pipe.read()
-            if message:
-                print("Received: '%s'" % message)
-                print("Training is finished. Start the next training with...")
-                os.remove(pipe_path)
-                return
-            sleep(3)
-            print("Daemon is alive. Waiting for the training result.")
 
 
 if __name__ == "__main__":
@@ -151,6 +132,3 @@ if __name__ == "__main__":
     fl_algorithm(process_id, worker_number, device, comm, client_model, train_data_num,
                  train_data_global, test_data_global, train_data_local_num_dict,
                  train_data_local_dict, test_data_local_dict, args, fed_trainer)
-
-    if args.local_rank == 0:
-        post_complete_message(args)
