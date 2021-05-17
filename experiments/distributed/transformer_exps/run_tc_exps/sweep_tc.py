@@ -88,21 +88,22 @@ hps = [
 
 hps_ch = [
     # running
-    # 'FedOPT "niid_label_clients=100_alpha=0.1" 5e-5 1 100 10'
+    # 'FedOPT "uniform" 5e-5 1 300 10'
+    'FedOPT "niid_label_clients=100_alpha=10.0" 5e-5 1 300 10'
     
-    # to do
-    'FedOPT "niid_label_clients=100_alpha=0.5" 5e-5 1 100 10'
-    'FedOPT "niid_label_clients=100_alpha=1.0" 5e-5 1 100 10'
-    'FedOPT "niid_label_clients=100_alpha=5.0" 5e-5 1 100 10'
-    'FedOPT "niid_label_clients=100_alpha=10.0" 5e-5 1 100 10'
-    'FedOPT "niid_quantity_clients=100_beta=5.0" 5e-5 1 100 10' 
+    'FedOPT "niid_label_clients=100_alpha=0.1" 5e-5 1 300 10'
+    'FedOPT "niid_label_clients=100_alpha=0.5" 5e-5 1 30 10'
+    'FedOPT "niid_label_clients=100_alpha=1.0" 5e-5 1 30 10'
+    'FedOPT "niid_label_clients=100_alpha=5.0" 5e-5 1 30 10'
+    'FedOPT "niid_label_clients=100_alpha=10.0" 5e-5 1 30 10'
+    'FedOPT "niid_quantity_clients=100_beta=5.0" 5e-5 1 30 10' 
 
-    'FedAvg "niid_label_clients=100_alpha=0.1" 1e-1 1 100 10'
-    'FedAvg "niid_label_clients=100_alpha=0.5" 1e-1 1 100 10'
-    'FedAvg "niid_label_clients=100_alpha=1.0" 1e-1 1 100 10'
-    'FedAvg "niid_label_clients=100_alpha=5.0" 1e-1 1 100 10'
-    'FedAvg "niid_label_clients=100_alpha=10.0" 1e-1 1 100 10'
-    'FedAvg "niid_quantity_clients=100_beta=5.0" 1e-1 1 100 10'
+    'FedAvg "niid_label_clients=100_alpha=0.1" 1e-1 1 30 10'
+    'FedAvg "niid_label_clients=100_alpha=0.5" 1e-1 1 30 10'
+    'FedAvg "niid_label_clients=100_alpha=1.0" 1e-1 1 30 10'
+    'FedAvg "niid_label_clients=100_alpha=5.0" 1e-1 1 30 10'
+    'FedAvg "niid_label_clients=100_alpha=10.0" 1e-1 1 30 10'
+    'FedAvg "niid_quantity_clients=100_beta=5.0" 1e-1 1 30 10'
 ]
 
 run_id = 0
