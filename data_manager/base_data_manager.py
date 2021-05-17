@@ -135,19 +135,20 @@ class BaseDataManager(ABC):
         
         return train_dl, test_dl
 
-    def load_federated_data(self, process_id):
+    def load_federated_data(self, process_id, test_cut_off=None):
         if process_id == 0:
-            return self._load_federated_data_server()
+            return self._load_federated_data_server(test_cut_off=test_cut_off)
         else:
             return self._load_federated_data_local()
 
-    def _load_federated_data_server(self, test_only=True):
+    def _load_federated_data_server(self, test_only=True, test_cut_off=None):
         state, res = self._load_data_loader_from_cache(-1)
         train_data_local_dict = None
         train_data_local_num_dict = None
         test_data_local_dict = {}
         if state:
             train_examples, train_features, train_dataset, test_examples, test_features, test_dataset = res
+            logging.info("test data size "+ str(len(test_examples)))
             if train_dataset is None:
                 train_data_num = 0
             else:
@@ -176,7 +177,11 @@ class BaseDataManager(ABC):
             if not test_only:
                 train_data = self.read_instance_from_h5(
                     data_file, train_index_list)
-        
+            if test_cut_off:
+                test_index_list.sort()
+            test_index_list = test_index_list[:test_cut_off]
+            logging.info("caching test index size "+ str(len(test_index_list)) + "test cut off " + str(test_cut_off))
+
             test_data = self.read_instance_from_h5(data_file, test_index_list)
 
             data_file.close()
@@ -188,7 +193,8 @@ class BaseDataManager(ABC):
                     **train_data, index_list=train_index_list)
             test_examples, test_features, test_dataset = self.preprocessor.transform(
                 **test_data, index_list=test_index_list)
-            
+            logging.info("caching test data size "+ str(len(test_examples)))
+
             with open(res, "wb") as handle:
                 pickle.dump((train_examples, train_features, train_dataset, test_examples, test_features, test_dataset), handle)
 

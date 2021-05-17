@@ -131,7 +131,7 @@ if __name__ == "__main__":
     num_workers = args.client_num_per_round
     dm = SpanExtractionDataManager(args, model_args, preprocessor, process_id, num_workers)
     train_data_num, train_data_global, test_data_global, train_data_local_num_dict, \
-    train_data_local_dict, test_data_local_dict, num_clients = dm.load_federated_data(process_id=process_id)
+    train_data_local_dict, test_data_local_dict, num_clients = dm.load_federated_data(process_id=process_id, test_cut_off=3000)
     if process_id == 0:
         client_trainer.test_dl = test_data_global
 
