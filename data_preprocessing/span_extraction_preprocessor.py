@@ -42,14 +42,14 @@ class TLMPreprocessor(BasePreprocessor):
         super(TLMPreprocessor, self).__init__(**kwargs)
         self.text_cleaner = customized_cleaner_dict.get(self.args.dataset, None)
 
-    def transform(self, context_X, question_X, y, qas_ids=None, index_list=None, evaluate=False):
+    def transform(self, context_X, question_X, y, y_answers, qas_ids=None, index_list=None, evaluate=False):
         if index_list is None:
             index_list = [i for i in range(len(context_X))]
         
         if qas_ids is None:
             qas_ids = index_list
         
-        examples = self.transform_examples(context_X, question_X, y, qas_ids, index_list)
+        examples = self.transform_examples(context_X, question_X, y, y_answers, qas_ids, index_list)
         features = self.transform_features(examples, evaluate=evaluate)
 
         # Convert to Tensors and build dataset
@@ -82,20 +82,22 @@ class TLMPreprocessor(BasePreprocessor):
             )
         return examples, features, dataset
 
-    def transform_examples(self, context_X, question_X, y, qas_ids, index_list):
+    def transform_examples(self, context_X, question_X, y, y_answers, qas_ids, index_list):
         examples = list()
-        for c, q, a, qas_id, idx in tqdm(zip(context_X, question_X, y, qas_ids, index_list), desc="trasforming examples"):
+        for c, q, a, a_t, qas_id, idx in tqdm(zip(context_X, question_X, y, y_answers, qas_ids, index_list), desc="trasforming examples"):
             # ignore the qa pair which doesn't have answer
             if c[a[0]:a[1]].strip() == "":
                 continue 
-            answers = [{"text": c[a[0]:a[1]], "answer_start": a[0]}]
+            # answers = [{"text": c[a[0]:a[1]], "answer_start": a[0]}]
+            answers = [{"text": a_t}]
             example = SpanExtractionInputExample(
                 guid= int(idx),
                 qas_id = qas_id,
                 question_text=q,
                 context_text=c,
-                answer_text=c[a[0]:a[1]],
-                start_position_character=a[0],
+                # answer_text=c[a[0]:a[1]],
+                # start_position_character=a[0],
+                answer_text=a_t,
                 title=None,
                 is_impossible=False,
                 answers=answers,
