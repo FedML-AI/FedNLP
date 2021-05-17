@@ -6,7 +6,7 @@ MU=$5
 ROUND=$6
 
 LOG_FILE="fedavg_transformer_ss.log"
-WORKER_NUM=10
+WORKER_NUM=4
 CI=0
 
 DATA_DIR=~/fednlp_data/
@@ -19,7 +19,7 @@ hostname > mpi_host_file
 mpirun -np $PROCESS_NUM -hostfile mpi_host_file \
 python -m fedavg_main_ss \
   --gpu_mapping_file "gpu_mapping.yaml" \
-  --gpu_mapping_key mapping_a100 \
+  --gpu_mapping_key mapping_config1_5 \
   --client_num_per_round $WORKER_NUM \
   --comm_round $ROUND \
   --ci $CI \
@@ -31,8 +31,8 @@ python -m fedavg_main_ss \
   --model_type bart \
   --model_name facebook/bart-base \
   --do_lower_case True \
-  --train_batch_size 8 \
-  --eval_batch_size 8 \
+  --train_batch_size 4 \
+  --eval_batch_size 4 \
   --max_seq_length 256 \
   --lr $C_LR \
   --server_lr $S_LR \
