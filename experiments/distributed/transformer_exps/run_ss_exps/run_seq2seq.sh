@@ -6,7 +6,7 @@ MU=$5
 ROUND=$6
 
 LOG_FILE="fedavg_transformer_ss.log"
-WORKER_NUM=10
+WORKER_NUM=4
 CI=0
 
 DATA_DIR=~/fednlp_data/
@@ -19,7 +19,7 @@ hostname > mpi_host_file
 mpirun -np $PROCESS_NUM -hostfile mpi_host_file \
 python -m fedavg_main_ss \
   --gpu_mapping_file "gpu_mapping.yaml" \
-  --gpu_mapping_key mapping_a100 \
+  --gpu_mapping_key mapping_config1_5 \
   --client_num_per_round $WORKER_NUM \
   --comm_round $ROUND \
   --ci $CI \
