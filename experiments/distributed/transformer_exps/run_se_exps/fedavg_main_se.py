@@ -31,17 +31,6 @@ import faulthandler
 
 faulthandler.enable()
 
-
-def post_complete_message(tc_args):
-    pipe_path = "/tmp/fednlp_se"
-    if not os.path.exists(pipe_path):
-        os.mkfifo(pipe_path)
-    pipe_fd = os.open(pipe_path, os.O_WRONLY)
-
-    with os.fdopen(pipe_fd, 'w') as pipe:
-        pipe.write("training is finished! \n%s" % (str(tc_args)))
-
-
 if __name__ == "__main__":
     # parse python script input parameters
     parser = argparse.ArgumentParser()
@@ -143,6 +132,3 @@ if __name__ == "__main__":
     fl_algorithm(process_id, worker_number, device, comm, client_model, train_data_num,
                  train_data_global, test_data_global, train_data_local_num_dict,
                  train_data_local_dict, test_data_local_dict, args, fed_trainer)
-
-    if args.local_rank == 0:
-        post_complete_message(args)

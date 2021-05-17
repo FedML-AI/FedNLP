@@ -38,7 +38,7 @@ class TextClassificationTrainer:
         self.best_accuracy = 0.0
 
         # freeze
-        self.freeze_layers = args.freeze_layers.split(",")
+        self.freeze_layers = args.freeze_layers.split(",") if args.freeze_layers else []
 
     def set_data(self, train_dl=None, test_dl=None):
         # Used for fedtrainer
@@ -214,7 +214,9 @@ class TextClassificationTrainer:
         warmup_steps = math.ceil(iteration_in_total * self.args.warmup_ratio)
         self.args.warmup_steps = warmup_steps if self.args.warmup_steps == 0 else self.args.warmup_steps
         logging.info("warmup steps = %d" % self.args.warmup_steps)
-        self.freeze_model_parameters(model)
+        # freeze exps only apply for distilbert
+        if self.args.model_type == "distilbert":
+            self.freeze_model_parameters(model)
         if self.args.fl_algorithm == "FedOPT" or self.args.fl_algorithm == "":
             optimizer = AdamW(model.parameters(), lr=self.args.learning_rate, eps=self.args.adam_epsilon)
         else:
