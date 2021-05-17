@@ -40,3 +40,6 @@ mapping_ink-lucy:
 mapping_a100:
     g1lmd2: [ 1, 1, 1, 1, 2, 2, 2, 1 ]
 
+mapping_ink-titan-mrqa:
+    ink-ron: [3,3]
+

@@ -49,13 +49,24 @@ os.system("kill $(ps aux | grep \"fedavg_main_se.py\" | grep -v grep | awk '{pri
 # sh run_span_extraction.sh FedProx "niid_cluster_clients=10_alpha=5.0" 1e-5 0.1 30
 # sh run_span_extraction.sh FedOPT "niid_cluster_clients=10_alpha=5.0" 1e-5 0.1 30
 
+
 hps = [
+    'FedOPT "uniform_clients=6" 5e-5 1 0.5 6',
+    'FedOPT "niid_label_clients=6_alpha=0.01" 5e-5 1 0.5 6',
+    'FedOPT "niid_label_clients=6_alpha=0.1" 5e-5 1 0.5 6'
+    #'FedOPT "niid_cluster_clients=100_alpha=0.1" 5e-5 1 0.5 6',
+    #'FedOPT "niid_cluster_clients=100_alpha=0.001" 5e-5 1 0.5 6'
+    #'FedOPT "kmeans_clusters=100" 5e-5 1 0.5 6'
+    #'FedOPT "uniform_clients=30" 5e-5 1 0.5 6', 
+    #'FedOPT "kmeans_clusters=30" 5e-5 1 0.5 6'
+    #'FedOPT "uniform_clients=100" 5e-5 1 0.5 6', 
+    #'FedOPT "niid_cluster_clients=100_alpha=0.01" 5e-5 1 0.5 6'
     # 'FedOPT "niid_cluster_clients=30_alpha=0.01" 5e-5 1 0.5 15', 
-    'FedOPT "uniform_clients=30" 5e-5 1 0.5 15', 
-    'FedOPT "niid_cluster_clients=30_alpha=0.1" 5e-5 1 0.5 15', 
+    #'FedOPT "uniform_clients=30" 5e-5 1 0.5 15', 
+    #'FedOPT "niid_cluster_clients=30_alpha=0.1" 5e-5 1 0.5 15', 
     # 'FedOPT "niid_cluster_clients=300_alpha=0.1" 5e-5 1 0.5 30', 
-    'FedAvg "niid_cluster_clients=30_alpha=0.1" 1e-1 1 0.5 15',
-    'FedProx "niid_cluster_clients=30_alpha=0.1" 1e-1 1 0.5 15',
+    #'FedAvg "niid_cluster_clients=30_alpha=0.01" 1e-1 1 0.5 15',
+    #'FedProx "niid_cluster_clients=30_alpha=0.01" 1e-1 1 0.5 15',
 ]
 
 run_id = 0
@@ -65,7 +76,7 @@ for hp in hps:
 
     logging.info("hp = %s" % args.hp)
     os.system("mkdir /tmp/; touch ./tmp/fedml")
-    os.system('nohup sh run_span_extraction.sh '
+    os.system('nohup sh run_mrqa.sh '
               '{args.hp} '
               '> ./fednlp_se_{args.run_id}.log 2>&1 &'.format(args=args))
 
