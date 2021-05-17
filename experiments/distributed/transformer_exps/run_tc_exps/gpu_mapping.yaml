@@ -38,7 +38,7 @@ mapping_ink-lucy:
     ink-lucy: [2, 3, 3, 3]
 
 mapping_a100:
-    g1lmd2: [1, 1, 1, 1, 2, 2, 2, 1]
+    g1lmd2: [2, 2, 2, 1, 1, 1, 1, 1]
 
 mapping_a100_2:
     g1lmd2: [2, 2, 2, 1, 1, 1, 1, 1]
