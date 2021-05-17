@@ -46,7 +46,7 @@ os.system("kill $(ps aux | grep \"fedavg_main_st.py\" | grep -v grep | awk '{pri
 
 hps = [
     # running
-    'FedOPT "uniform" 5e-5 1 0.5 20',
+    # 'FedOPT "uniform" 5e-5 1 0.5 20',
 
     # to do
     'FedOPT "niid_label_clients=30_alpha=0.1" 5e-5 1 0.5 20',
