@@ -117,7 +117,8 @@ if __name__ == "__main__":
                                  "partition_method": args.partition_method,
                                  "dataset": args.dataset,
                                  "output_dir": args.output_dir,
-                                 "is_debug_mode": args.is_debug_mode
+                                 "is_debug_mode": args.is_debug_mode,
+                                 "fedprox_mu": args.fedprox_mu
                                  })
     model_args.config["num_labels"] = num_labels
     model_config, client_model, tokenizer = create_model(
