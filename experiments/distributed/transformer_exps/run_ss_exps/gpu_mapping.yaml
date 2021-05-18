@@ -41,3 +41,7 @@ mapping_ink-lucy:
 mapping_a100:
     g1lmd2: [2, 2, 2, 1, 1, 1, 1, 1]
 
+
+mapping_a100_4gpus:
+    g1lmd2: [0, 0, 0, 0, 2, 1, 1, 1]
+

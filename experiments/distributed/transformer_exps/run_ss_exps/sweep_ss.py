@@ -54,9 +54,9 @@ hps = [
     # 'FedOPT "niid_cluster_clients=100_alpha=0.1" 5e-5 1 0.5 15',
     # 'FedOPT "niid_cluster_clients=100_alpha=0.01" 5e-5 1 0.5 15',
 
-    'FedAvg "uniform" 1e-1 1 0.5 15',
-    'FedAvg "niid_cluster_clients=100_alpha=0.1" 1e-1 1 0.5 15',
-    'FedAvg "niid_cluster_clients=100_alpha=0.01" 1e-1 1 0.5 15',
+    # 'FedAvg "uniform" 1e-1 1 0.5 15',
+    # 'FedAvg "niid_cluster_clients=100_alpha=0.1" 1e-1 1 0.5 15',
+    # 'FedAvg "niid_cluster_clients=100_alpha=0.01" 1e-1 1 0.5 15',
 
     'FedProx "uniform" 1e-1 1 0.5 15',
     'FedProx "niid_cluster_clients=100_alpha=0.1" 1e-1 1 0.5 15',
