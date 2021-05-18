@@ -96,7 +96,7 @@ class TLMPreprocessor(BasePreprocessor):
                 question_text=q,
                 context_text=c,
                 # answer_text=c[a[0]:a[1]],
-                # start_position_character=a[0],
+                start_position_character=a[0],
                 answer_text=a_t,
                 title=None,
                 is_impossible=False,
