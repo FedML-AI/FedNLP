@@ -123,6 +123,25 @@ git push
 ```  -->
 
 
+## Citation
+Please cite our FedNLP and FedML paper if it helps your research.
+```bib
+@inproceedings{fednlp2021,
+  title={FedNLP: A Research Platform for Federated Learning in Natural Language Processing},
+  author={Bill Yuchen Lin and Chaoyang He and ZiHang Zeng and Hulin Wang and Yufen Huang and M. Soltanolkotabi and Xiang Ren and S. Avestimehr},
+  year={2021},
+  booktitle={arXiv cs.CL 2104.08815},
+  url={https://arxiv.org/abs/2104.08815}
+}
+```
 
+```
+@article{chaoyanghe2020fedml,
+  Author = {He, Chaoyang and Li, Songze and So, Jinhyun and Zhang, Mi and Wang, Hongyi and Wang, Xiaoyang and Vepakomma, Praneeth and Singh, Abhishek and Qiu, Hang and Shen, Li and Zhao, Peilin and Kang, Yan and Liu, Yang and Raskar, Ramesh and Yang, Qiang and Annavaram, Murali and Avestimehr, Salman},
+  Journal = {arXiv preprint arXiv:2007.13518},
+  Title = {FedML: A Research Library and Benchmark for Federated Machine Learning},
+  Year = {2020}
+}
+```
 
  
