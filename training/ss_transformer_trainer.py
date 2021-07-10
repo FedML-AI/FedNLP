@@ -150,9 +150,8 @@ class Seq2SeqTrainer:
         #     model.train()
         for epoch in range(0, args.epochs):
             
-            self.model.train()
-            
             for batch_idx, batch in enumerate(self.train_dl):
+                self.model.train()
                 # print(batch)
                 # batch = tuple(t.to(device) for t in batch)
                 
