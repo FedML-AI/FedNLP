@@ -70,9 +70,8 @@ class SeqTaggingTrainer:
 
         for epoch in range(0, self.args.epochs):
 
-            self.model.train()
-
             for batch_idx, batch in enumerate(self.train_dl):
+                self.model.train()
                 batch = tuple(t for t in batch)
                 # dataset = TensorDataset(all_guid, all_input_ids, all_input_mask, all_segment_ids, all_label_ids)
                 x = batch[1].to(device)
