@@ -63,7 +63,7 @@ class NWPRNNTrainer(ModelTrainer):
                 test_loss += loss.item() * target.size(0)
                 test_total += target.size(0)
 
-        return test_acc, test_total, test_loss
+        return {'test_correct': test_acc, 'test_total': test_total, 'test_loss': test_loss}
 
     def test_on_the_server(self, train_data_local_dict, test_data_local_dict, device, args=None) -> bool:
         return False

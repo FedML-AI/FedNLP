@@ -14,7 +14,6 @@ class TextClassificationBiLSTMTrainer(ModelTrainer):
 
     def train(self, train_data, device, args):
         model = self.model
-
         model.to(device)
         model.train()
 
@@ -45,7 +44,6 @@ class TextClassificationBiLSTMTrainer(ModelTrainer):
                 acc = 100.0 * num_corrects / x.size()[0]
                 loss.backward()
                 optimizer.step()
-
                 batch_loss.append(loss.item())
                 batch_acc.append(acc.item())
                 if len(batch_loss) > 0:
@@ -81,4 +79,7 @@ class TextClassificationBiLSTMTrainer(ModelTrainer):
                 test_loss += loss.item() * y.size(0)
                 test_total += y.size(0)
 
-        return test_acc, test_total, test_loss
+        return {'test_correct': test_acc, 'test_total': test_total, 'test_loss': test_loss}
+
+    def test_on_the_server(self, train_data_local_dict, test_data_local_dict, device, args=None) -> bool:
+        return False
