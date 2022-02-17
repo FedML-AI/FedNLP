@@ -143,10 +143,8 @@ class SpanExtractionTrainer:
 
         for epoch in range(0, args.epochs):
 
-            self.model.train()
-
             for batch_idx, batch in enumerate(self.train_dl):
-
+                self.model.train()
                 batch = tuple(t.to(device) for t in batch)
                 # dataset = TensorDataset(all_guid, all_input_ids, all_attention_masks, all_token_type_ids, all_cls_index, 
                 # all_p_mask, all_is_impossible)
