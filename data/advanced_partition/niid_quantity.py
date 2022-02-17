@@ -2,7 +2,6 @@ import h5py
 import argparse
 import json
 import numpy as np
-from sklearn.model_selection import train_test_split
 
 
 def partition_class_samples_with_dirichlet_distribution(

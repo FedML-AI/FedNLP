@@ -68,6 +68,8 @@ python -m data.advanced_partition.niid_label \
 --data_file ${DATA_DIR}/data_files/20news_data.h5 \
 --partition_file ${DATA_DIR}/partition_files/20news_partition.h5 \
 --task_type text_classification \
+--skew_type label \
+--seed 42 \
 --kmeans_num 0  \
 --alpha 0.5
 
@@ -77,6 +79,8 @@ python -m data.advanced_partition.niid_label \
 --data_file ${DATA_DIR}/data_files/agnews_data.h5 \
 --partition_file ${DATA_DIR}/partition_files/agnews_partition.h5 \
 --task_type text_classification \
+--skew_type label \
+--seed 42 \
 --kmeans_num 0  \
 --alpha 0.5
 
@@ -85,6 +89,8 @@ python -m data.advanced_partition.niid_label   \
 --data_file ${DATA_DIR}/data_files/sst_2_data.h5 \
 --partition_file ${DATA_DIR}/partition_files/sst_2_partition.h5 \
 --task_type text_classification \
+--skew_type label \
+--seed 42 \
 --kmeans_num 0 \
 --alpha 0.5
 
@@ -93,7 +99,9 @@ python -m data.advanced_partition.niid_label   \
 --client_number 1000 \
 --data_file ${DATA_DIR}/data_files/wikiner_data.h5 \
 --partition_file ${DATA_DIR}/partition_files/wikiner_partition.h5 \
---task_type name_entity_recognition \
+--task_type sequence_tagging \
+--skew_type label \
+--seed 42 \
 --kmeans_num 10  \
 --alpha 0.5
 
@@ -101,7 +109,9 @@ python -m data.advanced_partition.niid_label   \
 --client_number 30 \
 --data_file ${DATA_DIR}/data_files/w_nut_data.h5 \
 --partition_file ${DATA_DIR}/partition_files/w_nut_partition.h5 \
---task_type name_entity_recognition \
+--task_type sequence_tagging \
+--skew_type label \
+--seed 42 \
 --kmeans_num 10  \
 --alpha 0.5
 
@@ -111,6 +121,8 @@ python -m data.advanced_partition.niid_label   \
 --data_file ${DATA_DIR}/data_files/squad_1.1_data.h5 \
 --partition_file ${DATA_DIR}/partition_files/squad_1.1_partition.h5 \
 --task_type reading_comprehension \
+--skew_type label \
+--seed 42 \
 --kmeans_num 30  \
 --alpha 0.5
 ```
