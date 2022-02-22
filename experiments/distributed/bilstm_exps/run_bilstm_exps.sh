@@ -27,11 +27,20 @@ echo $PROCESS_NUM
 
 hostname > mpi_host_file
 
+python data_preprocessing/base/distributed_data_util.py  \
+    --client_num_per_round $CLIENT_NUM \
+    --comm_round $ROUND \
+    --dataset $DATASET \
+    --data_file $DATA_FILE \
+    --partition_file $PARTITION_FILE 
+
 if [ "$FED_ALG" = "fedavg" ]
 then
-  mpirun -np $PROCESS_NUM -hostfile ./mpi_host_file python3 experiments/distributed/bilstm_exps/main_fedavg.py \
+  mpirun -np $PROCESS_NUM -hostfile ./mpi_host_file python3 experiments/distributed/bilstm_exps/main_text_classification.py \
     --gpu_num_per_server $GPU_NUM_PER_SERVER \
     --gpu_server_num $SERVER_NUM \
+    --gpu_mapping_file "experiments/distributed/bilstm_exps/gpu_mapping.yaml" \
+    --gpu_mapping_key mapping_default \
     --dataset $DATASET \
     --data_file $DATA_FILE \
     --partition_file $PARTITION_FILE \
@@ -48,12 +57,15 @@ then
     --max_seq_len $MAX_SEQ_LEN \
     --do_remove_stop_words $REMOVE_WORD \
     --do_remove_low_freq_words $REMOVE_LOW_FREQ_WORD \
+    --fed_alg $FED_ALG \
     --ci $CI
 elif [ "$FED_ALG" = "fedopt" ]
 then
-  mpirun -np $PROCESS_NUM -hostfile ./mpi_host_file python3 experiments/distributed/bilstm_exps/main_fedopt.py \
+  mpirun -np $PROCESS_NUM -hostfile ./mpi_host_file python3 experiments/distributed/bilstm_exps/main_text_classification.py \
     --gpu_num_per_server $GPU_NUM_PER_SERVER \
     --gpu_server_num $SERVER_NUM \
+    --gpu_mapping_file "experiments/distributed/bilstm_exps/gpu_mapping.yaml" \
+    --gpu_mapping_key mapping_default \
     --dataset $DATASET \
     --data_file $DATA_FILE \
     --partition_file $PARTITION_FILE \
@@ -71,6 +83,7 @@ then
     --max_seq_len $MAX_SEQ_LEN \
     --do_remove_stop_words $REMOVE_WORD \
     --do_remove_low_freq_words $REMOVE_LOW_FREQ_WORD \
+    --fed_alg $FED_ALG \
     --ci $CI
 else
   echo "no such federated algorithm!"
