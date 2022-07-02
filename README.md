@@ -1,3 +1,5 @@
+Note: An upgraded version is maintained at FedML repo: https://github.com/FedML-AI/FedML/tree/master/python/app/fednlp
+
 # FedNLP: A Research Platform for Federated Learning in Natural Language Processing
  
 <!-- This is FedNLP, an application ecosystem for federated natural language processing based on FedML framework (https://github.com/FedML-AI/FedML). -->
