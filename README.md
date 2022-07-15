@@ -1,8 +1,8 @@
-# FedNLP: A Research Platform for Federated Learning in Natural Language Processing
+# FedNLP: An Industry and Research Integrated Platform for Federated Learning in Natural Language Processing
 
 <!-- This is FedNLP, an application ecosystem for federated natural language processing based on FedML framework (https://github.com/FedML-AI/FedML). -->
 
-FedNLP is a research-oriented benchmarking framework for advancing *federated learning* (FL) in *natural language processing* (NLP). It uses the FedML API in its backend for for various Federated algorithms like FedAvg and FedOpt and platforms (Distributed Computing, IoT/Mobile, Standalone).
+FedNLP is an industry and research integrated platform for advancing *federated learning* (FL) in *natural language processing* (NLP). It uses the FedML API in its backend for for various Federated algorithms like FedAvg and FedOpt and platforms (Distributed Computing, IoT/Mobile, Standalone).
 
 The figure below is the overall structure of FedNLP.
 ![avatar](FedNLP.png)
