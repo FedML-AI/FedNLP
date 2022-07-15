@@ -1,4 +1,0 @@
-[submodule "FedML"]
-	path = FedML
-	url = https://github.com/FedML-AI/FedML.git
-	ignore = all
